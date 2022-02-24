@@ -1,8 +1,5 @@
+"""DynamoDB (through boto3) with a simple (dict-like or list-like) interface
 """
-dynamodb (through boto3) with a simple (dict-like or list-like) interface
-"""
-import traceback
-
 import boto3
 import botocore.exceptions
 from dataclasses import dataclass, field
@@ -10,14 +7,27 @@ from functools import wraps
 from lazyprop import lazyprop
 from typing import Any, Tuple
 
-from dol.base import KvReader, KvPersister
+from dol.base import KvReader, KvPersister, Store
 
 
 class NoSuchKeyError(KeyError):
     pass
 
 
-def get_db(aws_access_key_id='',
+DFLT_TABLE_NAME = 'dynamodol'
+DFLT_KEY_FIELDS = ('key',)
+DFLT_DATA_FIELDS = ('value',)
+
+db_defaults = {
+    'table_name': DFLT_TABLE_NAME,
+    'key_fields': DFLT_KEY_FIELDS,
+    'data_fields': DFLT_DATA_FIELDS,
+    'projection': None
+}
+
+
+def get_db(
+    aws_access_key_id='',
     aws_secret_access_key='',
     aws_session_token='',
     region_name='',
@@ -33,14 +43,43 @@ def get_db(aws_access_key_id='',
 
 @dataclass
 class DynamoDbBaseReader(KvReader):
+    """A basic key-value reader for DynamoDb
+
+    All properties will be filled in by defaults if not provided.
+
+    :property db: A boto3 DynamoDB resource object.
+    :property table_name: The name of the table to access.
+    :property key_fields: A tuple of length 1 or 2 with the table's partition key and (if present) sort key
+    :property data_fields: A tuple listing the data keys to retrieve with __getitem__.
+        If data_fields is length 0, all of the keys and values of the document will be returned as a dict.
+        If data_fields is length 1, the value of that field will be returned as a string.
+        If data_fields is length 2 or greater, the values in those fields will be returned as a tuple.
+    :property exclude_keys_on_read: If data_fields is empty, this flag specifies whether to exclude
+        the partition key (and sort key if applicable) from the output dict.
+
+    Keys are strings if the table has only a partition key, or tuples if the table has a partition key and a sort key.
+
+    >>> from dynamodol.base import load_sample_data
+    >>> load_sample_data()
+    >>> reader = DynamoDbBaseReader()
+    >>> reader[('part1', '01-01')]
+    >>> ('a', 'bcde')
+
+    MAJOR TODO: boto3 for DynamoDB casts all numbers to a Decimal type. We need to add a significant amount
+    of mapping code to transform values between Decimal and Python int and float types when reading and writing.
+    This library is currently only useful for tables that exclusively use string values.
+    """
     db: Any = field(default=None)
-    table_name: str = field(default='dynamodol')
-    key_fields: Tuple[str] = field(default=('key', None))
-    data_fields: Tuple[str] = field(default=('data',))
+    table_name: str = field(default=None)
+    key_fields: Tuple[str] = field(default=None)
+    data_fields: Tuple[str] = field(default=None)
     exclude_keys_on_read: bool = field(default=True)
     projection: str = field(default=None)
 
     def __post_init__(self):
+        for k, v in db_defaults.items():
+            if getattr(self, k, None) is None:
+                setattr(self, k, v)
         if not self.db:
             self.db = get_db()
         if isinstance(self.data_fields, str):
@@ -49,6 +88,9 @@ class DynamoDbBaseReader(KvReader):
             self.key_fields = (self.key_fields,)
         if isinstance(self.projection, list):
             self.projection = ','.join(self.projection)
+
+    def __reversed__(self):
+        return list(self)[::-1]
 
     @lazyprop
     def table(self):
@@ -91,9 +133,20 @@ class DynamoDbBaseReader(KvReader):
         return self.key_fields[1]
 
     def format_get_item(self, item):
+        """TODO: replace with _id_of_key, etc."""
+        if self.data_fields:
+            if len(self.data_fields) == 1:
+                return item[self.data_fields[0]]
+            return tuple([item[k] for k in self.data_fields])
         if self.exclude_keys_on_read:
             return {x: item[x] for x in item if x not in self.key_fields}
         return item
+
+    def format_get_key(self, item):
+        """TODO: replace with _id_of_key, etc."""
+        if len(self.key_fields) == 2:
+            return item[self.key_fields[0]], item[self.key_fields[1]]
+        return item[self.key_fields[0]]
 
     def __getitem__(self, k):
         try:
@@ -117,7 +170,7 @@ class DynamoDbBaseReader(KvReader):
         if self.projection:
             scan_kwargs = {'ProjectionExpression': self.projection}
         response = self.table.scan(**scan_kwargs)
-        yield from (self.format_get_response(d) for d in response['Items'])
+        yield from (self.format_get_key(d) for d in response['Items'])
 
     def __len__(self):
         # This is extremely inefficient and should not be used with large tables in production
@@ -132,9 +185,9 @@ class DynamoDbBaseReader(KvReader):
 
 class DynamoDbBasePersister(DynamoDbBaseReader, KvPersister):
     """
-    A basic DynamoDb via Boto3 persister.
-    >>> s = DynamoDbPersister()
-    >>> k = {'key': '777'} # Each collection will happily accept user-defined _key values.
+    A basic DynamoDb persister.
+    >>> s = DynamoDbBasePersister(table_name=DFLT_TABLE_NAME, key_fields=DFLT_KEY_FIELDS, data_fields=())
+    >>> k = '777' # Each collection will happily accept user-defined _key values.
     >>> v = {'val': 'bar'}
     >>> for _key in s:
     ...     del s[_key]
@@ -150,7 +203,7 @@ class DynamoDbBasePersister(DynamoDbBaseReader, KvPersister):
     {'val': 'bar'}
     >>> s.get(k)
     {'val': 'bar'}
-    >>> s.get({'not': 'a key'}, {'default': 'val'})  # testing s.get with default
+    >>> s.get('does_not_exist', {'default': 'val'})  # testing s.get with default
     {'default': 'val'}
     >>> list(s.values())
     [{'val': 'bar'}]
@@ -164,16 +217,16 @@ class DynamoDbBasePersister(DynamoDbBaseReader, KvPersister):
     ...   del s[_key]
     >>> len(s)
     0
-    >>> s[{'name': 'guido'}] = {'yob': 1956, 'proj': 'python', 'bdfl': False}
-    >>> s[{'name': 'guido'}]
+    >>> s['guido'] = {'yob': 1956, 'proj': 'python', 'bdfl': False}
+    >>> s['guido']
     {'proj': 'python', 'yob': Decimal('1956'), 'bdfl': False}
-    >>> s[{'name': 'vitalik'}] = {'yob': 1994, 'proj': 'ethereum', 'bdfl': True}
-    >>> s[{'name': 'vitalik'}]
+    >>> s['vitalik'] = {'yob': 1994, 'proj': 'ethereum', 'bdfl': True}
+    >>> s['vitalik']
     {'proj': 'ethereum', 'yob': Decimal('1994'), 'bdfl': True}
     >>> for key, val in s.items():
     ...   print(f"{key}: {val}")
-    {'name': 'vitalik'}: {'proj': 'ethereum', 'yob': Decimal('1994'), 'bdfl': True}
-    {'name': 'guido'}: {'proj': 'python', 'yob': Decimal('1956'), 'bdfl': False}
+    'vitalik': {'proj': 'ethereum', 'yob': Decimal('1994'), 'bdfl': True}
+    'guido': {'proj': 'python', 'yob': Decimal('1956'), 'bdfl': False}
     """
 
     def __setitem__(self, k, v):
@@ -183,9 +236,12 @@ class DynamoDbBasePersister(DynamoDbBaseReader, KvPersister):
             else:
                 k = (k,)
         key = {att: key for att, key in zip(self.key_fields, k)}
-        if isinstance(v, str):
-            v = (v,)
-        val = {att: key for att, key in zip(self.data_fields, v)}
+        if isinstance(v, dict):
+            val = v
+        else:
+            if isinstance(v, str):
+                v = (v,)
+            val = {att: key for att, key in zip(self.data_fields, v)}
 
         self.table.put_item(Item={**key, **val})
 
@@ -202,3 +258,46 @@ class DynamoDbBasePersister(DynamoDbBaseReader, KvPersister):
                 if e.__name__ == 'NoSuchKey':
                     raise NoSuchKeyError(f'Key not found: {k}')
             raise
+
+
+def set_db_defaults(new_defaults: dict):
+    """Sets global defaults for dynamodol so stores can be created without explicitly passing table details every time.
+
+    :param new_defaults: A dict containing one or more of the following keys
+        table_name: str - The name of the table
+        key_fields: Tuple - A tuple of length 1 or 2 containing the partition key and (optional) sort key for the table
+        data_fields: Tuple or None - A tuple of data fields to return from queries. If data_fields is None, data
+                                     will be returned as dicts instead of tuples.
+    """
+    for k, v in new_defaults.items():
+        db_defaults[k] = v
+
+
+def load_sample_data():
+    """For supporting doctests"""
+    set_db_defaults({
+        'table_name': 'sorted_table',
+        'key_fields': ('partitionkey', 'sortkey'),
+        'data_fields': ('data', 'moredata'),
+        'partition': 'part1'
+    })
+    sorted_persister = DynamoDbBasePersister()
+    for k in list(sorted_persister):
+        del sorted_persister[k]
+    sorted_persister[('part1', 'sort2')] = ('val2', 'moreval2', None)
+    sorted_persister[('part1', '01-01')] = ('a', 'bcde')
+    sorted_persister[('part1', '01-02')] = ('c', 'defg')
+    sorted_persister[('part1', '01-03')] = ('e', 'fghi')
+    sorted_persister[('part1', '01-04')] = ('a', 'cdef')
+    sorted_persister[('part1', '02-01')] = ('g', 'hijk')
+    sorted_persister[('part1', '03-02')] = ('i', 'jklm')
+    sorted_persister[('part1', '04-03')] = ('k', 'lmno')
+    sorted_persister[('part2', '02-01')] = ('m', 'nopq')
+    sorted_persister[('part2', '03-02')] = ('o', 'pqrs')
+    sorted_persister[('part2', '04-03')] = ('q', 'rstu')
+    sorted_persister[('part3', '01-05')] = ('s', 'tuvw')
+    sorted_persister[('part3', '02-02')] = ('u', 'vwxy')
+    sorted_persister[('part3', '03-03')] = ('w', 'xyza')
+
+
+# TODO class DynamoDbStore(DynamoDbBasePersister, Store): ...

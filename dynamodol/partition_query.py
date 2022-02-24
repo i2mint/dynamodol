@@ -1,11 +1,10 @@
-"""
-enable queries by partition and sort keys
+"""Stores for filtered data sets
 """
 from boto3.dynamodb.conditions import Key, Attr
 from dataclasses import dataclass, field
 from typing import Any
 
-from dynamodol.base import DynamoDbBaseReader, DynamoDbBasePersister
+from dynamodol.base import DynamoDbBaseReader, DynamoDbBasePersister, db_defaults
 
 
 class NoSuchKeyError(KeyError):
@@ -23,6 +22,7 @@ def _apply_filter_method(filter_obj, operator, value):
             raise ValueError(f'Values for the $between operator must be iterables of length 2 (received {value}).')
         return filter_method(*value)
     return filter_method(value)
+
 
 def _mk_query_from_dict_val(attr_or_key, query_val, is_key=False):
     """Transforms a MongoDB-like query dict into a DynamoDB Key or Attr condition object.
@@ -84,8 +84,33 @@ def _mk_query_from_dict_val(attr_or_key, query_val, is_key=False):
 #             'attr_query must include an operator and one value, or the "between" operator and two values, separated by spaces')
 #     return attr_method(*raw_query[1:])
 
+
 @dataclass
 class DynamoDbQueryReader(DynamoDbBaseReader):
+    """Reads from a filtered subset of a DynamoDB table.
+
+    Every query must include the partition key (the first key field).
+
+    >>> from dynamodol.base import load_sample_data
+    >>> load_sample_data()
+
+    Querying on the partition key and sort key
+    >>> query_reader = DynamoDbQueryReader(query={'partitionkey': 'part1', 'sortkey': '04-03'})
+    >>> list(query_reader)
+    [('part1', '04-03')]
+
+    Querying on a partition and arbitrary attribute key.
+    >>> query_reader = DynamoDbQueryReader(query={'partitionkey': 'part1', 'data': 'a'})
+    >>> list(query_reader)
+    [('part1', '01-01'), ('part1', '01-04')]
+    >>> query_reader[('part1', '01-04')]
+
+    A more complex query. Note that numerical values and numerical comparisons are not yet supported.
+    >>> query = {'partitionkey': 'part2', 'sortkey': {'$gt': '02-01'}, 'moredata': {'$contains': 'r'}}
+    >>> query_reader = DynamoDbQueryReader(query=query)
+    >>> list(query_reader)
+    [('part2', '03-02'), ('part2', '04-03')]
+    """
     query: Any = field(default=None)
     key_query: Any = field(default=None)
     attr_query: Any = field(default=None)
@@ -113,17 +138,16 @@ class DynamoDbQueryReader(DynamoDbBaseReader):
 
     @property
     def filter_kwargs(self):
-        result = dict(KeyConditionExpression=self.key_query)
+        result = {}
+        if self.key_query:
+            result['KeyConditionExpression'] = self.key_query
         if self.attr_query:
-            result['AttrConditionExpression'] = self.attr_query
+            result['FilterExpression'] = self.attr_query
         return result
 
     def __iter__(self):
         response = self.table.query(**self.filter_kwargs)
-        yield from (
-            {x: d[x] for x in d if x in self.key_fields} if self.exclude_keys_on_read else d
-            for d in response['Items']
-        )
+        yield from (self.format_get_key(d) for d in response['Items'])
 
     def __len__(self):
         response = self.table.query(**self.filter_kwargs, Select='COUNT')
@@ -132,13 +156,35 @@ class DynamoDbQueryReader(DynamoDbBaseReader):
 
 @dataclass
 class DynamoDbPartitionReader(DynamoDbQueryReader):
-    partition: str = field(default="partition")
+    """Reads from a partition of a DynamoDB table.
+
+    >>> from dynamodol.base import load_sample_data
+    >>> load_sample_data()
+    >>> partition_reader = DynamoDbPartitionReader(partition='part1')
+    >>> list(partition_reader)
+    [('part1', '01-01'),
+     ('part1', '01-02'),
+     ('part1', '01-03'),
+     ('part1', '01-04'),
+     ('part1', '02-01'),
+     ('part1', '03-02'),
+     ('part1', '04-03'),
+     ('part1', 'sort2')]
+    >>> partition_reader[('part1', '01-01')]
+    """
+    partition: str = field(default=None)
 
     def __post_init__(self):
+        DynamoDbQueryReader.__post_init__(self)
+        if not self.partition:
+            self.partition = db_defaults['partition']
         if len(self.key_fields) != 2:
             raise ValueError('DynamoDbPartitionReader must have a composite key of length 2 in the format (partition_key, sort_key)')
         self.key_query = Key(self.partition_key).eq(self.partition)
-        DynamoDbQueryReader.__post_init__(self)
+
+    def format_get_key(self, item):
+        """TODO: replace with _id_of_key, etc."""
+        return item[self.sort_key]
 
     def __getitem__(self, k):
         try:
@@ -152,16 +198,30 @@ class DynamoDbPartitionReader(DynamoDbQueryReader):
 
 @dataclass
 class DynamoDbPrefixReader(DynamoDbPartitionReader):
+    """Reads from a partition of a DynamoDB table, with the sort key filtered by a prefix.
+
+        >>> from dynamodol.base import load_sample_data
+        >>> load_sample_data()
+        >>> prefix_reader = DynamoDbPrefixReader(key_fields=('partitionkey', 'sortkey'), table_name='sorted_table', partition='part1', prefix='01')
+        >>> list(prefix_reader)
+        [('part1', '01-01'),
+         ('part1', '01-02'),
+         ('part1', '01-03'),
+         ('part1', '01-04')]
+        """
     prefix: str = field(default='')
 
     def __post_init__(self):
         DynamoDbPartitionReader.__post_init__(self)
         self.key_query = Key(self.partition_key).eq(self.partition) & Key(self.sort_key).begins_with(self.prefix)
 
+    def format_get_key(self, item):
+        """TODO: replace with _id_of_key, etc."""
+        return item[self.sort_key][len(self.prefix):]
+
     def __getitem__(self, k):
         try:
             key = {self.partition_key: self.partition, self.sort_key: self.prefix + k}
-            print(f'key: {key}')
             response = self.table.get_item(Key=key)
             item = response['Item']
             return self.format_get_item(item)
