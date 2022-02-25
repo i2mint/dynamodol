@@ -7,7 +7,7 @@ from functools import wraps
 from lazyprop import lazyprop
 from typing import Any, Tuple
 
-from dol.base import KvReader, KvPersister, Store
+from dol import KvReader, KvPersister, Store, BaseValuesView, BaseItemsView
 
 
 class NoSuchKeyError(KeyError):
@@ -74,7 +74,20 @@ class DynamoDbBaseReader(KvReader):
     key_fields: Tuple[str] = field(default=None)
     data_fields: Tuple[str] = field(default=None)
     exclude_keys_on_read: bool = field(default=True)
-    projection: str = field(default=None)
+
+    class ValuesView(BaseValuesView):
+        def __contains__(self, v):
+            return self._mapping.contains_value(v)
+
+        def __iter__(self):
+            return self._mapping.iter_values()
+
+    class ItemsView(BaseItemsView):
+        def __contains__(self, item):
+            return self._mapping.contains_item(item)
+
+        def __iter__(self):
+            return self._mapping.iter_items()
 
     def __post_init__(self):
         for k, v in db_defaults.items():
@@ -148,28 +161,58 @@ class DynamoDbBaseReader(KvReader):
             return item[self.key_fields[0]], item[self.key_fields[1]]
         return item[self.key_fields[0]]
 
+    @property
+    def _keys_expression(self):
+        return {
+            'ExpressionAttributeNames': {f'#{index}': key for index, key in enumerate(self.key_fields)},
+            'ProjectionExpression': ', '.join([f'#{i}' for i in range(len(self.key_fields))])
+        }
+
+    @property
+    def _values_expression(self):
+        if not self.data_fields:
+            return {}
+        return {
+            'ExpressionAttributeNames': {f'#{index}': key for index, key in enumerate(self.data_fields)},
+            'ProjectionExpression': ', '.join([f'#{i}' for i in range(len(self.data_fields))])
+        }
+
+    @property
+    def _keys_values_expression(self):
+        if not self.data_fields:
+            return {}
+        all_fields = [*self.key_fields, *self.data_fields]
+        return {
+            'ExpressionAttributeNames': {f'#{index}': key for index, key
+                                         in enumerate(all_fields)},
+            'ProjectionExpression': ', '.join([f'#{i}' for i in range(len(all_fields))])
+        }
+
     def __getitem__(self, k):
         try:
+            _k = k
             if isinstance(k, str):
                 if self.sort_key:
                     raise ValueError('If a sort key is defined, object keys must be tuples.')
-                k = (k,)
-            k = {att: key for att, key in zip(self.key_fields, k)}
-            get_kwargs = {'Key': k}
-            if self.projection:
-                get_kwargs['ProjectionExpression'] = self.projection
-            response = self.table.get_item(**get_kwargs)
+                _k = (k,)
+            _k = {att: key for att, key in zip(self.key_fields, _k)}
+            response = self.table.get_item(Key=_k, **self._values_expression)
             item = response['Item']
             return self.format_get_item(item)
         except Exception as e:
             raise NoSuchKeyError(f'Key not found: {k}')
 
+    def iter_items(self):
+        response = self.table.scan(**self._keys_values_expression)
+        yield from ((self.format_get_key(d), self.format_get_item(d)) for d in response['Items'])
+
+    def iter_values(self):
+        response = self.table.scan(**self._values_expression)
+        yield from (self.format_get_item(d) for d in response['Items'])
+
     def __iter__(self):
         # This is extremely inefficient and should not be used with large tables in production
-        scan_kwargs = {}
-        if self.projection:
-            scan_kwargs = {'ProjectionExpression': self.projection}
-        response = self.table.scan(**scan_kwargs)
+        response = self.table.scan(**self._keys_expression)
         yield from (self.format_get_key(d) for d in response['Items'])
 
     def __len__(self):

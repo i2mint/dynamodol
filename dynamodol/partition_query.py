@@ -145,8 +145,16 @@ class DynamoDbQueryReader(DynamoDbBaseReader):
             result['FilterExpression'] = self.attr_query
         return result
 
+    def iter_items(self):
+        response = self.table.query(**self.filter_kwargs, **self._keys_values_expression)
+        yield from ((self.format_get_key(d), self.format_get_item(d)) for d in response['Items'])
+
+    def iter_values(self):
+        response = self.table.query(**self.filter_kwargs, **self._values_expression)
+        yield from (self.format_get_item(d) for d in response['Items'])
+
     def __iter__(self):
-        response = self.table.query(**self.filter_kwargs)
+        response = self.table.query(**self.filter_kwargs, **self._keys_expression)
         yield from (self.format_get_key(d) for d in response['Items'])
 
     def __len__(self):
@@ -187,6 +195,7 @@ class DynamoDbPartitionReader(DynamoDbQueryReader):
         return item[self.sort_key]
 
     def __getitem__(self, k):
+        print(f'getitem: {k}')
         try:
             key = {self.partition_key: self.partition, self.sort_key: k}
             response = self.table.get_item(Key=key)
