@@ -10,8 +10,17 @@ from dynamodol.base import DynamoDbBaseReader, DynamoDbBasePersister, db_default
 class NoSuchKeyError(KeyError):
     pass
 
+
 valid_key_operators = ['begins_with', 'between', 'gt', 'gte', 'lt', 'lte']
-valid_attr_operators = [*valid_key_operators, 'contains', 'ne', 'exists', 'not_exists', 'is_in', 'size']
+valid_attr_operators = [
+    *valid_key_operators,
+    'contains',
+    'ne',
+    'exists',
+    'not_exists',
+    'is_in',
+    'size',
+]
 valid_size_operators = ['gt', 'gte', 'lt', 'lte', 'between', 'is_in']
 
 
@@ -19,7 +28,9 @@ def _apply_filter_method(filter_obj, operator, value):
     filter_method = getattr(filter_obj, operator[1:])
     if operator == '$between':
         if len(value) != 2:
-            raise ValueError(f'Values for the $between operator must be iterables of length 2 (received {value}).')
+            raise ValueError(
+                f'Values for the $between operator must be iterables of length 2 (received {value}).'
+            )
         return filter_method(*value)
     return filter_method(value)
 
@@ -45,7 +56,9 @@ def _mk_query_from_dict_val(attr_or_key, query_val, is_key=False):
         operator = '$is_in'
     valid_operator_list = valid_key_operators if is_key else valid_attr_operators
     if operator[1:] not in valid_operator_list:
-        raise ValueError(f'Operator {operator} is not valid for {"key" if is_key else "attribute"} queries.')
+        raise ValueError(
+            f'Operator {operator} is not valid for {"key" if is_key else "attribute"} queries.'
+        )
     if operator == '$exists':
         if value is False:
             return filter_obj.not_exists()
@@ -58,7 +71,9 @@ def _mk_query_from_dict_val(attr_or_key, query_val, is_key=False):
         else:
             size_operator, size_value = list(value.items())[0]
             if size_operator[1:] not in valid_size_operators:
-                raise ValueError(f'Operator {size_operator} is not valid for size queries.')
+                raise ValueError(
+                    f'Operator {size_operator} is not valid for size queries.'
+                )
             return _apply_filter_method(filter_obj, size_operator, size_value)
     return _apply_filter_method(filter_obj, operator, value)
 
@@ -111,6 +126,7 @@ class DynamoDbQueryReader(DynamoDbBaseReader):
     >>> list(query_reader)
     [('part2', '03-02'), ('part2', '04-03')]
     """
+
     query: Any = field(default=None)
     key_query: Any = field(default=None)
     attr_query: Any = field(default=None)
@@ -120,14 +136,20 @@ class DynamoDbQueryReader(DynamoDbBaseReader):
         if isinstance(self.query, dict):
             if not self.key_query:
                 if self.partition_key in self.query:
-                    self.key_query = Key(self.partition_key).eq(self.query[self.partition_key])
+                    self.key_query = Key(self.partition_key).eq(
+                        self.query[self.partition_key]
+                    )
                     if self.sort_key in self.query:
-                        self.key_query = self.key_query & _mk_query_from_dict_val(self.sort_key, self.query[self.sort_key], is_key=True)
+                        self.key_query = self.key_query & _mk_query_from_dict_val(
+                            self.sort_key, self.query[self.sort_key], is_key=True
+                        )
                 else:
                     self.key_query = None
             if not self.attr_query:
                 for attr, val in self.query.items():
-                    if attr == self.partition_key or (self.key_query and attr == self.sort_key):
+                    if attr == self.partition_key or (
+                        self.key_query and attr == self.sort_key
+                    ):
                         continue
                     if attr not in self.key_fields:
                         new_query = _mk_query_from_dict_val(attr, val)
@@ -146,8 +168,12 @@ class DynamoDbQueryReader(DynamoDbBaseReader):
         return result
 
     def iter_items(self):
-        response = self.table.query(**self.filter_kwargs, **self._keys_values_expression)
-        yield from ((self.format_get_key(d), self.format_get_item(d)) for d in response['Items'])
+        response = self.table.query(
+            **self.filter_kwargs, **self._keys_values_expression
+        )
+        yield from (
+            (self.format_get_key(d), self.format_get_item(d)) for d in response['Items']
+        )
 
     def iter_values(self):
         response = self.table.query(**self.filter_kwargs, **self._values_expression)
@@ -180,6 +206,7 @@ class DynamoDbPartitionReader(DynamoDbQueryReader):
      ('part1', 'sort2')]
     >>> partition_reader[('part1', '01-01')]
     """
+
     partition: str = field(default=None)
 
     def __post_init__(self):
@@ -187,7 +214,9 @@ class DynamoDbPartitionReader(DynamoDbQueryReader):
         if not self.partition:
             self.partition = db_defaults['partition']
         if len(self.key_fields) != 2:
-            raise ValueError('DynamoDbPartitionReader must have a composite key of length 2 in the format (partition_key, sort_key)')
+            raise ValueError(
+                'DynamoDbPartitionReader must have a composite key of length 2 in the format (partition_key, sort_key)'
+            )
         self.key_query = Key(self.partition_key).eq(self.partition)
 
     def format_get_key(self, item):
@@ -218,15 +247,18 @@ class DynamoDbPrefixReader(DynamoDbPartitionReader):
          ('part1', '01-03'),
          ('part1', '01-04')]
         """
+
     prefix: str = field(default='')
 
     def __post_init__(self):
         DynamoDbPartitionReader.__post_init__(self)
-        self.key_query = Key(self.partition_key).eq(self.partition) & Key(self.sort_key).begins_with(self.prefix)
+        self.key_query = Key(self.partition_key).eq(self.partition) & Key(
+            self.sort_key
+        ).begins_with(self.prefix)
 
     def format_get_key(self, item):
         """TODO: replace with _id_of_key, etc."""
-        return item[self.sort_key][len(self.prefix):]
+        return item[self.sort_key][len(self.prefix) :]
 
     def __getitem__(self, k):
         try:

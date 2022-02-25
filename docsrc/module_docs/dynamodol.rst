@@ -1,0 +1,4 @@
+dynamodol
+=========
+.. automodule:: dynamodol
+   :members:
