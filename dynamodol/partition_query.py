@@ -243,9 +243,10 @@ class DynamoDbPartitionPersister(DynamoDbBasePersister, DynamoDbPartitionReader)
         key = {self.partition_key: self.partition, self.sort_key: k}
         if isinstance(v, str):
             v = (v,)
-            val = {att: key for att, key in zip(self.data_fields, v)}
-        else:
+        if isinstance(v, dict):
             val = v
+        else:
+            val = {att: key for att, key in zip(self.data_fields, v)}
 
         self.table.put_item(Item={**key, **val})
 

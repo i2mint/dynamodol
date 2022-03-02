@@ -3,9 +3,10 @@
 import boto3
 import botocore.exceptions
 from dataclasses import dataclass, field
+from decimal import Decimal
 from functools import wraps
 from lazyprop import lazyprop
-from typing import Any, Tuple
+from typing import Any, Iterable, Mapping, Tuple
 
 from dol import KvReader, KvPersister, Store, BaseValuesView, BaseItemsView
 
@@ -39,6 +40,19 @@ def get_db(
         if aws_session_token:
             resource_kwargs['aws_session_token'] = aws_session_token
     return boto3.resource('dynamodb', **resource_kwargs)
+
+
+def decimal_to_float(x):
+    print(f'x: {x}')
+    if isinstance(x, str):
+        return x
+    if isinstance(x, Mapping):
+        return {k: decimal_to_float(v) for k, v in x.items()}
+    if isinstance(x, Iterable):
+        return [decimal_to_float(v) for v in x]
+    if isinstance(x, Decimal):
+        return float(x)
+    return x
 
 
 @dataclass
@@ -145,8 +159,7 @@ class DynamoDbBaseReader(KvReader):
             return None
         return self.key_fields[1]
 
-    def format_get_item(self, item):
-        """TODO: replace with _id_of_key, etc."""
+    def extract_obj_from_data(self, item):
         if self.data_fields:
             if len(self.data_fields) == 1:
                 return item[self.data_fields[0]]
@@ -154,6 +167,12 @@ class DynamoDbBaseReader(KvReader):
         if self.exclude_keys_on_read:
             return {x: item[x] for x in item if x not in self.key_fields}
         return item
+
+    def format_get_item(self, item):
+        """TODO: replace with _id_of_key, etc."""
+        obj = self.extract_obj_from_data(item)
+        print(f'obj: {obj}')
+        return decimal_to_float(obj)
 
     def format_get_key(self, item):
         """TODO: replace with _id_of_key, etc."""
