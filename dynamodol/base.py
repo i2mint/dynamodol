@@ -6,7 +6,8 @@ from dataclasses import dataclass, field
 from decimal import Decimal
 from functools import wraps
 from lazyprop import lazyprop
-from typing import Any, Iterable, Mapping, Tuple
+from typing import Any, Tuple
+from collections.abc import Iterable, Mapping
 
 from dol import KvReader, KvPersister, Store, BaseValuesView, BaseItemsView
 
@@ -89,8 +90,8 @@ class DynamoDbBaseReader(KvReader):
 
     db: Any = field(default=None)
     table_name: str = field(default=None)
-    key_fields: Tuple[str] = field(default=None)
-    data_fields: Tuple[str] = field(default=None)
+    key_fields: tuple[str] = field(default=None)
+    data_fields: tuple[str] = field(default=None)
     exclude_keys_on_read: bool = field(default=True)
 
     class ValuesView(BaseValuesView):
