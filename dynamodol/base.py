@@ -258,8 +258,8 @@ class DynamoDbBaseReader(KvReader):
         response = self.table.scan(Select='COUNT')
         return response['Count']
 
-    @wraps(get_db)
     @staticmethod
+    @wraps(get_db)
     def mk_db(**db_kwargs):
         return get_db(**db_kwargs)
 
