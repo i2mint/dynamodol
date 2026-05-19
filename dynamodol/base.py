@@ -1,5 +1,5 @@
-"""DynamoDB (through boto3) with a simple (dict-like or list-like) interface
-"""
+"""DynamoDB (through boto3) with a simple (dict-like or list-like) interface"""
+
 import boto3
 import botocore.exceptions
 from dataclasses import dataclass, field
@@ -16,38 +16,38 @@ class NoSuchKeyError(KeyError):
     pass
 
 
-DFLT_TABLE_NAME = 'dynamodol'
-DFLT_KEY_FIELDS = ('key',)
-DFLT_DATA_FIELDS = ('value',)
+DFLT_TABLE_NAME = "dynamodol"
+DFLT_KEY_FIELDS = ("key",)
+DFLT_DATA_FIELDS = ("value",)
 
 db_defaults = {
-    'table_name': DFLT_TABLE_NAME,
-    'key_fields': DFLT_KEY_FIELDS,
-    'data_fields': DFLT_DATA_FIELDS,
-    'projection': None,
+    "table_name": DFLT_TABLE_NAME,
+    "key_fields": DFLT_KEY_FIELDS,
+    "data_fields": DFLT_DATA_FIELDS,
+    "projection": None,
 }
 
 
 def get_db(
-    aws_access_key_id='',
-    aws_secret_access_key='',
-    aws_session_token='',
-    region_name='',
-    endpoint_url='http://localhost:8000',
+    aws_access_key_id="",
+    aws_secret_access_key="",
+    aws_session_token="",
+    region_name="",
+    endpoint_url="http://localhost:8000",
 ):
     resource_kwargs = (
-        {'region_name': region_name} if region_name else {'endpoint_url': endpoint_url}
+        {"region_name": region_name} if region_name else {"endpoint_url": endpoint_url}
     )
     if aws_access_key_id:
-        resource_kwargs['aws_access_key_id'] = aws_access_key_id
-        resource_kwargs['aws_secret_access_key'] = aws_secret_access_key
+        resource_kwargs["aws_access_key_id"] = aws_access_key_id
+        resource_kwargs["aws_secret_access_key"] = aws_secret_access_key
         if aws_session_token:
-            resource_kwargs['aws_session_token'] = aws_session_token
-    return boto3.resource('dynamodb', **resource_kwargs)
+            resource_kwargs["aws_session_token"] = aws_session_token
+    return boto3.resource("dynamodb", **resource_kwargs)
 
 
 def decimal_to_float(x):
-    print(f'x: {x}')
+    print(f"x: {x}")
     if isinstance(x, str):
         return x
     if isinstance(x, Mapping):
@@ -119,18 +119,18 @@ class DynamoDbBaseReader(KvReader):
         if isinstance(self.key_fields, str):
             self.key_fields = (self.key_fields,)
         if isinstance(self.projection, list):
-            self.projection = ','.join(self.projection)
+            self.projection = ",".join(self.projection)
 
     def __reversed__(self):
         return list(self)[::-1]
 
     @lazyprop
     def table(self):
-        key_schema = [{'AttributeName': self.partition_key, 'KeyType': 'HASH'}]
+        key_schema = [{"AttributeName": self.partition_key, "KeyType": "HASH"}]
         if self.sort_key:
-            key_schema.append({'AttributeName': self.sort_key, 'KeyType': 'RANGE'})
+            key_schema.append({"AttributeName": self.sort_key, "KeyType": "RANGE"})
         attribute_definition = [
-            {'AttributeName': k, 'AttributeType': 'S'} for k in self.key_fields if k
+            {"AttributeName": k, "AttributeType": "S"} for k in self.key_fields if k
         ]
 
         try:
@@ -139,15 +139,15 @@ class DynamoDbBaseReader(KvReader):
                 KeySchema=key_schema,
                 AttributeDefinitions=attribute_definition,
                 ProvisionedThroughput={
-                    'ReadCapacityUnits': 5,
-                    'WriteCapacityUnits': 5,
+                    "ReadCapacityUnits": 5,
+                    "WriteCapacityUnits": 5,
                 },
             )
             # Wait until the table creation is complete.
-            self.db.meta.client.get_waiter('table_exists').wait(
+            self.db.meta.client.get_waiter("table_exists").wait(
                 TableName=self.table_name
             )
-            print(f'Table {self.table_name} has been created.')
+            print(f"Table {self.table_name} has been created.")
         except botocore.exceptions.ClientError as e:
             table = self.db.Table(self.table_name)
             pass
@@ -175,7 +175,7 @@ class DynamoDbBaseReader(KvReader):
     def format_get_item(self, item):
         """TODO: replace with _id_of_key, etc."""
         obj = self.extract_obj_from_data(item)
-        print(f'obj: {obj}')
+        print(f"obj: {obj}")
         return decimal_to_float(obj)
 
     def format_get_key(self, item):
@@ -187,11 +187,11 @@ class DynamoDbBaseReader(KvReader):
     @property
     def _keys_expression(self):
         return {
-            'ExpressionAttributeNames': {
-                f'#{index}': key for index, key in enumerate(self.key_fields)
+            "ExpressionAttributeNames": {
+                f"#{index}": key for index, key in enumerate(self.key_fields)
             },
-            'ProjectionExpression': ', '.join(
-                [f'#{i}' for i in range(len(self.key_fields))]
+            "ProjectionExpression": ", ".join(
+                [f"#{i}" for i in range(len(self.key_fields))]
             ),
         }
 
@@ -200,11 +200,11 @@ class DynamoDbBaseReader(KvReader):
         if not self.data_fields:
             return {}
         return {
-            'ExpressionAttributeNames': {
-                f'#{index}': key for index, key in enumerate(self.data_fields)
+            "ExpressionAttributeNames": {
+                f"#{index}": key for index, key in enumerate(self.data_fields)
             },
-            'ProjectionExpression': ', '.join(
-                [f'#{i}' for i in range(len(self.data_fields))]
+            "ProjectionExpression": ", ".join(
+                [f"#{i}" for i in range(len(self.data_fields))]
             ),
         }
 
@@ -214,11 +214,11 @@ class DynamoDbBaseReader(KvReader):
             return {}
         all_fields = [*self.key_fields, *self.data_fields]
         return {
-            'ExpressionAttributeNames': {
-                f'#{index}': key for index, key in enumerate(all_fields)
+            "ExpressionAttributeNames": {
+                f"#{index}": key for index, key in enumerate(all_fields)
             },
-            'ProjectionExpression': ', '.join(
-                [f'#{i}' for i in range(len(all_fields))]
+            "ProjectionExpression": ", ".join(
+                [f"#{i}" for i in range(len(all_fields))]
             ),
         }
 
@@ -228,35 +228,35 @@ class DynamoDbBaseReader(KvReader):
             if isinstance(k, str):
                 if self.sort_key:
                     raise ValueError(
-                        'If a sort key is defined, object keys must be tuples.'
+                        "If a sort key is defined, object keys must be tuples."
                     )
                 _k = (k,)
             _k = {att: key for att, key in zip(self.key_fields, _k)}
             response = self.table.get_item(Key=_k, **self._values_expression)
-            item = response['Item']
+            item = response["Item"]
             return self.format_get_item(item)
         except Exception as e:
-            raise NoSuchKeyError(f'Key not found: {k}')
+            raise NoSuchKeyError(f"Key not found: {k}")
 
     def iter_items(self):
         response = self.table.scan(**self._keys_values_expression)
         yield from (
-            (self.format_get_key(d), self.format_get_item(d)) for d in response['Items']
+            (self.format_get_key(d), self.format_get_item(d)) for d in response["Items"]
         )
 
     def iter_values(self):
         response = self.table.scan(**self._values_expression)
-        yield from (self.format_get_item(d) for d in response['Items'])
+        yield from (self.format_get_item(d) for d in response["Items"])
 
     def __iter__(self):
         # This is extremely inefficient and should not be used with large tables in production
         response = self.table.scan(**self._keys_expression)
-        yield from (self.format_get_key(d) for d in response['Items'])
+        yield from (self.format_get_key(d) for d in response["Items"])
 
     def __len__(self):
         # This is extremely inefficient and should not be used with large tables in production
-        response = self.table.scan(Select='COUNT')
-        return response['Count']
+        response = self.table.scan(Select="COUNT")
+        return response["Count"]
 
     @staticmethod
     @wraps(get_db)
@@ -314,7 +314,7 @@ class DynamoDbBasePersister(DynamoDbBaseReader, KvPersister):
         if isinstance(k, str):
             if self.sort_key:
                 raise ValueError(
-                    'If a sort key is defined, object keys must be tuples.'
+                    "If a sort key is defined, object keys must be tuples."
                 )
             else:
                 k = (k,)
@@ -333,15 +333,15 @@ class DynamoDbBasePersister(DynamoDbBaseReader, KvPersister):
             if isinstance(k, str):
                 if self.sort_key:
                     raise ValueError(
-                        'If a sort key is defined, object keys must be tuples.'
+                        "If a sort key is defined, object keys must be tuples."
                     )
                 k = (k,)
             key = {att: key for att, key in zip(self.key_fields, k)}
             self.table.delete_item(Key=key)
         except Exception as e:
-            if hasattr(e, '__name__'):
-                if e.__name__ == 'NoSuchKey':
-                    raise NoSuchKeyError(f'Key not found: {k}')
+            if hasattr(e, "__name__"):
+                if e.__name__ == "NoSuchKey":
+                    raise NoSuchKeyError(f"Key not found: {k}")
             raise
 
 
@@ -362,29 +362,29 @@ def load_sample_data():
     """For supporting doctests"""
     set_db_defaults(
         {
-            'table_name': 'sorted_table',
-            'key_fields': ('partitionkey', 'sortkey'),
-            'data_fields': ('data', 'moredata'),
-            'partition': 'part1',
+            "table_name": "sorted_table",
+            "key_fields": ("partitionkey", "sortkey"),
+            "data_fields": ("data", "moredata"),
+            "partition": "part1",
         }
     )
     sorted_persister = DynamoDbBasePersister()
     for k in list(sorted_persister):
         del sorted_persister[k]
-    sorted_persister[('part1', 'sort2')] = ('val2', 'moreval2', None)
-    sorted_persister[('part1', '01-01')] = ('a', 'bcde')
-    sorted_persister[('part1', '01-02')] = ('c', 'defg')
-    sorted_persister[('part1', '01-03')] = ('e', 'fghi')
-    sorted_persister[('part1', '01-04')] = ('a', 'cdef')
-    sorted_persister[('part1', '02-01')] = ('g', 'hijk')
-    sorted_persister[('part1', '03-02')] = ('i', 'jklm')
-    sorted_persister[('part1', '04-03')] = ('k', 'lmno')
-    sorted_persister[('part2', '02-01')] = ('m', 'nopq')
-    sorted_persister[('part2', '03-02')] = ('o', 'pqrs')
-    sorted_persister[('part2', '04-03')] = ('q', 'rstu')
-    sorted_persister[('part3', '01-05')] = ('s', 'tuvw')
-    sorted_persister[('part3', '02-02')] = ('u', 'vwxy')
-    sorted_persister[('part3', '03-03')] = ('w', 'xyza')
+    sorted_persister[("part1", "sort2")] = ("val2", "moreval2", None)
+    sorted_persister[("part1", "01-01")] = ("a", "bcde")
+    sorted_persister[("part1", "01-02")] = ("c", "defg")
+    sorted_persister[("part1", "01-03")] = ("e", "fghi")
+    sorted_persister[("part1", "01-04")] = ("a", "cdef")
+    sorted_persister[("part1", "02-01")] = ("g", "hijk")
+    sorted_persister[("part1", "03-02")] = ("i", "jklm")
+    sorted_persister[("part1", "04-03")] = ("k", "lmno")
+    sorted_persister[("part2", "02-01")] = ("m", "nopq")
+    sorted_persister[("part2", "03-02")] = ("o", "pqrs")
+    sorted_persister[("part2", "04-03")] = ("q", "rstu")
+    sorted_persister[("part3", "01-05")] = ("s", "tuvw")
+    sorted_persister[("part3", "02-02")] = ("u", "vwxy")
+    sorted_persister[("part3", "03-03")] = ("w", "xyza")
 
 
 # TODO class DynamoDbStore(DynamoDbBasePersister, Store): ...

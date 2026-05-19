@@ -1,5 +1,5 @@
-"""Stores for filtered data sets
-"""
+"""Stores for filtered data sets"""
+
 from boto3.dynamodb.conditions import Key, Attr
 from dataclasses import dataclass, field
 from typing import Any
@@ -11,25 +11,25 @@ class NoSuchKeyError(KeyError):
     pass
 
 
-valid_key_operators = ['begins_with', 'between', 'gt', 'gte', 'lt', 'lte']
+valid_key_operators = ["begins_with", "between", "gt", "gte", "lt", "lte"]
 valid_attr_operators = [
     *valid_key_operators,
-    'contains',
-    'ne',
-    'exists',
-    'not_exists',
-    'is_in',
-    'size',
+    "contains",
+    "ne",
+    "exists",
+    "not_exists",
+    "is_in",
+    "size",
 ]
-valid_size_operators = ['gt', 'gte', 'lt', 'lte', 'between', 'is_in']
+valid_size_operators = ["gt", "gte", "lt", "lte", "between", "is_in"]
 
 
 def _apply_filter_method(filter_obj, operator, value):
     filter_method = getattr(filter_obj, operator[1:])
-    if operator == '$between':
+    if operator == "$between":
         if len(value) != 2:
             raise ValueError(
-                f'Values for the $between operator must be iterables of length 2 (received {value}).'
+                f"Values for the $between operator must be iterables of length 2 (received {value})."
             )
         return filter_method(*value)
     return filter_method(value)
@@ -52,19 +52,19 @@ def _mk_query_from_dict_val(attr_or_key, query_val, is_key=False):
     operator, value = list(query_val.items())[0]
 
     # for compatibility with MongoDB syntax
-    if operator == '$in':
-        operator = '$is_in'
+    if operator == "$in":
+        operator = "$is_in"
     valid_operator_list = valid_key_operators if is_key else valid_attr_operators
     if operator[1:] not in valid_operator_list:
         raise ValueError(
-            f'Operator {operator} is not valid for {"key" if is_key else "attribute"} queries.'
+            f"Operator {operator} is not valid for {'key' if is_key else 'attribute'} queries."
         )
-    if operator == '$exists':
+    if operator == "$exists":
         if value is False:
             return filter_obj.not_exists()
         else:
             return filter_obj.exists()
-    if operator == '$size':
+    if operator == "$size":
         filter_obj = filter_obj.size()
         if isinstance(value, int):
             return filter_obj.eq(value)
@@ -72,7 +72,7 @@ def _mk_query_from_dict_val(attr_or_key, query_val, is_key=False):
             size_operator, size_value = list(value.items())[0]
             if size_operator[1:] not in valid_size_operators:
                 raise ValueError(
-                    f'Operator {size_operator} is not valid for size queries.'
+                    f"Operator {size_operator} is not valid for size queries."
                 )
             return _apply_filter_method(filter_obj, size_operator, size_value)
     return _apply_filter_method(filter_obj, operator, value)
@@ -162,9 +162,9 @@ class DynamoDbQueryReader(DynamoDbBaseReader):
     def filter_kwargs(self):
         result = {}
         if self.key_query:
-            result['KeyConditionExpression'] = self.key_query
+            result["KeyConditionExpression"] = self.key_query
         if self.attr_query:
-            result['FilterExpression'] = self.attr_query
+            result["FilterExpression"] = self.attr_query
         return result
 
     def iter_items(self):
@@ -172,20 +172,20 @@ class DynamoDbQueryReader(DynamoDbBaseReader):
             **self.filter_kwargs, **self._keys_values_expression
         )
         yield from (
-            (self.format_get_key(d), self.format_get_item(d)) for d in response['Items']
+            (self.format_get_key(d), self.format_get_item(d)) for d in response["Items"]
         )
 
     def iter_values(self):
         response = self.table.query(**self.filter_kwargs, **self._values_expression)
-        yield from (self.format_get_item(d) for d in response['Items'])
+        yield from (self.format_get_item(d) for d in response["Items"])
 
     def __iter__(self):
         response = self.table.query(**self.filter_kwargs, **self._keys_expression)
-        yield from (self.format_get_key(d) for d in response['Items'])
+        yield from (self.format_get_key(d) for d in response["Items"])
 
     def __len__(self):
-        response = self.table.query(**self.filter_kwargs, Select='COUNT')
-        return response['Count']
+        response = self.table.query(**self.filter_kwargs, Select="COUNT")
+        return response["Count"]
 
 
 @dataclass
@@ -212,10 +212,10 @@ class DynamoDbPartitionReader(DynamoDbQueryReader):
     def __post_init__(self):
         DynamoDbQueryReader.__post_init__(self)
         if not self.partition:
-            self.partition = db_defaults['partition']
+            self.partition = db_defaults["partition"]
         if len(self.key_fields) != 2:
             raise ValueError(
-                'DynamoDbPartitionReader must have a composite key of length 2 in the format (partition_key, sort_key)'
+                "DynamoDbPartitionReader must have a composite key of length 2 in the format (partition_key, sort_key)"
             )
         self.key_query = Key(self.partition_key).eq(self.partition)
 
@@ -224,31 +224,31 @@ class DynamoDbPartitionReader(DynamoDbQueryReader):
         return item[self.sort_key]
 
     def __getitem__(self, k):
-        print(f'getitem: {k}')
+        print(f"getitem: {k}")
         try:
             key = {self.partition_key: self.partition, self.sort_key: k}
             response = self.table.get_item(Key=key)
-            item = response['Item']
+            item = response["Item"]
             return self.format_get_item(item)
         except Exception as e:
-            raise NoSuchKeyError(f'Key not found: {k}')
+            raise NoSuchKeyError(f"Key not found: {k}")
 
 
 @dataclass
 class DynamoDbPrefixReader(DynamoDbPartitionReader):
     """Reads from a partition of a DynamoDB table, with the sort key filtered by a prefix.
 
-        >>> from dynamodol.base import load_sample_data
-        >>> load_sample_data()
-        >>> prefix_reader = DynamoDbPrefixReader(key_fields=('partitionkey', 'sortkey'), table_name='sorted_table', partition='part1', prefix='01')
-        >>> list(prefix_reader)
-        [('part1', '01-01'),
-         ('part1', '01-02'),
-         ('part1', '01-03'),
-         ('part1', '01-04')]
-        """
+    >>> from dynamodol.base import load_sample_data
+    >>> load_sample_data()
+    >>> prefix_reader = DynamoDbPrefixReader(key_fields=('partitionkey', 'sortkey'), table_name='sorted_table', partition='part1', prefix='01')
+    >>> list(prefix_reader)
+    [('part1', '01-01'),
+     ('part1', '01-02'),
+     ('part1', '01-03'),
+     ('part1', '01-04')]
+    """
 
-    prefix: str = field(default='')
+    prefix: str = field(default="")
 
     def __post_init__(self):
         DynamoDbPartitionReader.__post_init__(self)
@@ -264,10 +264,10 @@ class DynamoDbPrefixReader(DynamoDbPartitionReader):
         try:
             key = {self.partition_key: self.partition, self.sort_key: self.prefix + k}
             response = self.table.get_item(Key=key)
-            item = response['Item']
+            item = response["Item"]
             return self.format_get_item(item)
         except Exception as e:
-            raise NoSuchKeyError(f'Key not found: {k}')
+            raise NoSuchKeyError(f"Key not found: {k}")
 
 
 class DynamoDbPartitionPersister(DynamoDbBasePersister, DynamoDbPartitionReader):
@@ -287,6 +287,6 @@ class DynamoDbPartitionPersister(DynamoDbBasePersister, DynamoDbPartitionReader)
         try:
             self.table.delete_item(Key=key)
         except Exception as e:
-            if getattr(e, '__name__') == 'NoSuchKey':
-                raise NoSuchKeyError(f'Key not found: {k}')
+            if getattr(e, "__name__") == "NoSuchKey":
+                raise NoSuchKeyError(f"Key not found: {k}")
             raise
