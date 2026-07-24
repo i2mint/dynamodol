@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "dynamodol"
-version = "0.1.7"
+version = "0.1.8"
 description = "dynamodb (through boto3) with a simple (dict-like or list-like) interface"
 readme = "README.md"
 requires-python = ">=3.10"
