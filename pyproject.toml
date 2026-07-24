@@ -10,6 +10,7 @@ version = "0.1.7"
 description = "dynamodb (through boto3) with a simple (dict-like or list-like) interface"
 readme = "README.md"
 requires-python = ">=3.10"
+license = "Apache-2.0"
 keywords = [
     "dynamodb",
     "dynamo",
@@ -17,15 +18,20 @@ keywords = [
     "data access",
 ]
 authors = []
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
 dependencies = [
     "dol",
     "botocore",
     "boto3",
     "lazyprop",
 ]
-
-[project.license]
-text = "Apache-2.0"
 
 [project.urls]
 Homepage = "https://github.com/i2mint/dynamodol"
