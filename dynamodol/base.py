@@ -12,8 +12,40 @@ from collections.abc import Iterable, Mapping
 from dol import KvReader, KvPersister, Store, BaseValuesView, BaseItemsView
 
 
+_not_found = object()  # sentinel: distinguishes "absent" from a stored None
+
+
 class NoSuchKeyError(KeyError):
     pass
+
+
+#: Backend error codes that mean "the requested key does not exist".
+NO_SUCH_KEY_ERROR_CODES = frozenset({"NoSuchKey"})
+
+
+def is_no_such_key_error(error: BaseException) -> bool:
+    """Tell whether ``error`` reports a missing key.
+
+    Boto/botocore carry the backend's error code in
+    ``error.response['Error']['Code']``. Note that exception *instances* never
+    have a ``__name__`` (that lives on the class), so testing ``error.__name__``
+    only raises ``AttributeError`` and hides the error being inspected.
+
+    >>> is_no_such_key_error(ValueError("nope"))
+    False
+    >>> from botocore.exceptions import ClientError
+    >>> is_no_such_key_error(
+    ...     ClientError({"Error": {"Code": "NoSuchKey"}}, "DeleteItem")
+    ... )
+    True
+    """
+    response = getattr(error, "response", None)
+    if isinstance(response, Mapping):
+        error_info = response.get("Error") or {}
+        if isinstance(error_info, Mapping):
+            if error_info.get("Code") in NO_SUCH_KEY_ERROR_CODES:
+                return True
+    return type(error).__name__ in NO_SUCH_KEY_ERROR_CODES
 
 
 DFLT_TABLE_NAME = "dynamodol"
@@ -47,7 +79,6 @@ def get_db(
 
 
 def decimal_to_float(x):
-    print(f"x: {x}")
     if isinstance(x, str):
         return x
     if isinstance(x, Mapping):
@@ -95,15 +126,23 @@ class DynamoDbBaseReader(KvReader):
     exclude_keys_on_read: bool = field(default=True)
 
     class ValuesView(BaseValuesView):
+        """Values view backed by a single table scan (see ``iter_values``)."""
+
         def __contains__(self, v):
-            return self._mapping.contains_value(v)
+            return any(value is v or value == v for value in self)
 
         def __iter__(self):
             return self._mapping.iter_values()
 
     class ItemsView(BaseItemsView):
+        """Items view backed by a single table scan (see ``iter_items``)."""
+
         def __contains__(self, item):
-            return self._mapping.contains_item(item)
+            k, v = item
+            value = self._mapping.get(k, _not_found)
+            if value is _not_found:
+                return False
+            return value is v or value == v
 
         def __iter__(self):
             return self._mapping.iter_items()
@@ -175,7 +214,6 @@ class DynamoDbBaseReader(KvReader):
     def format_get_item(self, item):
         """TODO: replace with _id_of_key, etc."""
         obj = self.extract_obj_from_data(item)
-        print(f"obj: {obj}")
         return decimal_to_float(obj)
 
     def format_get_key(self, item):
@@ -339,9 +377,8 @@ class DynamoDbBasePersister(DynamoDbBaseReader, KvPersister):
             key = {att: key for att, key in zip(self.key_fields, k)}
             self.table.delete_item(Key=key)
         except Exception as e:
-            if hasattr(e, "__name__"):
-                if e.__name__ == "NoSuchKey":
-                    raise NoSuchKeyError(f"Key not found: {k}")
+            if is_no_such_key_error(e):
+                raise NoSuchKeyError(f"Key not found: {k}") from e
             raise
 
 

@@ -4,7 +4,12 @@ from boto3.dynamodb.conditions import Key, Attr
 from dataclasses import dataclass, field
 from typing import Any
 
-from dynamodol.base import DynamoDbBaseReader, DynamoDbBasePersister, db_defaults
+from dynamodol.base import (
+    DynamoDbBaseReader,
+    DynamoDbBasePersister,
+    db_defaults,
+    is_no_such_key_error,
+)
 
 
 class NoSuchKeyError(KeyError):
@@ -224,7 +229,6 @@ class DynamoDbPartitionReader(DynamoDbQueryReader):
         return item[self.sort_key]
 
     def __getitem__(self, k):
-        print(f"getitem: {k}")
         try:
             key = {self.partition_key: self.partition, self.sort_key: k}
             response = self.table.get_item(Key=key)
@@ -287,6 +291,6 @@ class DynamoDbPartitionPersister(DynamoDbBasePersister, DynamoDbPartitionReader)
         try:
             self.table.delete_item(Key=key)
         except Exception as e:
-            if getattr(e, "__name__") == "NoSuchKey":
-                raise NoSuchKeyError(f"Key not found: {k}")
+            if is_no_such_key_error(e):
+                raise NoSuchKeyError(f"Key not found: {k}") from e
             raise
