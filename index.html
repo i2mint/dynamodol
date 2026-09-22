@@ -1,146 +1,205 @@
-
-
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" data-content_root="./">
+<html lang="en" data-accent-color="lime" data-content_root="./">
 <head>
-  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
-
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Welcome to dynamodol’s documentation! &mdash; dynamodol 0.1.7 documentation</title>
-      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
-      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
-      <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
-      <link rel="stylesheet" type="text/css" href="_static/graphviz.css?v=4ae1632d" />
-
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"><title>dynamodol</title><link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="API reference" href="api.html" /><script>
+    function setColorMode(t){let e=document.documentElement;e.setAttribute("data-color-mode",t);let a=window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches,s=t;"auto"===t&&(s=a?"dark":"light"),"light"===s?(e.classList.remove("dark"),e.classList.add("light")):(e.classList.remove("light"),e.classList.add("dark"))}
+    setColorMode(localStorage._theme||"auto");
+  </script><link rel="stylesheet" type="text/css" href="_static/pygments.css?v=d88b86f9" />
+    <link rel="stylesheet" type="text/css" href="_static/shibuya.css?v=2ceb65ce" />
+    <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
+    <link media="print" rel="stylesheet" type="text/css" href="_static/print.css?v=20ff2c19" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --sy-f-text: "Inter", var(--sy-f-sys), var(--sy-f-cjk), sans-serif;
+  --sy-f-heading: "Inter", var(--sy-f-sys), var(--sy-f-cjk), sans-serif;
+}
+</style>
+    
+  <meta property="og:type" content="website"/><meta property="og:title" content="dynamodol"/>
+    <meta name="twitter:card" content="summary"/>
   
-      <script src="_static/jquery.js?v=5d32c60e"></script>
-      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=ca7ad2ea"></script>
+<link rel="alternate" type="text/markdown" href="index.html.md">
+<link rel="describedby" href="llms.txt" type="text/markdown">
+</head>
+<body><div class="sy-head">
+  <div class="sy-head-blur"></div>
+  <div class="sy-head-inner sy-container mx-auto">
+    <a class="sy-head-brand" href="#">
+      
+      
+      <strong>dynamodol</strong>
+    </a>
+    <div class="sy-head-nav" id="head-nav">
+      <nav class="sy-head-links"></nav>
+      <div class="sy-head-extra flex items-center print:hidden"><form class="searchbox flex items-center" action="search.html" method="get">
+  <input type="text" name="q" placeholder="Search" />
+  <kbd>/</kbd>
+</form><div class="sy-head-socials">
+  <a href="https://github.com/i2mint/dynamodol" aria-label="GitHub">
+    <iconify-icon icon="simple-icons:github"></iconify-icon>
+  </a></div></div>
+    </div>
+    <div class="sy-head-actions flex items-center shrink-0 print:hidden"><button class="js-theme theme-switch flex items-center"
+data-aria-auto="Switch to light color mode"
+data-aria-light="Switch to dark color mode"
+data-aria-dark="Switch to auto color mode">
+<i class="i-lucide theme-icon"></i>
+</button><button class="md:hidden flex items-center js-menu" aria-label="Menu" type="button" aria-controls="head-nav" aria-expanded="false">
+        <div class="hamburger">
+          <span class="hamburger_1"></span>
+          <span class="hamburger_2"></span>
+          <span class="hamburger_3"></span>
+        </div>
+      </button>
+    </div>
+  </div>
+</div>
+<div class="sy-page sy-container flex mx-auto">
+  <aside id="lside" class="sy-lside md:w-72 md:shrink-0 print:hidden">
+    <div class="sy-lside-inner md:sticky">
+      <div class="sy-scrollbar p-6">
+        <div class="globaltoc" data-expand-depth="0"><ul>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="_autosummary/dynamodol.html">dynamodol</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="_autosummary/dynamodol.base.html">dynamodol.base</a></li>
+<li class="toctree-l3"><a class="reference internal" href="_autosummary/dynamodol.partition_query.html">dynamodol.partition_query</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="lside-overlay js-menu" role="button" aria-label="Close left sidebar" aria-controls="lside" aria-expanded="false"></div>
+  <aside id="rside" class="sy-rside pb-3 w-64 shrink-0 order-last">
+    <button class="rside-close js-menu xl:hidden" aria-label="Close Table of Contents" type="button" aria-controls="rside" aria-expanded="false">
+      <i class="i-lucide close"></i>
+    </button>
+    <div class="sy-scrollbar sy-rside-inner px-6 xl:top-16 xl:sticky xl:pl-0 pt-6 pb-4"><div id="ethical-ad-placement" data-ea-publisher="readthedocs"></div></div>
+  </aside>
+  <div class="rside-overlay js-menu" role="button" aria-label="Close Table of Contents" aria-controls="rside" aria-expanded="false"></div>
+  <main class="sy-main w-full max-sm:max-w-full print:pt-6">
+<div class="sy-breadcrumbs" role="navigation">
+  <div class="sy-breadcrumbs-inner flex items-center">
+    <div class="md:hidden mr-3">
+      <button class="js-menu" aria-label="Menu" type="button" aria-controls="lside" aria-expanded="false">
+        <i class="i-lucide menu"></i>
+      </button>
+    </div>
+    <ol class="flex-1" itemscope itemtype="https://schema.org/BreadcrumbList"><li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+        <a itemprop="item" href="#"><span itemprop="name">dynamodol</span></a>
+        <meta itemprop="position" content="1" />
+      </li></ol>
+    <div class="xl:hidden ml-1">
+      <button class="js-menu" aria-label="Show table of contents" type="button" aria-controls="rside"
+        aria-expanded="false">
+        <i class="i-lucide outdent"></i>
+      </button>
+    </div>
+  </div>
+</div><div class="flex flex-col break-words justify-between">
+      <div class="relative min-w-0 max-w-6xl px-6 pb-6 pt-8 xl:px-12">
+  <article class="yue dark-code" role="main">
+          <!-- generated by epythet -->
+<section id="dynamodol">
+<h1>dynamodol<a class="headerlink" href="#dynamodol" title="Link to this heading">#</a></h1>
+<p>dynamodb (through boto3) with a simple (dict-like or list-like) interface</p>
+<p>To install:	<code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">dynamodol</span></code></p>
+<p>A basic DynamoDb via Boto3 persister demo:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span data-line="1"><span class="gp">&gt;&gt;&gt; </span><span class="n">s</span> <span class="o">=</span> <span class="n">DynamoDbPersister</span><span class="p">()</span>
+</span><span data-line="2"><span class="gp">&gt;&gt;&gt; </span><span class="n">k</span> <span class="o">=</span> <span class="p">{</span><span class="s1">'key'</span><span class="p">:</span> <span class="s1">'777'</span><span class="p">}</span> <span class="c1"># Each collection will happily accept user-defined _key values.</span>
+</span><span data-line="3"><span class="gp">&gt;&gt;&gt; </span><span class="n">v</span> <span class="o">=</span> <span class="p">{</span><span class="s1">'val'</span><span class="p">:</span> <span class="s1">'bar'</span><span class="p">}</span>
+</span><span data-line="4"><span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">_key</span> <span class="ow">in</span> <span class="n">s</span><span class="p">:</span>
+</span><span data-line="5"><span class="gp">... </span>    <span class="k">del</span> <span class="n">s</span><span class="p">[</span><span class="n">_key</span><span class="p">]</span>
+</span><span data-line="6"><span class="gp">...</span>
+</span><span data-line="7"><span class="gp">&gt;&gt;&gt; </span><span class="n">k</span> <span class="ow">in</span> <span class="n">s</span>
+</span><span data-line="8"><span class="go">False</span>
+</span><span data-line="9"><span class="gp">&gt;&gt;&gt; </span><span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+</span><span data-line="10"><span class="go">0</span>
+</span><span data-line="11"><span class="gp">&gt;&gt;&gt; </span><span class="n">s</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
+</span><span data-line="12"><span class="gp">&gt;&gt;&gt; </span><span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+</span><span data-line="13"><span class="go">1</span>
+</span><span data-line="14"><span class="gp">&gt;&gt;&gt; </span><span class="n">s</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+</span><span data-line="15"><span class="go">{'val': 'bar'}</span>
+</span><span data-line="16"><span class="gp">&gt;&gt;&gt; </span><span class="n">s</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+</span><span data-line="17"><span class="go">{'val': 'bar'}</span>
+</span><span data-line="18"><span class="gp">&gt;&gt;&gt; </span><span class="n">s</span><span class="o">.</span><span class="n">get</span><span class="p">({</span><span class="s1">'not'</span><span class="p">:</span> <span class="s1">'a key'</span><span class="p">},</span> <span class="p">{</span><span class="s1">'default'</span><span class="p">:</span> <span class="s1">'val'</span><span class="p">})</span>  <span class="c1"># testing s.get with default</span>
+</span><span data-line="19"><span class="go">{'default': 'val'}</span>
+</span><span data-line="20"><span class="gp">&gt;&gt;&gt; </span><span class="nb">list</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+</span><span data-line="21"><span class="go">[{'val': 'bar'}]</span>
+</span><span data-line="22"><span class="gp">&gt;&gt;&gt; </span><span class="n">k</span> <span class="ow">in</span> <span class="n">s</span>  <span class="c1"># testing __contains__ again</span>
+</span><span data-line="23"><span class="go">True</span>
+</span><span data-line="24"><span class="gp">&gt;&gt;&gt; </span><span class="k">del</span> <span class="n">s</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+</span><span data-line="25"><span class="gp">&gt;&gt;&gt; </span><span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+</span><span data-line="26"><span class="go">0</span>
+</span><span data-line="27"><span class="gp">&gt;&gt;&gt; </span><span class="n">s</span> <span class="o">=</span> <span class="n">DynamoDbPersister</span><span class="p">(</span><span class="n">table_name</span><span class="o">=</span><span class="s1">'dynamodol2'</span><span class="p">,</span> <span class="n">key_fields</span><span class="o">=</span><span class="p">(</span><span class="s1">'name'</span><span class="p">,))</span>
+</span><span data-line="28"><span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">_key</span> <span class="ow">in</span> <span class="n">s</span><span class="p">:</span>
+</span><span data-line="29"><span class="gp">... </span>  <span class="k">del</span> <span class="n">s</span><span class="p">[</span><span class="n">_key</span><span class="p">]</span>
+</span><span data-line="30"><span class="gp">&gt;&gt;&gt; </span><span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+</span><span data-line="31"><span class="go">0</span>
+</span><span data-line="32"><span class="gp">&gt;&gt;&gt; </span><span class="n">s</span><span class="p">[{</span><span class="s1">'name'</span><span class="p">:</span> <span class="s1">'guido'</span><span class="p">}]</span> <span class="o">=</span> <span class="p">{</span><span class="s1">'yob'</span><span class="p">:</span> <span class="mi">1956</span><span class="p">,</span> <span class="s1">'proj'</span><span class="p">:</span> <span class="s1">'python'</span><span class="p">,</span> <span class="s1">'bdfl'</span><span class="p">:</span> <span class="kc">False</span><span class="p">}</span>
+</span><span data-line="33"><span class="gp">&gt;&gt;&gt; </span><span class="n">s</span><span class="p">[{</span><span class="s1">'name'</span><span class="p">:</span> <span class="s1">'guido'</span><span class="p">}]</span>
+</span><span data-line="34"><span class="go">{'proj': 'python', 'yob': Decimal('1956'), 'bdfl': False}</span>
+</span><span data-line="35"><span class="gp">&gt;&gt;&gt; </span><span class="n">s</span><span class="p">[{</span><span class="s1">'name'</span><span class="p">:</span> <span class="s1">'vitalik'</span><span class="p">}]</span> <span class="o">=</span> <span class="p">{</span><span class="s1">'yob'</span><span class="p">:</span> <span class="mi">1994</span><span class="p">,</span> <span class="s1">'proj'</span><span class="p">:</span> <span class="s1">'ethereum'</span><span class="p">,</span> <span class="s1">'bdfl'</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
+</span><span data-line="36"><span class="gp">&gt;&gt;&gt; </span><span class="n">s</span><span class="p">[{</span><span class="s1">'name'</span><span class="p">:</span> <span class="s1">'vitalik'</span><span class="p">}]</span>
+</span><span data-line="37"><span class="go">{'proj': 'ethereum', 'yob': Decimal('1994'), 'bdfl': True}</span>
+</span><span data-line="38"><span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">s</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+</span><span data-line="39"><span class="gp">... </span>  <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">val</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</span><span data-line="40"><span class="go">{'name': 'vitalik'}: {'proj': 'ethereum', 'yob': Decimal('1994'), 'bdfl': True}</span>
+</span><span data-line="41"><span class="go">{'name': 'guido'}: {'proj': 'python', 'yob': Decimal('1956'), 'bdfl': False}</span>
+</span></pre></div>
+</div>
+<p class="epythet-aggregates">This documentation as a single file: <a href="dynamodol.md">dynamodol.md</a> (Markdown, for agents).</p>
+<div class="toctree-wrapper compound">
+</div>
+</section>
+
+<p class="epythet-provenance" style="font-size:.8em;opacity:.65;margin-top:2.5em;text-align:right">built 2026-09-22 12:51 UTC from <a href="https://github.com/i2mint/dynamodol/commit/1b5aa090e6b9f58790e7adf5940a9aee9251b84f">1b5aa09</a> (master) · dynamodol 0.1.8 · <a href="about-this-build.html">about this build</a></p>
+        </article><button class="back-to-top" type="button">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+    <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+  </svg>
+  <span>Back to top</span>
+</button><div class="navigation flex print:hidden"><div class="navigation-next">
+    <a href="api.html">
+      <div class="page-info">
+        <span>Next</span>
+        <div class="title">API reference</div>
+      </div>
+      <i class="i-lucide chevron-right"></i>
+    </a>
+  </div></div></div>
+    </div>
+  </main>
+</div>
+<footer class="sy-foot">
+  <div class="sy-foot-inner sy-container mx-auto">
+    <div class="sy-foot-reserved md:flex justify-between items-center">
+      <div class="sy-foot-copyright">
+  <p>
+    Made with
+    
+    <a href="https://shibuya.lepture.com">Shibuya theme</a>.
+  </p>
+</div>
+      <div class="sy-foot-socials">
+  <a href="https://github.com/i2mint/dynamodol" aria-label="GitHub">
+    <iconify-icon icon="simple-icons:github"></iconify-icon>
+  </a></div>
+    </div>
+  </div>
+</footer>
+      <script src="_static/documentation_options.js?v=22607128"></script>
       <script src="_static/doctools.js?v=fd6eb6e6"></script>
       <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
-      <script src="_static/toggleprompt.js?v=d7ede5d2"></script>
       <script src="_static/clipboard.min.js?v=a7894cd8"></script>
-      <script src="_static/copybutton.js?v=f281be69"></script>
-    <script src="_static/js/theme.js"></script>
-    <link rel="index" title="Index" href="genindex.html" />
-    <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="dynamodol" href="module_docs/dynamodol.html" /> 
-</head>
-
-<body class="wy-body-for-nav"> 
-  <div class="wy-grid-for-nav">
-    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
-      <div class="wy-side-scroll">
-        <div class="wy-side-nav-search" >
-
-          
-          
-          <a href="#" class="icon icon-home">
-            dynamodol
-          </a>
-<div role="search">
-  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
-    <input type="hidden" name="check_keywords" value="yes" />
-    <input type="hidden" name="area" value="default" />
-  </form>
-</div>
-        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="module_docs/dynamodol.html">dynamodol</a></li>
-<li class="toctree-l1"><a class="reference internal" href="module_docs/dynamodol/base.html">dynamodol.base</a></li>
-<li class="toctree-l1"><a class="reference internal" href="module_docs/dynamodol/partition_query.html">dynamodol.partition_query</a></li>
-</ul>
-
-        </div>
-      </div>
-    </nav>
-
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
-          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="#">dynamodol</a>
-      </nav>
-
-      <div class="wy-nav-content">
-        <div class="rst-content">
-          <div role="navigation" aria-label="Page navigation">
-  <ul class="wy-breadcrumbs">
-      <li><a href="#" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">Welcome to dynamodol’s documentation!</li>
-      <li class="wy-breadcrumbs-aside">
-            <a href="_sources/index.rst.txt" rel="nofollow"> View page source</a>
-      </li>
-  </ul>
-  <hr/>
-</div>
-          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
-           <div itemprop="articleBody">
-             
-  <section id="welcome-to-dynamodol-s-documentation">
-<h1>Welcome to dynamodol’s documentation!<a class="headerlink" href="#welcome-to-dynamodol-s-documentation" title="Link to this heading"></a></h1>
-<div class="toctree-wrapper compound">
-<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="module_docs/dynamodol.html">dynamodol</a></li>
-<li class="toctree-l1"><a class="reference internal" href="module_docs/dynamodol/base.html">dynamodol.base</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/dynamodol/base.html#dynamodol.base.DynamoDbBasePersister"><code class="docutils literal notranslate"><span class="pre">DynamoDbBasePersister</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/dynamodol/base.html#dynamodol.base.DynamoDbBaseReader"><code class="docutils literal notranslate"><span class="pre">DynamoDbBaseReader</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/dynamodol/base.html#dynamodol.base.NoSuchKeyError"><code class="docutils literal notranslate"><span class="pre">NoSuchKeyError</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/dynamodol/base.html#dynamodol.base.load_sample_data"><code class="docutils literal notranslate"><span class="pre">load_sample_data()</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/dynamodol/base.html#dynamodol.base.set_db_defaults"><code class="docutils literal notranslate"><span class="pre">set_db_defaults()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="module_docs/dynamodol/partition_query.html">dynamodol.partition_query</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/dynamodol/partition_query.html#dynamodol.partition_query.DynamoDbPartitionPersister"><code class="docutils literal notranslate"><span class="pre">DynamoDbPartitionPersister</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/dynamodol/partition_query.html#dynamodol.partition_query.DynamoDbPartitionReader"><code class="docutils literal notranslate"><span class="pre">DynamoDbPartitionReader</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/dynamodol/partition_query.html#dynamodol.partition_query.DynamoDbPrefixReader"><code class="docutils literal notranslate"><span class="pre">DynamoDbPrefixReader</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/dynamodol/partition_query.html#dynamodol.partition_query.DynamoDbQueryReader"><code class="docutils literal notranslate"><span class="pre">DynamoDbQueryReader</span></code></a></li>
-<li class="toctree-l2"><a class="reference internal" href="module_docs/dynamodol/partition_query.html#dynamodol.partition_query.NoSuchKeyError"><code class="docutils literal notranslate"><span class="pre">NoSuchKeyError</span></code></a></li>
-</ul>
-</li>
-</ul>
-</div>
-</section>
-<section id="indices-and-tables">
-<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Link to this heading"></a></h1>
-<ul class="simple">
-<li><p><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></p></li>
-<li><p><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></p></li>
-<li><p><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></p></li>
-</ul>
-<p>Release: 0.1.7</p>
-<p>Last change: Jul 24, 2026</p>
-</section>
-
-
-           </div>
-          </div>
-          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="module_docs/dynamodol.html" class="btn btn-neutral float-right" title="dynamodol" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
-    </div>
-
-  <hr/>
-
-  <div role="contentinfo">
-    <p></p>
-  </div>
-
-  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
-    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
-    provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   
-
-</footer>
-        </div>
-      </div>
-    </section>
-  </div>
-  <script>
-      jQuery(function () {
-          SphinxRtdTheme.Navigation.enable(true);
-      });
-  </script> 
-
-</body>
+      <script src="_static/copybutton.js?v=fd10adb8"></script>
+      <script src="_static/shibuya.js?v=50760d75"></script></body>
 </html>

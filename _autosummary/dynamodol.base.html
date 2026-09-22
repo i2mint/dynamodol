@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en" data-accent-color="lime" data-content_root="../">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"><title>dynamodol.base - dynamodol</title><link rel="index" title="Index" href="../genindex.html" /><link rel="search" title="Search" href="../search.html" /><link rel="next" title="dynamodol.partition_query" href="dynamodol.partition_query.html" /><link rel="prev" title="dynamodol" href="dynamodol.html" /><script>
+    function setColorMode(t){let e=document.documentElement;e.setAttribute("data-color-mode",t);let a=window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches,s=t;"auto"===t&&(s=a?"dark":"light"),"light"===s?(e.classList.remove("dark"),e.classList.add("light")):(e.classList.remove("light"),e.classList.add("dark"))}
+    setColorMode(localStorage._theme||"auto");
+  </script><link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=d88b86f9" />
+    <link rel="stylesheet" type="text/css" href="../_static/shibuya.css?v=2ceb65ce" />
+    <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+    <link media="print" rel="stylesheet" type="text/css" href="../_static/print.css?v=20ff2c19" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --sy-f-text: "Inter", var(--sy-f-sys), var(--sy-f-cjk), sans-serif;
+  --sy-f-heading: "Inter", var(--sy-f-sys), var(--sy-f-cjk), sans-serif;
+}
+</style>
+    
+  <meta property="og:type" content="website"/><meta property="og:title" content="dynamodol.base"/>
+    <meta name="twitter:card" content="summary"/>
+  
+<link rel="alternate" type="text/markdown" href="dynamodol.base.html.md">
+<link rel="describedby" href="../llms.txt" type="text/markdown">
+</head>
+<body><div class="sy-head">
+  <div class="sy-head-blur"></div>
+  <div class="sy-head-inner sy-container mx-auto">
+    <a class="sy-head-brand" href="../index.html">
+      
+      
+      <strong>dynamodol</strong>
+    </a>
+    <div class="sy-head-nav" id="head-nav">
+      <nav class="sy-head-links"></nav>
+      <div class="sy-head-extra flex items-center print:hidden"><form class="searchbox flex items-center" action="../search.html" method="get">
+  <input type="text" name="q" placeholder="Search" />
+  <kbd>/</kbd>
+</form><div class="sy-head-socials">
+  <a href="https://github.com/i2mint/dynamodol" aria-label="GitHub">
+    <iconify-icon icon="simple-icons:github"></iconify-icon>
+  </a></div></div>
+    </div>
+    <div class="sy-head-actions flex items-center shrink-0 print:hidden"><button class="js-theme theme-switch flex items-center"
+data-aria-auto="Switch to light color mode"
+data-aria-light="Switch to dark color mode"
+data-aria-dark="Switch to auto color mode">
+<i class="i-lucide theme-icon"></i>
+</button><button class="md:hidden flex items-center js-menu" aria-label="Menu" type="button" aria-controls="head-nav" aria-expanded="false">
+        <div class="hamburger">
+          <span class="hamburger_1"></span>
+          <span class="hamburger_2"></span>
+          <span class="hamburger_3"></span>
+        </div>
+      </button>
+    </div>
+  </div>
+</div>
+<div class="sy-page sy-container flex mx-auto">
+  <aside id="lside" class="sy-lside md:w-72 md:shrink-0 print:hidden">
+    <div class="sy-lside-inner md:sticky">
+      <div class="sy-scrollbar p-6">
+        <div class="globaltoc" data-expand-depth="0"><ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../api.html">API reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="dynamodol.html">dynamodol</a><ul class="current">
+<li class="toctree-l3 current"><a class="current reference internal" href="#">dynamodol.base</a></li>
+<li class="toctree-l3"><a class="reference internal" href="dynamodol.partition_query.html">dynamodol.partition_query</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="lside-overlay js-menu" role="button" aria-label="Close left sidebar" aria-controls="lside" aria-expanded="false"></div>
+  <aside id="rside" class="sy-rside pb-3 w-64 shrink-0 order-last">
+    <button class="rside-close js-menu xl:hidden" aria-label="Close Table of Contents" type="button" aria-controls="rside" aria-expanded="false">
+      <i class="i-lucide close"></i>
+    </button>
+    <div class="sy-scrollbar sy-rside-inner px-6 xl:top-16 xl:sticky xl:pl-0 pt-6 pb-4"><div class="localtoc"><h3>On this page</h3><ul>
+<li><a class="reference internal" href="#dynamodol.base.DynamoDbBasePersister"><code class="docutils literal notranslate"><span class="pre">DynamoDbBasePersister</span></code></a></li>
+<li><a class="reference internal" href="#dynamodol.base.DynamoDbBaseReader"><code class="docutils literal notranslate"><span class="pre">DynamoDbBaseReader</span></code></a><ul>
+<li><a class="reference internal" href="#dynamodol.base.DynamoDbBaseReader.ItemsView"><code class="docutils literal notranslate"><span class="pre">DynamoDbBaseReader.ItemsView</span></code></a></li>
+<li><a class="reference internal" href="#dynamodol.base.DynamoDbBaseReader.ValuesView"><code class="docutils literal notranslate"><span class="pre">DynamoDbBaseReader.ValuesView</span></code></a></li>
+<li><a class="reference internal" href="#dynamodol.base.DynamoDbBaseReader.format_get_item"><code class="docutils literal notranslate"><span class="pre">DynamoDbBaseReader.format_get_item()</span></code></a></li>
+<li><a class="reference internal" href="#dynamodol.base.DynamoDbBaseReader.format_get_key"><code class="docutils literal notranslate"><span class="pre">DynamoDbBaseReader.format_get_key()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#dynamodol.base.NO_SUCH_KEY_ERROR_CODES"><code class="docutils literal notranslate"><span class="pre">NO_SUCH_KEY_ERROR_CODES</span></code></a></li>
+<li><a class="reference internal" href="#dynamodol.base.NoSuchKeyError"><code class="docutils literal notranslate"><span class="pre">NoSuchKeyError</span></code></a></li>
+<li><a class="reference internal" href="#dynamodol.base.is_no_such_key_error"><code class="docutils literal notranslate"><span class="pre">is_no_such_key_error()</span></code></a></li>
+<li><a class="reference internal" href="#dynamodol.base.load_sample_data"><code class="docutils literal notranslate"><span class="pre">load_sample_data()</span></code></a></li>
+<li><a class="reference internal" href="#dynamodol.base.set_db_defaults"><code class="docutils literal notranslate"><span class="pre">set_db_defaults()</span></code></a></li>
+</ul>
+</div><div id="ethical-ad-placement" data-ea-publisher="readthedocs"></div></div>
+  </aside>
+  <div class="rside-overlay js-menu" role="button" aria-label="Close Table of Contents" aria-controls="rside" aria-expanded="false"></div>
+  <main class="sy-main w-full max-sm:max-w-full print:pt-6">
+<div class="sy-breadcrumbs" role="navigation">
+  <div class="sy-breadcrumbs-inner flex items-center">
+    <div class="md:hidden mr-3">
+      <button class="js-menu" aria-label="Menu" type="button" aria-controls="lside" aria-expanded="false">
+        <i class="i-lucide menu"></i>
+      </button>
+    </div>
+    <ol class="flex-1" itemscope itemtype="https://schema.org/BreadcrumbList"><li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+        <a itemprop="item" href="../index.html"><span itemprop="name">dynamodol</span></a>
+        <span>/</span>
+        <meta itemprop="position" content="1" />
+      </li><li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+        <a itemprop="item" href="../api.html"><span itemprop="name">API reference</span></a>
+        <span>/</span>
+        <meta itemprop="position" content="2" />
+      </li><li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+        <a itemprop="item" href="dynamodol.html"><span itemprop="name">dynamodol</span></a>
+        <span>/</span>
+        <meta itemprop="position" content="3" />
+      </li><li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">
+        <strong itemprop="name">dynamodol.base</strong>
+        <meta itemprop="position" content="4" />
+      </li></ol>
+    <div class="xl:hidden ml-1">
+      <button class="js-menu" aria-label="Show table of contents" type="button" aria-controls="rside"
+        aria-expanded="false">
+        <i class="i-lucide outdent"></i>
+      </button>
+    </div>
+  </div>
+</div><div class="flex flex-col break-words justify-between">
+      <div class="relative min-w-0 max-w-6xl px-6 pb-6 pt-8 xl:px-12">
+  <article class="yue dark-code" role="main">
+          <section id="module-dynamodol.base">
+<span id="dynamodol-base"></span><h1>dynamodol.base<a class="headerlink" href="#module-dynamodol.base" title="Link to this heading">#</a></h1>
+<p>DynamoDB (through boto3) with a simple (dict-like or list-like) interface</p>
+<p class="rubric">Module Attributes</p>
+<div class="table-wrapper autosummary longtable docutils container">
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#dynamodol.base.NO_SUCH_KEY_ERROR_CODES" title="dynamodol.base.NO_SUCH_KEY_ERROR_CODES"><code class="xref py py-obj docutils literal notranslate"><span class="pre">NO_SUCH_KEY_ERROR_CODES</span></code></a></p></td>
+<td><p>Backend error codes that mean &quot;the requested key does not exist&quot;.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p class="rubric">Functions</p>
+<div class="table-wrapper autosummary longtable docutils container">
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">decimal_to_float</span></code>(x)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_db</span></code>([aws_access_key_id, ...])</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#dynamodol.base.is_no_such_key_error" title="dynamodol.base.is_no_such_key_error"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_no_such_key_error</span></code></a>(error)</p></td>
+<td><p>Tell whether <code class="docutils literal notranslate"><span class="pre">error</span></code> reports a missing key.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#dynamodol.base.load_sample_data" title="dynamodol.base.load_sample_data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_sample_data</span></code></a>()</p></td>
+<td><p>For supporting doctests</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#dynamodol.base.set_db_defaults" title="dynamodol.base.set_db_defaults"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_db_defaults</span></code></a>(new_defaults)</p></td>
+<td><p>Sets global defaults for dynamodol so stores can be created without explicitly passing table details every time.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p class="rubric">Classes</p>
+<div class="table-wrapper autosummary longtable docutils container">
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#dynamodol.base.DynamoDbBasePersister" title="dynamodol.base.DynamoDbBasePersister"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DynamoDbBasePersister</span></code></a>([db, table_name, ...])</p></td>
+<td><p>A basic DynamoDb persister.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#dynamodol.base.DynamoDbBaseReader" title="dynamodol.base.DynamoDbBaseReader"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DynamoDbBaseReader</span></code></a>([db, table_name, ...])</p></td>
+<td><p>A basic key-value reader for DynamoDb</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p class="rubric">Exceptions</p>
+<div class="table-wrapper autosummary longtable docutils container">
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#dynamodol.base.NoSuchKeyError" title="dynamodol.base.NoSuchKeyError"><code class="xref py py-obj docutils literal notranslate"><span class="pre">NoSuchKeyError</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<dl class="py class">
+<dt class="sig sig-object py" id="dynamodol.base.DynamoDbBasePersister">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">dynamodol.base.</span></span><span class="sig-name descname"><span class="pre">DynamoDbBasePersister</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">db</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">table_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key_fields</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_fields</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exclude_keys_on_read</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dynamodol/base.html#DynamoDbBasePersister"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dynamodol.base.DynamoDbBasePersister" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#dynamodol.base.DynamoDbBaseReader" title="dynamodol.base.DynamoDbBaseReader"><code class="xref py py-class docutils literal notranslate"><span class="pre">DynamoDbBaseReader</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">KvPersister</span></code></p>
+<p>A basic DynamoDb persister.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span data-line="1"><span class="gp">&gt;&gt;&gt; </span><span class="n">s</span> <span class="o">=</span> <span class="n">DynamoDbBasePersister</span><span class="p">(</span><span class="n">table_name</span><span class="o">=</span><span class="n">DFLT_TABLE_NAME</span><span class="p">,</span> <span class="n">key_fields</span><span class="o">=</span><span class="n">DFLT_KEY_FIELDS</span><span class="p">,</span> <span class="n">data_fields</span><span class="o">=</span><span class="p">())</span>
+</span><span data-line="2"><span class="gp">&gt;&gt;&gt; </span><span class="n">k</span> <span class="o">=</span> <span class="s1">'777'</span> <span class="c1"># Each collection will happily accept user-defined _key values.</span>
+</span><span data-line="3"><span class="gp">&gt;&gt;&gt; </span><span class="n">v</span> <span class="o">=</span> <span class="p">{</span><span class="s1">'val'</span><span class="p">:</span> <span class="s1">'bar'</span><span class="p">}</span>
+</span><span data-line="4"><span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">_key</span> <span class="ow">in</span> <span class="n">s</span><span class="p">:</span>
+</span><span data-line="5"><span class="gp">... </span>    <span class="k">del</span> <span class="n">s</span><span class="p">[</span><span class="n">_key</span><span class="p">]</span>
+</span><span data-line="6"><span class="gp">...</span>
+</span><span data-line="7"><span class="gp">&gt;&gt;&gt; </span><span class="n">k</span> <span class="ow">in</span> <span class="n">s</span>
+</span><span data-line="8"><span class="go">False</span>
+</span><span data-line="9"><span class="gp">&gt;&gt;&gt; </span><span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+</span><span data-line="10"><span class="go">0</span>
+</span><span data-line="11"><span class="gp">&gt;&gt;&gt; </span><span class="n">s</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
+</span><span data-line="12"><span class="gp">&gt;&gt;&gt; </span><span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+</span><span data-line="13"><span class="go">1</span>
+</span><span data-line="14"><span class="gp">&gt;&gt;&gt; </span><span class="n">s</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+</span><span data-line="15"><span class="go">{'val': 'bar'}</span>
+</span><span data-line="16"><span class="gp">&gt;&gt;&gt; </span><span class="n">s</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+</span><span data-line="17"><span class="go">{'val': 'bar'}</span>
+</span><span data-line="18"><span class="gp">&gt;&gt;&gt; </span><span class="n">s</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'does_not_exist'</span><span class="p">,</span> <span class="p">{</span><span class="s1">'default'</span><span class="p">:</span> <span class="s1">'val'</span><span class="p">})</span>  <span class="c1"># testing s.get with default</span>
+</span><span data-line="19"><span class="go">{'default': 'val'}</span>
+</span><span data-line="20"><span class="gp">&gt;&gt;&gt; </span><span class="nb">list</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+</span><span data-line="21"><span class="go">[{'val': 'bar'}]</span>
+</span><span data-line="22"><span class="gp">&gt;&gt;&gt; </span><span class="n">k</span> <span class="ow">in</span> <span class="n">s</span>  <span class="c1"># testing __contains__ again</span>
+</span><span data-line="23"><span class="go">True</span>
+</span><span data-line="24"><span class="gp">&gt;&gt;&gt; </span><span class="k">del</span> <span class="n">s</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+</span><span data-line="25"><span class="gp">&gt;&gt;&gt; </span><span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+</span><span data-line="26"><span class="go">0</span>
+</span><span data-line="27"><span class="gp">&gt;&gt;&gt; </span><span class="n">s</span> <span class="o">=</span> <span class="n">DynamoDbPersister</span><span class="p">(</span><span class="n">table_name</span><span class="o">=</span><span class="s1">'dynamodol2'</span><span class="p">,</span> <span class="n">key_fields</span><span class="o">=</span><span class="p">(</span><span class="s1">'name'</span><span class="p">,))</span>
+</span><span data-line="28"><span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">_key</span> <span class="ow">in</span> <span class="n">s</span><span class="p">:</span>
+</span><span data-line="29"><span class="gp">... </span>  <span class="k">del</span> <span class="n">s</span><span class="p">[</span><span class="n">_key</span><span class="p">]</span>
+</span><span data-line="30"><span class="gp">&gt;&gt;&gt; </span><span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+</span><span data-line="31"><span class="go">0</span>
+</span><span data-line="32"><span class="gp">&gt;&gt;&gt; </span><span class="n">s</span><span class="p">[</span><span class="s1">'guido'</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s1">'yob'</span><span class="p">:</span> <span class="mi">1956</span><span class="p">,</span> <span class="s1">'proj'</span><span class="p">:</span> <span class="s1">'python'</span><span class="p">,</span> <span class="s1">'bdfl'</span><span class="p">:</span> <span class="kc">False</span><span class="p">}</span>
+</span><span data-line="33"><span class="gp">&gt;&gt;&gt; </span><span class="n">s</span><span class="p">[</span><span class="s1">'guido'</span><span class="p">]</span>
+</span><span data-line="34"><span class="go">{'proj': 'python', 'yob': Decimal('1956'), 'bdfl': False}</span>
+</span><span data-line="35"><span class="gp">&gt;&gt;&gt; </span><span class="n">s</span><span class="p">[</span><span class="s1">'vitalik'</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s1">'yob'</span><span class="p">:</span> <span class="mi">1994</span><span class="p">,</span> <span class="s1">'proj'</span><span class="p">:</span> <span class="s1">'ethereum'</span><span class="p">,</span> <span class="s1">'bdfl'</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
+</span><span data-line="36"><span class="gp">&gt;&gt;&gt; </span><span class="n">s</span><span class="p">[</span><span class="s1">'vitalik'</span><span class="p">]</span>
+</span><span data-line="37"><span class="go">{'proj': 'ethereum', 'yob': Decimal('1994'), 'bdfl': True}</span>
+</span><span data-line="38"><span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">s</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+</span><span data-line="39"><span class="gp">... </span>  <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">val</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</span><span data-line="40"><span class="go">'vitalik': {'proj': 'ethereum', 'yob': Decimal('1994'), 'bdfl': True}</span>
+</span><span data-line="41"><span class="go">'guido': {'proj': 'python', 'yob': Decimal('1956'), 'bdfl': False}</span>
+</span></pre></div>
+</div>
+<dl class="field-list simple">
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="dynamodol.base.DynamoDbBaseReader">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">dynamodol.base.</span></span><span class="sig-name descname"><span class="pre">DynamoDbBaseReader</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">db</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">table_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key_fields</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_fields</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">exclude_keys_on_read</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dynamodol/base.html#DynamoDbBaseReader"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dynamodol.base.DynamoDbBaseReader" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">KvReader</span></code></p>
+<p>A basic key-value reader for DynamoDb</p>
+<p>All properties will be filled in by defaults if not provided.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Property db<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A boto3 DynamoDB resource object.</p>
+</dd>
+<dt class="field-even">Property table_name<span class="colon">:</span></dt>
+<dd class="field-even"><p>The name of the table to access.</p>
+</dd>
+<dt class="field-odd">Property key_fields<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A tuple of length 1 or 2 with the table’s partition key and (if present) sort key</p>
+</dd>
+<dt class="field-even">Property data_fields<span class="colon">:</span></dt>
+<dd class="field-even"><p>A tuple listing the data keys to retrieve with __getitem__.
+If data_fields is length 0, all of the keys and values of the document will be returned as a dict.
+If data_fields is length 1, the value of that field will be returned as a string.
+If data_fields is length 2 or greater, the values in those fields will be returned as a tuple.</p>
+</dd>
+<dt class="field-odd">Property exclude_keys_on_read<span class="colon">:</span></dt>
+<dd class="field-odd"><p>If data_fields is empty, this flag specifies whether to exclude
+the partition key (and sort key if applicable) from the output dict.</p>
+</dd>
+</dl>
+<p>Keys are strings if the table has only a partition key, or tuples if the table has a partition key and a sort key.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span data-line="1"><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">dynamodol.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_sample_data</span>
+</span><span data-line="2"><span class="gp">&gt;&gt;&gt; </span><span class="n">load_sample_data</span><span class="p">()</span>
+</span><span data-line="3"><span class="gp">&gt;&gt;&gt; </span><span class="n">reader</span> <span class="o">=</span> <span class="n">DynamoDbBaseReader</span><span class="p">()</span>
+</span><span data-line="4"><span class="gp">&gt;&gt;&gt; </span><span class="n">reader</span><span class="p">[(</span><span class="s1">'part1'</span><span class="p">,</span> <span class="s1">'01-01'</span><span class="p">)]</span>
+</span><span data-line="5"><span class="gp">&gt;&gt;&gt; </span><span class="p">(</span><span class="s1">'a'</span><span class="p">,</span> <span class="s1">'bcde'</span><span class="p">)</span>
+</span></pre></div>
+</div>
+<p>MAJOR TODO: boto3 for DynamoDB casts all numbers to a Decimal type. We need to add a significant amount
+of mapping code to transform values between Decimal and Python int and float types when reading and writing.
+This library is currently only useful for tables that exclusively use string values.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="dynamodol.base.DynamoDbBaseReader.ItemsView">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">ItemsView</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mapping</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dynamodol/base.html#DynamoDbBaseReader.ItemsView"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dynamodol.base.DynamoDbBaseReader.ItemsView" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/collections.abc.html#collections.abc.ItemsView" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ItemsView</span></code></a></p>
+<p>Items view backed by a single table scan (see <code class="docutils literal notranslate"><span class="pre">iter_items</span></code>).</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="dynamodol.base.DynamoDbBaseReader.ValuesView">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">ValuesView</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mapping</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dynamodol/base.html#DynamoDbBaseReader.ValuesView"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dynamodol.base.DynamoDbBaseReader.ValuesView" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/collections.abc.html#collections.abc.ValuesView" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ValuesView</span></code></a></p>
+<p>Values view backed by a single table scan (see <code class="docutils literal notranslate"><span class="pre">iter_values</span></code>).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dynamodol.base.DynamoDbBaseReader.format_get_item">
+<span class="sig-name descname"><span class="pre">format_get_item</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">item</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dynamodol/base.html#DynamoDbBaseReader.format_get_item"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dynamodol.base.DynamoDbBaseReader.format_get_item" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="dynamodol.base.DynamoDbBaseReader.format_get_key">
+<span class="sig-name descname"><span class="pre">format_get_key</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">item</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dynamodol/base.html#DynamoDbBaseReader.format_get_key"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dynamodol.base.DynamoDbBaseReader.format_get_key" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="dynamodol.base.NO_SUCH_KEY_ERROR_CODES">
+<span class="sig-prename descclassname"><span class="pre">dynamodol.base.</span></span><span class="sig-name descname"><span class="pre">NO_SUCH_KEY_ERROR_CODES</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">frozenset({'NoSuchKey'})</span></span><a class="headerlink" href="#dynamodol.base.NO_SUCH_KEY_ERROR_CODES" title="Link to this definition">#</a></dt>
+<dd><p>Backend error codes that mean “the requested key does not exist”.</p>
+</dd></dl>
+
+<dl class="py exception">
+<dt class="sig sig-object py" id="dynamodol.base.NoSuchKeyError">
+<span class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">dynamodol.base.</span></span><span class="sig-name descname"><span class="pre">NoSuchKeyError</span></span><a class="reference internal" href="../_modules/dynamodol/base.html#NoSuchKeyError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dynamodol.base.NoSuchKeyError" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/builtins/exceptions.html#KeyError" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">KeyError</span></code></a></p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="dynamodol.base.is_no_such_key_error">
+<span class="sig-prename descclassname"><span class="pre">dynamodol.base.</span></span><span class="sig-name descname"><span class="pre">is_no_such_key_error</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">error</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dynamodol/base.html#is_no_such_key_error"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dynamodol.base.is_no_such_key_error" title="Link to this definition">#</a></dt>
+<dd><p>Tell whether <code class="docutils literal notranslate"><span class="pre">error</span></code> reports a missing key.</p>
+<p>Boto/botocore carry the backend’s error code in
+<code class="docutils literal notranslate"><span class="pre">error.response['Error']['Code']</span></code>. Note that exception <em>instances</em> never
+have a <code class="docutils literal notranslate"><span class="pre">__name__</span></code> (that lives on the class), so testing <code class="docutils literal notranslate"><span class="pre">error.__name__</span></code>
+only raises <code class="docutils literal notranslate"><span class="pre">AttributeError</span></code> and hides the error being inspected.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#bool" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a></span></p>
+</dd>
+</dl>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span data-line="1"><span class="gp">&gt;&gt;&gt; </span><span class="n">is_no_such_key_error</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">(</span><span class="s2">"nope"</span><span class="p">))</span>
+</span><span data-line="2"><span class="go">False</span>
+</span><span data-line="3"><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">botocore.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">ClientError</span>
+</span><span data-line="4"><span class="gp">&gt;&gt;&gt; </span><span class="n">is_no_such_key_error</span><span class="p">(</span>
+</span><span data-line="5"><span class="gp">... </span>    <span class="n">ClientError</span><span class="p">({</span><span class="s2">"Error"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"Code"</span><span class="p">:</span> <span class="s2">"NoSuchKey"</span><span class="p">}},</span> <span class="s2">"DeleteItem"</span><span class="p">)</span>
+</span><span data-line="6"><span class="gp">... </span><span class="p">)</span>
+</span><span data-line="7"><span class="go">True</span>
+</span></pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="dynamodol.base.load_sample_data">
+<span class="sig-prename descclassname"><span class="pre">dynamodol.base.</span></span><span class="sig-name descname"><span class="pre">load_sample_data</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dynamodol/base.html#load_sample_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dynamodol.base.load_sample_data" title="Link to this definition">#</a></dt>
+<dd><p>For supporting doctests</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="dynamodol.base.set_db_defaults">
+<span class="sig-prename descclassname"><span class="pre">dynamodol.base.</span></span><span class="sig-name descname"><span class="pre">set_db_defaults</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">new_defaults</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dynamodol/base.html#set_db_defaults"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dynamodol.base.set_db_defaults" title="Link to this definition">#</a></dt>
+<dd><p>Sets global defaults for dynamodol so stores can be created without explicitly passing table details every time.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>new_defaults</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#dict" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a></span>) – <p>A dict containing one or more of the following keys
+table_name: str - The name of the table
+key_fields: Tuple - A tuple of length 1 or 2 containing the partition key and (optional) sort key for the table
+data_fields: Tuple or None - A tuple of data fields to return from queries. If data_fields is None, data</p>
+<blockquote>
+<div><p>will be returned as dicts instead of tuples.</p>
+</div></blockquote>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+        </article><button class="back-to-top" type="button">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+    <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
+  </svg>
+  <span>Back to top</span>
+</button><div class="navigation flex print:hidden"><div class="navigation-prev">
+    <a href="dynamodol.html">
+      <i class="i-lucide chevron-left"></i>
+      <div class="page-info">
+        <span>Previous</span><div class="title">dynamodol</div></div>
+    </a>
+  </div><div class="navigation-next">
+    <a href="dynamodol.partition_query.html">
+      <div class="page-info">
+        <span>Next</span>
+        <div class="title">dynamodol.partition_query</div>
+      </div>
+      <i class="i-lucide chevron-right"></i>
+    </a>
+  </div></div></div>
+    </div>
+  </main>
+</div>
+<footer class="sy-foot">
+  <div class="sy-foot-inner sy-container mx-auto">
+    <div class="sy-foot-reserved md:flex justify-between items-center">
+      <div class="sy-foot-copyright">
+  <p>
+    Made with
+    
+    <a href="https://shibuya.lepture.com">Shibuya theme</a>.
+  </p>
+</div>
+      <div class="sy-foot-socials">
+  <a href="https://github.com/i2mint/dynamodol" aria-label="GitHub">
+    <iconify-icon icon="simple-icons:github"></iconify-icon>
+  </a></div>
+    </div>
+  </div>
+</footer>
+      <script src="../_static/documentation_options.js?v=22607128"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../_static/copybutton.js?v=fd10adb8"></script>
+      <script src="../_static/shibuya.js?v=50760d75"></script></body>
+</html>

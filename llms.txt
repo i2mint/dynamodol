@@ -1,0 +1,21 @@
+# dynamodol
+
+> dynamodb (through boto3) with a simple (dict-like or list-like) interface
+
+
+## Pages
+
+- [dynamodol](index.html.md): dynamodb (through boto3) with a simple (dict-like or list-like) interface
+- [API reference](api.html.md): | &#96;dynamodol&#96;   | Exports   |
+- [dynamodol](_autosummary/dynamodol.html.md): | &#96;base&#96;                       | DynamoDB (through boto3) with a simple (dict-like or list-like) int...
+- [dynamodol.base](_autosummary/dynamodol.base.html.md): DynamoDB (through boto3) with a simple (dict-like or list-like) interface
+- [dynamodol.partition_query](_autosummary/dynamodol.partition_query.html.md): Stores for filtered data sets
+- [About this build](about-this-build.html.md): This documentation was built on &#42;&#42;2026-09-22 12:51 UTC&#42;&#42; from commit &lt;a href="https://github.com/i2m...
+
+## Optional
+
+- [dynamodol.md](dynamodol.md): Complete documentation in a single file.
+
+## Build
+
+- [build_info.json](build_info.json): build provenance (commit, version, tool versions, whether the docs match the package)

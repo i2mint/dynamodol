@@ -1,0 +1,14 @@
+﻿dynamodol
+=========
+
+.. automodule:: dynamodol
+
+   
+.. rubric:: Modules
+
+.. autosummary::
+   :toctree:
+   :recursive:
+
+   base
+   partition_query

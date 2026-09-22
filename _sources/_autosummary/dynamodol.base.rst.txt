@@ -1,0 +1,35 @@
+dynamodol.base
+==============
+
+.. automodule:: dynamodol.base
+
+   
+   .. rubric:: Module Attributes
+
+   .. autosummary::
+   
+      NO_SUCH_KEY_ERROR_CODES
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+   
+      decimal_to_float
+      get_db
+      is_no_such_key_error
+      load_sample_data
+      set_db_defaults
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+   
+      DynamoDbBasePersister
+      DynamoDbBaseReader
+   
+   .. rubric:: Exceptions
+
+   .. autosummary::
+   
+      NoSuchKeyError
+   

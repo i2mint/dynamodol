@@ -1,0 +1,21 @@
+dynamodol.partition\_query
+==========================
+
+.. automodule:: dynamodol.partition_query
+
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+   
+      DynamoDbPartitionPersister
+      DynamoDbPartitionReader
+      DynamoDbPrefixReader
+      DynamoDbQueryReader
+   
+   .. rubric:: Exceptions
+
+   .. autosummary::
+   
+      NoSuchKeyError
+   
