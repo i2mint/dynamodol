@@ -4,17 +4,20 @@ DynamoDB (through boto3) with a simple (dict-like or list-like) interface
 
 ### Module Attributes
 
-| [`NO_SUCH_KEY_ERROR_CODES`](#dynamodol.base.NO_SUCH_KEY_ERROR_CODES)   | Backend error codes that mean "the requested key does not exist".   |
-|----------------------------------------------------------------------------|---------------------------------------------------------------------|
+| [`NO_SUCH_KEY_ERROR_CODES`](#dynamodol.base.NO_SUCH_KEY_ERROR_CODES)             | Backend error codes that mean "the requested key does not exist".                                                                                                     |
+|--------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [`KEY_CANNOT_NAME_AN_ITEM_ERROR_CODES`](#dynamodol.base.KEY_CANNOT_NAME_AN_ITEM_ERROR_CODES) | Backend error codes that mean "this key cannot name an item" (wrong type, empty string, wrong arity for the key schema): such a key is absent, not a backend failure. |
 
 ### Functions
 
-| `decimal_to_float`(x)                                                          |                                                                                                                  |
-|--------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------|
-| `get_db`([aws_access_key_id, ...])                                             |                                                                                                                  |
-| [`is_no_such_key_error`](#dynamodol.base.is_no_such_key_error)(error)   | Tell whether `error` reports a missing key.                                                                      |
-| [`load_sample_data`](#dynamodol.base.load_sample_data)()            | For supporting doctests                                                                                          |
-| [`set_db_defaults`](#dynamodol.base.set_db_defaults)(new_defaults) | Sets global defaults for dynamodol so stores can be created without explicitly passing table details every time. |
+| `decimal_to_float`(x)                                                                              |                                                                                                                  |
+|----------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------|
+| `get_db`([aws_access_key_id, ...])                                                                 |                                                                                                                  |
+| [`get_item_or_raise`](#dynamodol.base.get_item_or_raise)(table, key, k, \*[, error_cls]) | `table.get_item(Key=key)`'s `Item`, raising `error_cls` only if it is absent.                                    |
+| [`is_no_such_key_error`](#dynamodol.base.is_no_such_key_error)(error)                       | Tell whether `error` reports a missing key.                                                                      |
+| [`load_sample_data`](#dynamodol.base.load_sample_data)()                                | For supporting doctests                                                                                          |
+| [`raise_if_nothing_was_deleted`](#dynamodol.base.raise_if_nothing_was_deleted)(...[, error_cls])    | Raise `NoSuchKeyError` if a `ReturnValues='ALL_OLD'` delete removed nothing.                                     |
+| [`set_db_defaults`](#dynamodol.base.set_db_defaults)(new_defaults)                     | Sets global defaults for dynamodol so stores can be created without explicitly passing table details every time. |
 
 ### Classes
 
@@ -130,6 +133,11 @@ Values view backed by a single table scan (see `iter_values`).
 
 #### format_get_key(item)
 
+### dynamodol.base.KEY_CANNOT_NAME_AN_ITEM_ERROR_CODES *= frozenset({'ValidationException'})*
+
+Backend error codes that mean “this key cannot name an item” (wrong type, empty
+string, wrong arity for the key schema): such a key is absent, not a backend failure.
+
 ### dynamodol.base.NO_SUCH_KEY_ERROR_CODES *= frozenset({'NoSuchKey'})*
 
 Backend error codes that mean “the requested key does not exist”.
@@ -137,6 +145,13 @@ Backend error codes that mean “the requested key does not exist”.
 ### *exception* dynamodol.base.NoSuchKeyError
 
 Bases: [`KeyError`](https://docs.python.org/3/builtins/exceptions.html#KeyError)
+
+### dynamodol.base.get_item_or_raise(table, key, k, \*, error_cls=<class 'dynamodol.base.NoSuchKeyError'>, \*\*get_item_kwargs)
+
+`table.get_item(Key=key)`’s `Item`, raising `error_cls` only if it is absent.
+
+Backend failures (throttling, credentials, a missing table) propagate unchanged.
+A key the table’s schema rejects outright is reported absent, as before.
 
 ### dynamodol.base.is_no_such_key_error(error)
 
@@ -163,6 +178,22 @@ True
 ### dynamodol.base.load_sample_data()
 
 For supporting doctests
+
+### dynamodol.base.raise_if_nothing_was_deleted(delete_item_response, k, \*, error_cls=<class 'dynamodol.base.NoSuchKeyError'>)
+
+Raise `NoSuchKeyError` if a `ReturnValues='ALL_OLD'` delete removed nothing.
+
+DynamoDB’s `DeleteItem` succeeds silently on an absent key – it never reports a
+`NoSuchKey` code (that is S3’s) – so the only sign the key was missing is that
+no old `Attributes` came back. `del store[missing]` must raise `KeyError`.
+
+```pycon
+>>> raise_if_nothing_was_deleted({"Attributes": {"key": "k1"}}, "k1")
+>>> raise_if_nothing_was_deleted({}, "k1")
+Traceback (most recent call last):
+  ...
+dynamodol.base.NoSuchKeyError: 'Key not found: k1'
+```
 
 ### dynamodol.base.set_db_defaults(new_defaults)
 

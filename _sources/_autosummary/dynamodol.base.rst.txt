@@ -9,6 +9,7 @@ dynamodol.base
    .. autosummary::
    
       NO_SUCH_KEY_ERROR_CODES
+      KEY_CANNOT_NAME_AN_ITEM_ERROR_CODES
    
    .. rubric:: Functions
 
@@ -16,8 +17,10 @@ dynamodol.base
    
       decimal_to_float
       get_db
+      get_item_or_raise
       is_no_such_key_error
       load_sample_data
+      raise_if_nothing_was_deleted
       set_db_defaults
    
    .. rubric:: Classes

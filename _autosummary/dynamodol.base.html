@@ -91,10 +91,13 @@ data-aria-dark="Switch to auto color mode">
 <li><a class="reference internal" href="#dynamodol.base.DynamoDbBaseReader.format_get_key"><code class="docutils literal notranslate"><span class="pre">DynamoDbBaseReader.format_get_key()</span></code></a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#dynamodol.base.KEY_CANNOT_NAME_AN_ITEM_ERROR_CODES"><code class="docutils literal notranslate"><span class="pre">KEY_CANNOT_NAME_AN_ITEM_ERROR_CODES</span></code></a></li>
 <li><a class="reference internal" href="#dynamodol.base.NO_SUCH_KEY_ERROR_CODES"><code class="docutils literal notranslate"><span class="pre">NO_SUCH_KEY_ERROR_CODES</span></code></a></li>
 <li><a class="reference internal" href="#dynamodol.base.NoSuchKeyError"><code class="docutils literal notranslate"><span class="pre">NoSuchKeyError</span></code></a></li>
+<li><a class="reference internal" href="#dynamodol.base.get_item_or_raise"><code class="docutils literal notranslate"><span class="pre">get_item_or_raise()</span></code></a></li>
 <li><a class="reference internal" href="#dynamodol.base.is_no_such_key_error"><code class="docutils literal notranslate"><span class="pre">is_no_such_key_error()</span></code></a></li>
 <li><a class="reference internal" href="#dynamodol.base.load_sample_data"><code class="docutils literal notranslate"><span class="pre">load_sample_data()</span></code></a></li>
+<li><a class="reference internal" href="#dynamodol.base.raise_if_nothing_was_deleted"><code class="docutils literal notranslate"><span class="pre">raise_if_nothing_was_deleted()</span></code></a></li>
 <li><a class="reference internal" href="#dynamodol.base.set_db_defaults"><code class="docutils literal notranslate"><span class="pre">set_db_defaults()</span></code></a></li>
 </ul>
 </div><div id="ethical-ad-placement" data-ea-publisher="readthedocs"></div></div>
@@ -144,6 +147,9 @@ data-aria-dark="Switch to auto color mode">
 <tr class="row-odd"><td><p><a class="reference internal" href="#dynamodol.base.NO_SUCH_KEY_ERROR_CODES" title="dynamodol.base.NO_SUCH_KEY_ERROR_CODES"><code class="xref py py-obj docutils literal notranslate"><span class="pre">NO_SUCH_KEY_ERROR_CODES</span></code></a></p></td>
 <td><p>Backend error codes that mean &quot;the requested key does not exist&quot;.</p></td>
 </tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#dynamodol.base.KEY_CANNOT_NAME_AN_ITEM_ERROR_CODES" title="dynamodol.base.KEY_CANNOT_NAME_AN_ITEM_ERROR_CODES"><code class="xref py py-obj docutils literal notranslate"><span class="pre">KEY_CANNOT_NAME_AN_ITEM_ERROR_CODES</span></code></a></p></td>
+<td><p>Backend error codes that mean &quot;this key cannot name an item&quot; (wrong type, empty string, wrong arity for the key schema): such a key is absent, not a backend failure.</p></td>
+</tr>
 </tbody>
 </table>
 </div>
@@ -157,11 +163,17 @@ data-aria-dark="Switch to auto color mode">
 <tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_db</span></code>([aws_access_key_id, ...])</p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#dynamodol.base.is_no_such_key_error" title="dynamodol.base.is_no_such_key_error"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_no_such_key_error</span></code></a>(error)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#dynamodol.base.get_item_or_raise" title="dynamodol.base.get_item_or_raise"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_item_or_raise</span></code></a>(table, key, k, *[, error_cls])</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">table.get_item(Key=key)</span></code>'s <code class="docutils literal notranslate"><span class="pre">Item</span></code>, raising <code class="docutils literal notranslate"><span class="pre">error_cls</span></code> only if it is absent.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#dynamodol.base.is_no_such_key_error" title="dynamodol.base.is_no_such_key_error"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_no_such_key_error</span></code></a>(error)</p></td>
 <td><p>Tell whether <code class="docutils literal notranslate"><span class="pre">error</span></code> reports a missing key.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#dynamodol.base.load_sample_data" title="dynamodol.base.load_sample_data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_sample_data</span></code></a>()</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#dynamodol.base.load_sample_data" title="dynamodol.base.load_sample_data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_sample_data</span></code></a>()</p></td>
 <td><p>For supporting doctests</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#dynamodol.base.raise_if_nothing_was_deleted" title="dynamodol.base.raise_if_nothing_was_deleted"><code class="xref py py-obj docutils literal notranslate"><span class="pre">raise_if_nothing_was_deleted</span></code></a>(...[, error_cls])</p></td>
+<td><p>Raise <code class="docutils literal notranslate"><span class="pre">NoSuchKeyError</span></code> if a <code class="docutils literal notranslate"><span class="pre">ReturnValues='ALL_OLD'</span></code> delete removed nothing.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#dynamodol.base.set_db_defaults" title="dynamodol.base.set_db_defaults"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_db_defaults</span></code></a>(new_defaults)</p></td>
 <td><p>Sets global defaults for dynamodol so stores can be created without explicitly passing table details every time.</p></td>
@@ -309,6 +321,13 @@ This library is currently only useful for tables that exclusively use string val
 </dd></dl>
 
 <dl class="py data">
+<dt class="sig sig-object py" id="dynamodol.base.KEY_CANNOT_NAME_AN_ITEM_ERROR_CODES">
+<span class="sig-prename descclassname"><span class="pre">dynamodol.base.</span></span><span class="sig-name descname"><span class="pre">KEY_CANNOT_NAME_AN_ITEM_ERROR_CODES</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">frozenset({'ValidationException'})</span></span><a class="headerlink" href="#dynamodol.base.KEY_CANNOT_NAME_AN_ITEM_ERROR_CODES" title="Link to this definition">#</a></dt>
+<dd><p>Backend error codes that mean “this key cannot name an item” (wrong type, empty
+string, wrong arity for the key schema): such a key is absent, not a backend failure.</p>
+</dd></dl>
+
+<dl class="py data">
 <dt class="sig sig-object py" id="dynamodol.base.NO_SUCH_KEY_ERROR_CODES">
 <span class="sig-prename descclassname"><span class="pre">dynamodol.base.</span></span><span class="sig-name descname"><span class="pre">NO_SUCH_KEY_ERROR_CODES</span></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">frozenset({'NoSuchKey'})</span></span><a class="headerlink" href="#dynamodol.base.NO_SUCH_KEY_ERROR_CODES" title="Link to this definition">#</a></dt>
 <dd><p>Backend error codes that mean “the requested key does not exist”.</p>
@@ -318,6 +337,14 @@ This library is currently only useful for tables that exclusively use string val
 <dt class="sig sig-object py" id="dynamodol.base.NoSuchKeyError">
 <span class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">dynamodol.base.</span></span><span class="sig-name descname"><span class="pre">NoSuchKeyError</span></span><a class="reference internal" href="../_modules/dynamodol/base.html#NoSuchKeyError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dynamodol.base.NoSuchKeyError" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/builtins/exceptions.html#KeyError" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">KeyError</span></code></a></p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="dynamodol.base.get_item_or_raise">
+<span class="sig-prename descclassname"><span class="pre">dynamodol.base.</span></span><span class="sig-name descname"><span class="pre">get_item_or_raise</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">table</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">error_cls</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;class</span> <span class="pre">'dynamodol.base.NoSuchKeyError'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">**get_item_kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dynamodol/base.html#get_item_or_raise"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dynamodol.base.get_item_or_raise" title="Link to this definition">#</a></dt>
+<dd><p><code class="docutils literal notranslate"><span class="pre">table.get_item(Key=key)</span></code>’s <code class="docutils literal notranslate"><span class="pre">Item</span></code>, raising <code class="docutils literal notranslate"><span class="pre">error_cls</span></code> only if it is absent.</p>
+<p>Backend failures (throttling, credentials, a missing table) propagate unchanged.
+A key the table’s schema rejects outright is reported absent, as before.</p>
 </dd></dl>
 
 <dl class="py function">
@@ -348,6 +375,22 @@ only raises <code class="docutils literal notranslate"><span class="pre">Attribu
 <dt class="sig sig-object py" id="dynamodol.base.load_sample_data">
 <span class="sig-prename descclassname"><span class="pre">dynamodol.base.</span></span><span class="sig-name descname"><span class="pre">load_sample_data</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dynamodol/base.html#load_sample_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dynamodol.base.load_sample_data" title="Link to this definition">#</a></dt>
 <dd><p>For supporting doctests</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="dynamodol.base.raise_if_nothing_was_deleted">
+<span class="sig-prename descclassname"><span class="pre">dynamodol.base.</span></span><span class="sig-name descname"><span class="pre">raise_if_nothing_was_deleted</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">delete_item_response</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">error_cls</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;class</span> <span class="pre">'dynamodol.base.NoSuchKeyError'&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dynamodol/base.html#raise_if_nothing_was_deleted"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dynamodol.base.raise_if_nothing_was_deleted" title="Link to this definition">#</a></dt>
+<dd><p>Raise <code class="docutils literal notranslate"><span class="pre">NoSuchKeyError</span></code> if a <code class="docutils literal notranslate"><span class="pre">ReturnValues='ALL_OLD'</span></code> delete removed nothing.</p>
+<p>DynamoDB’s <code class="docutils literal notranslate"><span class="pre">DeleteItem</span></code> succeeds silently on an absent key – it never reports a
+<code class="docutils literal notranslate"><span class="pre">NoSuchKey</span></code> code (that is S3’s) – so the only sign the key was missing is that
+no old <code class="docutils literal notranslate"><span class="pre">Attributes</span></code> came back. <code class="docutils literal notranslate"><span class="pre">del</span> <span class="pre">store[missing]</span></code> must raise <code class="docutils literal notranslate"><span class="pre">KeyError</span></code>.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span data-line="1"><span class="gp">&gt;&gt;&gt; </span><span class="n">raise_if_nothing_was_deleted</span><span class="p">({</span><span class="s2">"Attributes"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"key"</span><span class="p">:</span> <span class="s2">"k1"</span><span class="p">}},</span> <span class="s2">"k1"</span><span class="p">)</span>
+</span><span data-line="2"><span class="gp">&gt;&gt;&gt; </span><span class="n">raise_if_nothing_was_deleted</span><span class="p">({},</span> <span class="s2">"k1"</span><span class="p">)</span>
+</span><span data-line="3"><span class="gt">Traceback (most recent call last):</span>
+</span><span data-line="4"><span class="w">  </span><span class="c">...</span>
+</span><span data-line="5"><span class="gr">dynamodol.base.NoSuchKeyError</span>: <span class="n">'Key not found: k1'</span>
+</span></pre></div>
+</div>
 </dd></dl>
 
 <dl class="py function">
@@ -410,7 +453,7 @@ data_fields: Tuple or None - A tuple of data fields to return from queries. If d
     </div>
   </div>
 </footer>
-      <script src="../_static/documentation_options.js?v=22607128"></script>
+      <script src="../_static/documentation_options.js?v=8618f531"></script>
       <script src="../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../_static/clipboard.min.js?v=a7894cd8"></script>

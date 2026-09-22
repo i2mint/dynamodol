@@ -1,4 +1,4 @@
-> built 2026-09-22 12:51 UTC from 1b5aa09 (master) · dynamodol 0.1.8. Details: build_info.json
+> built 2026-09-22 14:14 UTC from 6c44494 (master) · dynamodol 0.1.9. Details: build_info.json
 
 # index.html.md
 
@@ -67,17 +67,20 @@ DynamoDB (through boto3) with a simple (dict-like or list-like) interface
 
 ### Module Attributes
 
-| [`NO_SUCH_KEY_ERROR_CODES`](_autosummary/dynamodol.base.html.md#dynamodol.base.NO_SUCH_KEY_ERROR_CODES)   | Backend error codes that mean "the requested key does not exist".   |
-|----------------------------------------------------------------------------|---------------------------------------------------------------------|
+| [`NO_SUCH_KEY_ERROR_CODES`](_autosummary/dynamodol.base.html.md#dynamodol.base.NO_SUCH_KEY_ERROR_CODES)             | Backend error codes that mean "the requested key does not exist".                                                                                                     |
+|--------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [`KEY_CANNOT_NAME_AN_ITEM_ERROR_CODES`](_autosummary/dynamodol.base.html.md#dynamodol.base.KEY_CANNOT_NAME_AN_ITEM_ERROR_CODES) | Backend error codes that mean "this key cannot name an item" (wrong type, empty string, wrong arity for the key schema): such a key is absent, not a backend failure. |
 
 ### Functions
 
-| `decimal_to_float`(x)                                                          |                                                                                                                  |
-|--------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------|
-| `get_db`([aws_access_key_id, ...])                                             |                                                                                                                  |
-| [`is_no_such_key_error`](_autosummary/dynamodol.base.html.md#dynamodol.base.is_no_such_key_error)(error)   | Tell whether `error` reports a missing key.                                                                      |
-| [`load_sample_data`](_autosummary/dynamodol.base.html.md#dynamodol.base.load_sample_data)()            | For supporting doctests                                                                                          |
-| [`set_db_defaults`](_autosummary/dynamodol.base.html.md#dynamodol.base.set_db_defaults)(new_defaults) | Sets global defaults for dynamodol so stores can be created without explicitly passing table details every time. |
+| `decimal_to_float`(x)                                                                              |                                                                                                                  |
+|----------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------|
+| `get_db`([aws_access_key_id, ...])                                                                 |                                                                                                                  |
+| [`get_item_or_raise`](_autosummary/dynamodol.base.html.md#dynamodol.base.get_item_or_raise)(table, key, k, \*[, error_cls]) | `table.get_item(Key=key)`'s `Item`, raising `error_cls` only if it is absent.                                    |
+| [`is_no_such_key_error`](_autosummary/dynamodol.base.html.md#dynamodol.base.is_no_such_key_error)(error)                       | Tell whether `error` reports a missing key.                                                                      |
+| [`load_sample_data`](_autosummary/dynamodol.base.html.md#dynamodol.base.load_sample_data)()                                | For supporting doctests                                                                                          |
+| [`raise_if_nothing_was_deleted`](_autosummary/dynamodol.base.html.md#dynamodol.base.raise_if_nothing_was_deleted)(...[, error_cls])    | Raise `NoSuchKeyError` if a `ReturnValues='ALL_OLD'` delete removed nothing.                                     |
+| [`set_db_defaults`](_autosummary/dynamodol.base.html.md#dynamodol.base.set_db_defaults)(new_defaults)                     | Sets global defaults for dynamodol so stores can be created without explicitly passing table details every time. |
 
 ### Classes
 
@@ -193,6 +196,11 @@ Values view backed by a single table scan (see `iter_values`).
 
 #### format_get_key(item)
 
+### dynamodol.base.KEY_CANNOT_NAME_AN_ITEM_ERROR_CODES *= frozenset({'ValidationException'})*
+
+Backend error codes that mean “this key cannot name an item” (wrong type, empty
+string, wrong arity for the key schema): such a key is absent, not a backend failure.
+
 ### dynamodol.base.NO_SUCH_KEY_ERROR_CODES *= frozenset({'NoSuchKey'})*
 
 Backend error codes that mean “the requested key does not exist”.
@@ -200,6 +208,13 @@ Backend error codes that mean “the requested key does not exist”.
 ### *exception* dynamodol.base.NoSuchKeyError
 
 Bases: [`KeyError`](https://docs.python.org/3/builtins/exceptions.html#KeyError)
+
+### dynamodol.base.get_item_or_raise(table, key, k, \*, error_cls=<class 'dynamodol.base.NoSuchKeyError'>, \*\*get_item_kwargs)
+
+`table.get_item(Key=key)`’s `Item`, raising `error_cls` only if it is absent.
+
+Backend failures (throttling, credentials, a missing table) propagate unchanged.
+A key the table’s schema rejects outright is reported absent, as before.
 
 ### dynamodol.base.is_no_such_key_error(error)
 
@@ -226,6 +241,22 @@ True
 ### dynamodol.base.load_sample_data()
 
 For supporting doctests
+
+### dynamodol.base.raise_if_nothing_was_deleted(delete_item_response, k, \*, error_cls=<class 'dynamodol.base.NoSuchKeyError'>)
+
+Raise `NoSuchKeyError` if a `ReturnValues='ALL_OLD'` delete removed nothing.
+
+DynamoDB’s `DeleteItem` succeeds silently on an absent key – it never reports a
+`NoSuchKey` code (that is S3’s) – so the only sign the key was missing is that
+no old `Attributes` came back. `del store[missing]` must raise `KeyError`.
+
+```pycon
+>>> raise_if_nothing_was_deleted({"Attributes": {"key": "k1"}}, "k1")
+>>> raise_if_nothing_was_deleted({}, "k1")
+Traceback (most recent call last):
+  ...
+dynamodol.base.NoSuchKeyError: 'Key not found: k1'
+```
 
 ### dynamodol.base.set_db_defaults(new_defaults)
 
@@ -370,18 +401,18 @@ Bases: [`KeyError`](https://docs.python.org/3/builtins/exceptions.html#KeyError)
 
 # About this build
 
-This documentation was built on **2026-09-22 12:51 UTC** from commit <a href="https://github.com/i2mint/dynamodol/commit/1b5aa090e6b9f58790e7adf5940a9aee9251b84f"><code>1b5aa09</code></a> on branch <code>master</code>, for **dynamodol 0.1.8** (from <code>pyproject.toml</code>).
+This documentation was built on **2026-09-22 14:14 UTC** from commit <a href="https://github.com/i2mint/dynamodol/commit/6c44494e05aceb30a14a3e2064b99558b9923802"><code>6c44494</code></a> on branch <code>master</code>, for **dynamodol 0.1.9** (from <code>pyproject.toml</code>).
 
 #### WARNING
 The documentation and the package may be misaligned:
 
-- The documented version (0.1.8) is behind the latest release on PyPI (0.1.9): `pip install dynamodol` gives newer code than these docs describe.
+- The documented version (0.1.9) is behind the latest release on PyPI (0.1.10): `pip install dynamodol` gives newer code than these docs describe.
 
 ## Source
 
 |                     |                                                                                                                                                         |
 |---------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Commit              | <a href="https://github.com/i2mint/dynamodol/commit/1b5aa090e6b9f58790e7adf5940a9aee9251b84f"><code>1b5aa090e6b9f58790e7adf5940a9aee9251b84f</code></a> |
+| Commit              | <a href="https://github.com/i2mint/dynamodol/commit/6c44494e05aceb30a14a3e2064b99558b9923802"><code>6c44494e05aceb30a14a3e2064b99558b9923802</code></a> |
 | Branch              | <code>master</code>                                                                                                                                     |
 | Tags at this commit | none                                                                                                                                                    |
 | Working tree        | clean                                                                                                                                                   |
@@ -392,9 +423,9 @@ The documentation and the package may be misaligned:
 |              |                                                                                            |
 |--------------|--------------------------------------------------------------------------------------------|
 | Repository   | <code>i2mint/dynamodol</code>                                                              |
-| Run          | <a href="https://github.com/i2mint/dynamodol/actions/runs/35729578503">35729578503</a>     |
+| Run          | <a href="https://github.com/i2mint/dynamodol/actions/runs/35738661058">35738661058</a>     |
 | Ref          | <code>refs/heads/master</code>                                                             |
-| Event commit | <code>1b5aa090e6b9f58790e7adf5940a9aee9251b84f</code> (in the history of the built commit) |
+| Event commit | <code>6c44494e05aceb30a14a3e2064b99558b9923802</code> (in the history of the built commit) |
 
 ## Tools
 
@@ -419,13 +450,13 @@ The documentation and the package may be misaligned:
 
 ## Package on PyPI
 
-Latest release: <a href="https://pypi.org/project/dynamodol/0.1.9/">0.1.9</a>, newer than the documented version (0.1.8).
+Latest release: <a href="https://pypi.org/project/dynamodol/0.1.10/">0.1.10</a>, newer than the documented version (0.1.9).
 
 ## Reproduce
 
 ```bash
 git clone https://github.com/i2mint/dynamodol && cd dynamodol
-git checkout 1b5aa090e6b9f58790e7adf5940a9aee9251b84f
+git checkout 6c44494e05aceb30a14a3e2064b99558b9923802
 pip install "epythet==0.2.12"
 epythet quickstart . --ignore tests/ scrap/ examples/
 ```

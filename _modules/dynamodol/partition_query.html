@@ -124,311 +124,309 @@ data-aria-dark="Switch to auto color mode">
 </span><span data-line="9">    <span class="n">DynamoDbBasePersister</span><span class="p">,</span>
 </span><span data-line="10">    <span class="n">db_defaults</span><span class="p">,</span>
 </span><span data-line="11">    <span class="n">is_no_such_key_error</span><span class="p">,</span>
-</span><span data-line="12"><span class="p">)</span>
-</span><span data-line="13">
-</span><span data-line="14">
+</span><span data-line="12">    <span class="n">get_item_or_raise</span><span class="p">,</span>
+</span><span data-line="13">    <span class="n">raise_if_nothing_was_deleted</span><span class="p">,</span>
+</span><span data-line="14"><span class="p">)</span>
+</span><span data-line="15">
+</span><span data-line="16">
 <div class="viewcode-block" id="NoSuchKeyError">
 <a class="viewcode-back" href="../../_autosummary/dynamodol.partition_query.html#dynamodol.partition_query.NoSuchKeyError">[docs]</a>
-</span><span data-line="15"><span class="k">class</span><span class="w"> </span><span class="nc">NoSuchKeyError</span><span class="p">(</span><span class="ne">KeyError</span><span class="p">):</span>
-</span><span data-line="16">    <span class="k">pass</span></div>
+</span><span data-line="17"><span class="k">class</span><span class="w"> </span><span class="nc">NoSuchKeyError</span><span class="p">(</span><span class="ne">KeyError</span><span class="p">):</span>
+</span><span data-line="18">    <span class="k">pass</span></div>
 
-</span><span data-line="17">
-</span><span data-line="18">
-</span><span data-line="19"><span class="n">valid_key_operators</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"begins_with"</span><span class="p">,</span> <span class="s2">"between"</span><span class="p">,</span> <span class="s2">"gt"</span><span class="p">,</span> <span class="s2">"gte"</span><span class="p">,</span> <span class="s2">"lt"</span><span class="p">,</span> <span class="s2">"lte"</span><span class="p">]</span>
-</span><span data-line="20"><span class="n">valid_attr_operators</span> <span class="o">=</span> <span class="p">[</span>
-</span><span data-line="21">    <span class="o">*</span><span class="n">valid_key_operators</span><span class="p">,</span>
-</span><span data-line="22">    <span class="s2">"contains"</span><span class="p">,</span>
-</span><span data-line="23">    <span class="s2">"ne"</span><span class="p">,</span>
-</span><span data-line="24">    <span class="s2">"exists"</span><span class="p">,</span>
-</span><span data-line="25">    <span class="s2">"not_exists"</span><span class="p">,</span>
-</span><span data-line="26">    <span class="s2">"is_in"</span><span class="p">,</span>
-</span><span data-line="27">    <span class="s2">"size"</span><span class="p">,</span>
-</span><span data-line="28"><span class="p">]</span>
-</span><span data-line="29"><span class="n">valid_size_operators</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"gt"</span><span class="p">,</span> <span class="s2">"gte"</span><span class="p">,</span> <span class="s2">"lt"</span><span class="p">,</span> <span class="s2">"lte"</span><span class="p">,</span> <span class="s2">"between"</span><span class="p">,</span> <span class="s2">"is_in"</span><span class="p">]</span>
-</span><span data-line="30">
-</span><span data-line="31">
-</span><span data-line="32"><span class="k">def</span><span class="w"> </span><span class="nf">_apply_filter_method</span><span class="p">(</span><span class="n">filter_obj</span><span class="p">,</span> <span class="n">operator</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
-</span><span data-line="33">    <span class="n">filter_method</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">filter_obj</span><span class="p">,</span> <span class="n">operator</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
-</span><span data-line="34">    <span class="k">if</span> <span class="n">operator</span> <span class="o">==</span> <span class="s2">"$between"</span><span class="p">:</span>
-</span><span data-line="35">        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
-</span><span data-line="36">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-</span><span data-line="37">                <span class="sa">f</span><span class="s2">"Values for the $between operator must be iterables of length 2 (received </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">)."</span>
-</span><span data-line="38">            <span class="p">)</span>
-</span><span data-line="39">        <span class="k">return</span> <span class="n">filter_method</span><span class="p">(</span><span class="o">*</span><span class="n">value</span><span class="p">)</span>
-</span><span data-line="40">    <span class="k">return</span> <span class="n">filter_method</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
-</span><span data-line="41">
-</span><span data-line="42">
-</span><span data-line="43"><span class="k">def</span><span class="w"> </span><span class="nf">_mk_query_from_dict_val</span><span class="p">(</span><span class="n">attr_or_key</span><span class="p">,</span> <span class="n">query_val</span><span class="p">,</span> <span class="n">is_key</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
-</span><span data-line="44"><span class="w">    </span><span class="sd">"""Transforms a MongoDB-like query dict into a DynamoDB Key or Attr condition object.</span>
-</span><span data-line="45"><span class="sd">    Cannot currently handle any $and or $or conditions.</span>
-</span><span data-line="46">
-</span><span data-line="47"><span class="sd">    :param attr_or_key: The name of the attribute or key</span>
-</span><span data-line="48"><span class="sd">    :param query_val: The value to filter by; either a primitive to filter for equality, or a dict containing a logical operator</span>
-</span><span data-line="49"><span class="sd">    :param is_key: Whether to create a Key condition</span>
-</span><span data-line="50">
-</span><span data-line="51"><span class="sd">    TODO: handle complex logical expressions</span>
-</span><span data-line="52"><span class="sd">    """</span>
-</span><span data-line="53">    <span class="n">filter_obj</span> <span class="o">=</span> <span class="n">Key</span><span class="p">(</span><span class="n">attr_or_key</span><span class="p">)</span> <span class="k">if</span> <span class="n">is_key</span> <span class="k">else</span> <span class="n">Attr</span><span class="p">(</span><span class="n">attr_or_key</span><span class="p">)</span>
-</span><span data-line="54">    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">query_val</span><span class="p">,</span> <span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">bool</span><span class="p">)):</span>
-</span><span data-line="55">        <span class="k">return</span> <span class="n">filter_obj</span><span class="o">.</span><span class="n">eq</span><span class="p">(</span><span class="n">query_val</span><span class="p">)</span>
-</span><span data-line="56">
-</span><span data-line="57">    <span class="n">operator</span><span class="p">,</span> <span class="n">value</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">query_val</span><span class="o">.</span><span class="n">items</span><span class="p">())[</span><span class="mi">0</span><span class="p">]</span>
+</span><span data-line="19">
+</span><span data-line="20">
+</span><span data-line="21"><span class="n">valid_key_operators</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"begins_with"</span><span class="p">,</span> <span class="s2">"between"</span><span class="p">,</span> <span class="s2">"gt"</span><span class="p">,</span> <span class="s2">"gte"</span><span class="p">,</span> <span class="s2">"lt"</span><span class="p">,</span> <span class="s2">"lte"</span><span class="p">]</span>
+</span><span data-line="22"><span class="n">valid_attr_operators</span> <span class="o">=</span> <span class="p">[</span>
+</span><span data-line="23">    <span class="o">*</span><span class="n">valid_key_operators</span><span class="p">,</span>
+</span><span data-line="24">    <span class="s2">"contains"</span><span class="p">,</span>
+</span><span data-line="25">    <span class="s2">"ne"</span><span class="p">,</span>
+</span><span data-line="26">    <span class="s2">"exists"</span><span class="p">,</span>
+</span><span data-line="27">    <span class="s2">"not_exists"</span><span class="p">,</span>
+</span><span data-line="28">    <span class="s2">"is_in"</span><span class="p">,</span>
+</span><span data-line="29">    <span class="s2">"size"</span><span class="p">,</span>
+</span><span data-line="30"><span class="p">]</span>
+</span><span data-line="31"><span class="n">valid_size_operators</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"gt"</span><span class="p">,</span> <span class="s2">"gte"</span><span class="p">,</span> <span class="s2">"lt"</span><span class="p">,</span> <span class="s2">"lte"</span><span class="p">,</span> <span class="s2">"between"</span><span class="p">,</span> <span class="s2">"is_in"</span><span class="p">]</span>
+</span><span data-line="32">
+</span><span data-line="33">
+</span><span data-line="34"><span class="k">def</span><span class="w"> </span><span class="nf">_apply_filter_method</span><span class="p">(</span><span class="n">filter_obj</span><span class="p">,</span> <span class="n">operator</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+</span><span data-line="35">    <span class="n">filter_method</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">filter_obj</span><span class="p">,</span> <span class="n">operator</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
+</span><span data-line="36">    <span class="k">if</span> <span class="n">operator</span> <span class="o">==</span> <span class="s2">"$between"</span><span class="p">:</span>
+</span><span data-line="37">        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+</span><span data-line="38">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+</span><span data-line="39">                <span class="sa">f</span><span class="s2">"Values for the $between operator must be iterables of length 2 (received </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">)."</span>
+</span><span data-line="40">            <span class="p">)</span>
+</span><span data-line="41">        <span class="k">return</span> <span class="n">filter_method</span><span class="p">(</span><span class="o">*</span><span class="n">value</span><span class="p">)</span>
+</span><span data-line="42">    <span class="k">return</span> <span class="n">filter_method</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+</span><span data-line="43">
+</span><span data-line="44">
+</span><span data-line="45"><span class="k">def</span><span class="w"> </span><span class="nf">_mk_query_from_dict_val</span><span class="p">(</span><span class="n">attr_or_key</span><span class="p">,</span> <span class="n">query_val</span><span class="p">,</span> <span class="n">is_key</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+</span><span data-line="46"><span class="w">    </span><span class="sd">"""Transforms a MongoDB-like query dict into a DynamoDB Key or Attr condition object.</span>
+</span><span data-line="47"><span class="sd">    Cannot currently handle any $and or $or conditions.</span>
+</span><span data-line="48">
+</span><span data-line="49"><span class="sd">    :param attr_or_key: The name of the attribute or key</span>
+</span><span data-line="50"><span class="sd">    :param query_val: The value to filter by; either a primitive to filter for equality, or a dict containing a logical operator</span>
+</span><span data-line="51"><span class="sd">    :param is_key: Whether to create a Key condition</span>
+</span><span data-line="52">
+</span><span data-line="53"><span class="sd">    TODO: handle complex logical expressions</span>
+</span><span data-line="54"><span class="sd">    """</span>
+</span><span data-line="55">    <span class="n">filter_obj</span> <span class="o">=</span> <span class="n">Key</span><span class="p">(</span><span class="n">attr_or_key</span><span class="p">)</span> <span class="k">if</span> <span class="n">is_key</span> <span class="k">else</span> <span class="n">Attr</span><span class="p">(</span><span class="n">attr_or_key</span><span class="p">)</span>
+</span><span data-line="56">    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">query_val</span><span class="p">,</span> <span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">bool</span><span class="p">)):</span>
+</span><span data-line="57">        <span class="k">return</span> <span class="n">filter_obj</span><span class="o">.</span><span class="n">eq</span><span class="p">(</span><span class="n">query_val</span><span class="p">)</span>
 </span><span data-line="58">
-</span><span data-line="59">    <span class="c1"># for compatibility with MongoDB syntax</span>
-</span><span data-line="60">    <span class="k">if</span> <span class="n">operator</span> <span class="o">==</span> <span class="s2">"$in"</span><span class="p">:</span>
-</span><span data-line="61">        <span class="n">operator</span> <span class="o">=</span> <span class="s2">"$is_in"</span>
-</span><span data-line="62">    <span class="n">valid_operator_list</span> <span class="o">=</span> <span class="n">valid_key_operators</span> <span class="k">if</span> <span class="n">is_key</span> <span class="k">else</span> <span class="n">valid_attr_operators</span>
-</span><span data-line="63">    <span class="k">if</span> <span class="n">operator</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">valid_operator_list</span><span class="p">:</span>
-</span><span data-line="64">        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-</span><span data-line="65">            <span class="sa">f</span><span class="s2">"Operator </span><span class="si">{</span><span class="n">operator</span><span class="si">}</span><span class="s2"> is not valid for </span><span class="si">{</span><span class="s1">'key'</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">is_key</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">'attribute'</span><span class="si">}</span><span class="s2"> queries."</span>
-</span><span data-line="66">        <span class="p">)</span>
-</span><span data-line="67">    <span class="k">if</span> <span class="n">operator</span> <span class="o">==</span> <span class="s2">"$exists"</span><span class="p">:</span>
-</span><span data-line="68">        <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
-</span><span data-line="69">            <span class="k">return</span> <span class="n">filter_obj</span><span class="o">.</span><span class="n">not_exists</span><span class="p">()</span>
-</span><span data-line="70">        <span class="k">else</span><span class="p">:</span>
-</span><span data-line="71">            <span class="k">return</span> <span class="n">filter_obj</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
-</span><span data-line="72">    <span class="k">if</span> <span class="n">operator</span> <span class="o">==</span> <span class="s2">"$size"</span><span class="p">:</span>
-</span><span data-line="73">        <span class="n">filter_obj</span> <span class="o">=</span> <span class="n">filter_obj</span><span class="o">.</span><span class="n">size</span><span class="p">()</span>
-</span><span data-line="74">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
-</span><span data-line="75">            <span class="k">return</span> <span class="n">filter_obj</span><span class="o">.</span><span class="n">eq</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
-</span><span data-line="76">        <span class="k">else</span><span class="p">:</span>
-</span><span data-line="77">            <span class="n">size_operator</span><span class="p">,</span> <span class="n">size_value</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">items</span><span class="p">())[</span><span class="mi">0</span><span class="p">]</span>
-</span><span data-line="78">            <span class="k">if</span> <span class="n">size_operator</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">valid_size_operators</span><span class="p">:</span>
-</span><span data-line="79">                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-</span><span data-line="80">                    <span class="sa">f</span><span class="s2">"Operator </span><span class="si">{</span><span class="n">size_operator</span><span class="si">}</span><span class="s2"> is not valid for size queries."</span>
-</span><span data-line="81">                <span class="p">)</span>
-</span><span data-line="82">            <span class="k">return</span> <span class="n">_apply_filter_method</span><span class="p">(</span><span class="n">filter_obj</span><span class="p">,</span> <span class="n">size_operator</span><span class="p">,</span> <span class="n">size_value</span><span class="p">)</span>
-</span><span data-line="83">    <span class="k">return</span> <span class="n">_apply_filter_method</span><span class="p">(</span><span class="n">filter_obj</span><span class="p">,</span> <span class="n">operator</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
-</span><span data-line="84">
-</span><span data-line="85">
-</span><span data-line="86"><span class="c1"># TODO unused; delete it, or use it?</span>
-</span><span data-line="87"><span class="c1"># def _mk_attr_query_from_split_string(raw_query, attr_def):</span>
-</span><span data-line="88"><span class="c1">#     """Make an attribute query from a raw query in the format [operator, *args]</span>
-</span><span data-line="89"><span class="c1">#     """</span>
-</span><span data-line="90"><span class="c1">#     operator = raw_query[0]</span>
-</span><span data-line="91"><span class="c1">#     if operator not in valid_attr_operators:</span>
-</span><span data-line="92"><span class="c1">#         raise ValueError(f'{operator} is not a valid attribute query operator.')</span>
-</span><span data-line="93"><span class="c1">#     attr_method = getattr(attr_def, operator)</span>
-</span><span data-line="94"><span class="c1">#     if operator == 'size':</span>
-</span><span data-line="95"><span class="c1">#         return _mk_attr_query_from_split_string(raw_query[1:], attr_method())</span>
-</span><span data-line="96"><span class="c1">#     if operator == 'exists' and raw_query[1] is False:</span>
-</span><span data-line="97"><span class="c1">#         operator = 'not_exists'</span>
-</span><span data-line="98"><span class="c1">#     if operator in ['exists', 'not_exists']:</span>
-</span><span data-line="99"><span class="c1">#         return attr_method()</span>
-</span><span data-line="100"><span class="c1">#     if len(raw_query) &gt; 3 or len(raw_query) &lt; 2 or \</span>
-</span><span data-line="101"><span class="c1">#             (len(raw_query) == 3 and raw_query[0] != 'between') or \</span>
-</span><span data-line="102"><span class="c1">#             (len(raw_query) == 2 and raw_query[0] == 'between'):</span>
-</span><span data-line="103"><span class="c1">#         raise ValueError(</span>
-</span><span data-line="104"><span class="c1">#             'attr_query must include an operator and one value, or the "between" operator and two values, separated by spaces')</span>
-</span><span data-line="105"><span class="c1">#     return attr_method(*raw_query[1:])</span>
-</span><span data-line="106">
-</span><span data-line="107">
+</span><span data-line="59">    <span class="n">operator</span><span class="p">,</span> <span class="n">value</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">query_val</span><span class="o">.</span><span class="n">items</span><span class="p">())[</span><span class="mi">0</span><span class="p">]</span>
+</span><span data-line="60">
+</span><span data-line="61">    <span class="c1"># for compatibility with MongoDB syntax</span>
+</span><span data-line="62">    <span class="k">if</span> <span class="n">operator</span> <span class="o">==</span> <span class="s2">"$in"</span><span class="p">:</span>
+</span><span data-line="63">        <span class="n">operator</span> <span class="o">=</span> <span class="s2">"$is_in"</span>
+</span><span data-line="64">    <span class="n">valid_operator_list</span> <span class="o">=</span> <span class="n">valid_key_operators</span> <span class="k">if</span> <span class="n">is_key</span> <span class="k">else</span> <span class="n">valid_attr_operators</span>
+</span><span data-line="65">    <span class="k">if</span> <span class="n">operator</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">valid_operator_list</span><span class="p">:</span>
+</span><span data-line="66">        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+</span><span data-line="67">            <span class="sa">f</span><span class="s2">"Operator </span><span class="si">{</span><span class="n">operator</span><span class="si">}</span><span class="s2"> is not valid for </span><span class="si">{</span><span class="s1">'key'</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">is_key</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">'attribute'</span><span class="si">}</span><span class="s2"> queries."</span>
+</span><span data-line="68">        <span class="p">)</span>
+</span><span data-line="69">    <span class="k">if</span> <span class="n">operator</span> <span class="o">==</span> <span class="s2">"$exists"</span><span class="p">:</span>
+</span><span data-line="70">        <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
+</span><span data-line="71">            <span class="k">return</span> <span class="n">filter_obj</span><span class="o">.</span><span class="n">not_exists</span><span class="p">()</span>
+</span><span data-line="72">        <span class="k">else</span><span class="p">:</span>
+</span><span data-line="73">            <span class="k">return</span> <span class="n">filter_obj</span><span class="o">.</span><span class="n">exists</span><span class="p">()</span>
+</span><span data-line="74">    <span class="k">if</span> <span class="n">operator</span> <span class="o">==</span> <span class="s2">"$size"</span><span class="p">:</span>
+</span><span data-line="75">        <span class="n">filter_obj</span> <span class="o">=</span> <span class="n">filter_obj</span><span class="o">.</span><span class="n">size</span><span class="p">()</span>
+</span><span data-line="76">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+</span><span data-line="77">            <span class="k">return</span> <span class="n">filter_obj</span><span class="o">.</span><span class="n">eq</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+</span><span data-line="78">        <span class="k">else</span><span class="p">:</span>
+</span><span data-line="79">            <span class="n">size_operator</span><span class="p">,</span> <span class="n">size_value</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">items</span><span class="p">())[</span><span class="mi">0</span><span class="p">]</span>
+</span><span data-line="80">            <span class="k">if</span> <span class="n">size_operator</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">valid_size_operators</span><span class="p">:</span>
+</span><span data-line="81">                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+</span><span data-line="82">                    <span class="sa">f</span><span class="s2">"Operator </span><span class="si">{</span><span class="n">size_operator</span><span class="si">}</span><span class="s2"> is not valid for size queries."</span>
+</span><span data-line="83">                <span class="p">)</span>
+</span><span data-line="84">            <span class="k">return</span> <span class="n">_apply_filter_method</span><span class="p">(</span><span class="n">filter_obj</span><span class="p">,</span> <span class="n">size_operator</span><span class="p">,</span> <span class="n">size_value</span><span class="p">)</span>
+</span><span data-line="85">    <span class="k">return</span> <span class="n">_apply_filter_method</span><span class="p">(</span><span class="n">filter_obj</span><span class="p">,</span> <span class="n">operator</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+</span><span data-line="86">
+</span><span data-line="87">
+</span><span data-line="88"><span class="c1"># TODO unused; delete it, or use it?</span>
+</span><span data-line="89"><span class="c1"># def _mk_attr_query_from_split_string(raw_query, attr_def):</span>
+</span><span data-line="90"><span class="c1">#     """Make an attribute query from a raw query in the format [operator, *args]</span>
+</span><span data-line="91"><span class="c1">#     """</span>
+</span><span data-line="92"><span class="c1">#     operator = raw_query[0]</span>
+</span><span data-line="93"><span class="c1">#     if operator not in valid_attr_operators:</span>
+</span><span data-line="94"><span class="c1">#         raise ValueError(f'{operator} is not a valid attribute query operator.')</span>
+</span><span data-line="95"><span class="c1">#     attr_method = getattr(attr_def, operator)</span>
+</span><span data-line="96"><span class="c1">#     if operator == 'size':</span>
+</span><span data-line="97"><span class="c1">#         return _mk_attr_query_from_split_string(raw_query[1:], attr_method())</span>
+</span><span data-line="98"><span class="c1">#     if operator == 'exists' and raw_query[1] is False:</span>
+</span><span data-line="99"><span class="c1">#         operator = 'not_exists'</span>
+</span><span data-line="100"><span class="c1">#     if operator in ['exists', 'not_exists']:</span>
+</span><span data-line="101"><span class="c1">#         return attr_method()</span>
+</span><span data-line="102"><span class="c1">#     if len(raw_query) &gt; 3 or len(raw_query) &lt; 2 or \</span>
+</span><span data-line="103"><span class="c1">#             (len(raw_query) == 3 and raw_query[0] != 'between') or \</span>
+</span><span data-line="104"><span class="c1">#             (len(raw_query) == 2 and raw_query[0] == 'between'):</span>
+</span><span data-line="105"><span class="c1">#         raise ValueError(</span>
+</span><span data-line="106"><span class="c1">#             'attr_query must include an operator and one value, or the "between" operator and two values, separated by spaces')</span>
+</span><span data-line="107"><span class="c1">#     return attr_method(*raw_query[1:])</span>
+</span><span data-line="108">
+</span><span data-line="109">
 <div class="viewcode-block" id="DynamoDbQueryReader">
 <a class="viewcode-back" href="../../_autosummary/dynamodol.partition_query.html#dynamodol.partition_query.DynamoDbQueryReader">[docs]</a>
-</span><span data-line="108"><span class="nd">@dataclass</span>
-</span><span data-line="109"><span class="k">class</span><span class="w"> </span><span class="nc">DynamoDbQueryReader</span><span class="p">(</span><span class="n">DynamoDbBaseReader</span><span class="p">):</span>
-</span><span data-line="110"><span class="w">    </span><span class="sd">"""Reads from a filtered subset of a DynamoDB table.</span>
-</span><span data-line="111">
-</span><span data-line="112"><span class="sd">    Every query must include the partition key (the first key field).</span>
+</span><span data-line="110"><span class="nd">@dataclass</span>
+</span><span data-line="111"><span class="k">class</span><span class="w"> </span><span class="nc">DynamoDbQueryReader</span><span class="p">(</span><span class="n">DynamoDbBaseReader</span><span class="p">):</span>
+</span><span data-line="112"><span class="w">    </span><span class="sd">"""Reads from a filtered subset of a DynamoDB table.</span>
 </span><span data-line="113">
-</span><span data-line="114"><span class="sd">    &gt;&gt;&gt; from dynamodol.base import load_sample_data</span>
-</span><span data-line="115"><span class="sd">    &gt;&gt;&gt; load_sample_data()</span>
-</span><span data-line="116">
-</span><span data-line="117"><span class="sd">    Querying on the partition key and sort key</span>
-</span><span data-line="118"><span class="sd">    &gt;&gt;&gt; query_reader = DynamoDbQueryReader(query={'partitionkey': 'part1', 'sortkey': '04-03'})</span>
-</span><span data-line="119"><span class="sd">    &gt;&gt;&gt; list(query_reader)</span>
-</span><span data-line="120"><span class="sd">    [('part1', '04-03')]</span>
-</span><span data-line="121">
-</span><span data-line="122"><span class="sd">    Querying on a partition and arbitrary attribute key.</span>
-</span><span data-line="123"><span class="sd">    &gt;&gt;&gt; query_reader = DynamoDbQueryReader(query={'partitionkey': 'part1', 'data': 'a'})</span>
-</span><span data-line="124"><span class="sd">    &gt;&gt;&gt; list(query_reader)</span>
-</span><span data-line="125"><span class="sd">    [('part1', '01-01'), ('part1', '01-04')]</span>
-</span><span data-line="126"><span class="sd">    &gt;&gt;&gt; query_reader[('part1', '01-04')]</span>
-</span><span data-line="127">
-</span><span data-line="128"><span class="sd">    A more complex query. Note that numerical values and numerical comparisons are not yet supported.</span>
-</span><span data-line="129"><span class="sd">    &gt;&gt;&gt; query = {'partitionkey': 'part2', 'sortkey': {'$gt': '02-01'}, 'moredata': {'$contains': 'r'}}</span>
-</span><span data-line="130"><span class="sd">    &gt;&gt;&gt; query_reader = DynamoDbQueryReader(query=query)</span>
-</span><span data-line="131"><span class="sd">    &gt;&gt;&gt; list(query_reader)</span>
-</span><span data-line="132"><span class="sd">    [('part2', '03-02'), ('part2', '04-03')]</span>
-</span><span data-line="133"><span class="sd">    """</span>
-</span><span data-line="134">
-</span><span data-line="135">    <span class="n">query</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
-</span><span data-line="136">    <span class="n">key_query</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
-</span><span data-line="137">    <span class="n">attr_query</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
-</span><span data-line="138">
-</span><span data-line="139">    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-</span><span data-line="140">        <span class="n">DynamoDbBaseReader</span><span class="o">.</span><span class="n">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-</span><span data-line="141">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">query</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
-</span><span data-line="142">            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">key_query</span><span class="p">:</span>
-</span><span data-line="143">                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">partition_key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">query</span><span class="p">:</span>
-</span><span data-line="144">                    <span class="bp">self</span><span class="o">.</span><span class="n">key_query</span> <span class="o">=</span> <span class="n">Key</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">partition_key</span><span class="p">)</span><span class="o">.</span><span class="n">eq</span><span class="p">(</span>
-</span><span data-line="145">                        <span class="bp">self</span><span class="o">.</span><span class="n">query</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">partition_key</span><span class="p">]</span>
-</span><span data-line="146">                    <span class="p">)</span>
-</span><span data-line="147">                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sort_key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">query</span><span class="p">:</span>
-</span><span data-line="148">                        <span class="bp">self</span><span class="o">.</span><span class="n">key_query</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">key_query</span> <span class="o">&amp;</span> <span class="n">_mk_query_from_dict_val</span><span class="p">(</span>
-</span><span data-line="149">                            <span class="bp">self</span><span class="o">.</span><span class="n">sort_key</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">query</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">sort_key</span><span class="p">],</span> <span class="n">is_key</span><span class="o">=</span><span class="kc">True</span>
-</span><span data-line="150">                        <span class="p">)</span>
-</span><span data-line="151">                <span class="k">else</span><span class="p">:</span>
-</span><span data-line="152">                    <span class="bp">self</span><span class="o">.</span><span class="n">key_query</span> <span class="o">=</span> <span class="kc">None</span>
-</span><span data-line="153">            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">attr_query</span><span class="p">:</span>
-</span><span data-line="154">                <span class="k">for</span> <span class="n">attr</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">query</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-</span><span data-line="155">                    <span class="k">if</span> <span class="n">attr</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">partition_key</span> <span class="ow">or</span> <span class="p">(</span>
-</span><span data-line="156">                        <span class="bp">self</span><span class="o">.</span><span class="n">key_query</span> <span class="ow">and</span> <span class="n">attr</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">sort_key</span>
-</span><span data-line="157">                    <span class="p">):</span>
-</span><span data-line="158">                        <span class="k">continue</span>
-</span><span data-line="159">                    <span class="k">if</span> <span class="n">attr</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">key_fields</span><span class="p">:</span>
-</span><span data-line="160">                        <span class="n">new_query</span> <span class="o">=</span> <span class="n">_mk_query_from_dict_val</span><span class="p">(</span><span class="n">attr</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span>
-</span><span data-line="161">                        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">attr_query</span><span class="p">:</span>
-</span><span data-line="162">                            <span class="bp">self</span><span class="o">.</span><span class="n">attr_query</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">attr_query</span> <span class="o">&amp;</span> <span class="n">new_query</span>
-</span><span data-line="163">                        <span class="k">else</span><span class="p">:</span>
-</span><span data-line="164">                            <span class="bp">self</span><span class="o">.</span><span class="n">attr_query</span> <span class="o">=</span> <span class="n">new_query</span>
-</span><span data-line="165">
-</span><span data-line="166">    <span class="nd">@property</span>
-</span><span data-line="167">    <span class="k">def</span><span class="w"> </span><span class="nf">filter_kwargs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-</span><span data-line="168">        <span class="n">result</span> <span class="o">=</span> <span class="p">{}</span>
-</span><span data-line="169">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">key_query</span><span class="p">:</span>
-</span><span data-line="170">            <span class="n">result</span><span class="p">[</span><span class="s2">"KeyConditionExpression"</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">key_query</span>
-</span><span data-line="171">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">attr_query</span><span class="p">:</span>
-</span><span data-line="172">            <span class="n">result</span><span class="p">[</span><span class="s2">"FilterExpression"</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">attr_query</span>
-</span><span data-line="173">        <span class="k">return</span> <span class="n">result</span>
-</span><span data-line="174">
-</span><span data-line="175">    <span class="k">def</span><span class="w"> </span><span class="nf">iter_items</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-</span><span data-line="176">        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="o">.</span><span class="n">query</span><span class="p">(</span>
-</span><span data-line="177">            <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">filter_kwargs</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_keys_values_expression</span>
-</span><span data-line="178">        <span class="p">)</span>
-</span><span data-line="179">        <span class="k">yield from</span> <span class="p">(</span>
-</span><span data-line="180">            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">format_get_key</span><span class="p">(</span><span class="n">d</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">format_get_item</span><span class="p">(</span><span class="n">d</span><span class="p">))</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">response</span><span class="p">[</span><span class="s2">"Items"</span><span class="p">]</span>
-</span><span data-line="181">        <span class="p">)</span>
-</span><span data-line="182">
-</span><span data-line="183">    <span class="k">def</span><span class="w"> </span><span class="nf">iter_values</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-</span><span data-line="184">        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">filter_kwargs</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_values_expression</span><span class="p">)</span>
-</span><span data-line="185">        <span class="k">yield from</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">format_get_item</span><span class="p">(</span><span class="n">d</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">response</span><span class="p">[</span><span class="s2">"Items"</span><span class="p">])</span>
-</span><span data-line="186">
-</span><span data-line="187">    <span class="k">def</span><span class="w"> </span><span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-</span><span data-line="188">        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">filter_kwargs</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_keys_expression</span><span class="p">)</span>
-</span><span data-line="189">        <span class="k">yield from</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">format_get_key</span><span class="p">(</span><span class="n">d</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">response</span><span class="p">[</span><span class="s2">"Items"</span><span class="p">])</span>
-</span><span data-line="190">
-</span><span data-line="191">    <span class="k">def</span><span class="w"> </span><span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-</span><span data-line="192">        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">filter_kwargs</span><span class="p">,</span> <span class="n">Select</span><span class="o">=</span><span class="s2">"COUNT"</span><span class="p">)</span>
-</span><span data-line="193">        <span class="k">return</span> <span class="n">response</span><span class="p">[</span><span class="s2">"Count"</span><span class="p">]</span></div>
+</span><span data-line="114"><span class="sd">    Every query must include the partition key (the first key field).</span>
+</span><span data-line="115">
+</span><span data-line="116"><span class="sd">    &gt;&gt;&gt; from dynamodol.base import load_sample_data</span>
+</span><span data-line="117"><span class="sd">    &gt;&gt;&gt; load_sample_data()</span>
+</span><span data-line="118">
+</span><span data-line="119"><span class="sd">    Querying on the partition key and sort key</span>
+</span><span data-line="120"><span class="sd">    &gt;&gt;&gt; query_reader = DynamoDbQueryReader(query={'partitionkey': 'part1', 'sortkey': '04-03'})</span>
+</span><span data-line="121"><span class="sd">    &gt;&gt;&gt; list(query_reader)</span>
+</span><span data-line="122"><span class="sd">    [('part1', '04-03')]</span>
+</span><span data-line="123">
+</span><span data-line="124"><span class="sd">    Querying on a partition and arbitrary attribute key.</span>
+</span><span data-line="125"><span class="sd">    &gt;&gt;&gt; query_reader = DynamoDbQueryReader(query={'partitionkey': 'part1', 'data': 'a'})</span>
+</span><span data-line="126"><span class="sd">    &gt;&gt;&gt; list(query_reader)</span>
+</span><span data-line="127"><span class="sd">    [('part1', '01-01'), ('part1', '01-04')]</span>
+</span><span data-line="128"><span class="sd">    &gt;&gt;&gt; query_reader[('part1', '01-04')]</span>
+</span><span data-line="129">
+</span><span data-line="130"><span class="sd">    A more complex query. Note that numerical values and numerical comparisons are not yet supported.</span>
+</span><span data-line="131"><span class="sd">    &gt;&gt;&gt; query = {'partitionkey': 'part2', 'sortkey': {'$gt': '02-01'}, 'moredata': {'$contains': 'r'}}</span>
+</span><span data-line="132"><span class="sd">    &gt;&gt;&gt; query_reader = DynamoDbQueryReader(query=query)</span>
+</span><span data-line="133"><span class="sd">    &gt;&gt;&gt; list(query_reader)</span>
+</span><span data-line="134"><span class="sd">    [('part2', '03-02'), ('part2', '04-03')]</span>
+</span><span data-line="135"><span class="sd">    """</span>
+</span><span data-line="136">
+</span><span data-line="137">    <span class="n">query</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+</span><span data-line="138">    <span class="n">key_query</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+</span><span data-line="139">    <span class="n">attr_query</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+</span><span data-line="140">
+</span><span data-line="141">    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+</span><span data-line="142">        <span class="n">DynamoDbBaseReader</span><span class="o">.</span><span class="n">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+</span><span data-line="143">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">query</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+</span><span data-line="144">            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">key_query</span><span class="p">:</span>
+</span><span data-line="145">                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">partition_key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">query</span><span class="p">:</span>
+</span><span data-line="146">                    <span class="bp">self</span><span class="o">.</span><span class="n">key_query</span> <span class="o">=</span> <span class="n">Key</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">partition_key</span><span class="p">)</span><span class="o">.</span><span class="n">eq</span><span class="p">(</span>
+</span><span data-line="147">                        <span class="bp">self</span><span class="o">.</span><span class="n">query</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">partition_key</span><span class="p">]</span>
+</span><span data-line="148">                    <span class="p">)</span>
+</span><span data-line="149">                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sort_key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">query</span><span class="p">:</span>
+</span><span data-line="150">                        <span class="bp">self</span><span class="o">.</span><span class="n">key_query</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">key_query</span> <span class="o">&amp;</span> <span class="n">_mk_query_from_dict_val</span><span class="p">(</span>
+</span><span data-line="151">                            <span class="bp">self</span><span class="o">.</span><span class="n">sort_key</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">query</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">sort_key</span><span class="p">],</span> <span class="n">is_key</span><span class="o">=</span><span class="kc">True</span>
+</span><span data-line="152">                        <span class="p">)</span>
+</span><span data-line="153">                <span class="k">else</span><span class="p">:</span>
+</span><span data-line="154">                    <span class="bp">self</span><span class="o">.</span><span class="n">key_query</span> <span class="o">=</span> <span class="kc">None</span>
+</span><span data-line="155">            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">attr_query</span><span class="p">:</span>
+</span><span data-line="156">                <span class="k">for</span> <span class="n">attr</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">query</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+</span><span data-line="157">                    <span class="k">if</span> <span class="n">attr</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">partition_key</span> <span class="ow">or</span> <span class="p">(</span>
+</span><span data-line="158">                        <span class="bp">self</span><span class="o">.</span><span class="n">key_query</span> <span class="ow">and</span> <span class="n">attr</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">sort_key</span>
+</span><span data-line="159">                    <span class="p">):</span>
+</span><span data-line="160">                        <span class="k">continue</span>
+</span><span data-line="161">                    <span class="k">if</span> <span class="n">attr</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">key_fields</span><span class="p">:</span>
+</span><span data-line="162">                        <span class="n">new_query</span> <span class="o">=</span> <span class="n">_mk_query_from_dict_val</span><span class="p">(</span><span class="n">attr</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span>
+</span><span data-line="163">                        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">attr_query</span><span class="p">:</span>
+</span><span data-line="164">                            <span class="bp">self</span><span class="o">.</span><span class="n">attr_query</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">attr_query</span> <span class="o">&amp;</span> <span class="n">new_query</span>
+</span><span data-line="165">                        <span class="k">else</span><span class="p">:</span>
+</span><span data-line="166">                            <span class="bp">self</span><span class="o">.</span><span class="n">attr_query</span> <span class="o">=</span> <span class="n">new_query</span>
+</span><span data-line="167">
+</span><span data-line="168">    <span class="nd">@property</span>
+</span><span data-line="169">    <span class="k">def</span><span class="w"> </span><span class="nf">filter_kwargs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+</span><span data-line="170">        <span class="n">result</span> <span class="o">=</span> <span class="p">{}</span>
+</span><span data-line="171">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">key_query</span><span class="p">:</span>
+</span><span data-line="172">            <span class="n">result</span><span class="p">[</span><span class="s2">"KeyConditionExpression"</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">key_query</span>
+</span><span data-line="173">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">attr_query</span><span class="p">:</span>
+</span><span data-line="174">            <span class="n">result</span><span class="p">[</span><span class="s2">"FilterExpression"</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">attr_query</span>
+</span><span data-line="175">        <span class="k">return</span> <span class="n">result</span>
+</span><span data-line="176">
+</span><span data-line="177">    <span class="k">def</span><span class="w"> </span><span class="nf">iter_items</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+</span><span data-line="178">        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="o">.</span><span class="n">query</span><span class="p">(</span>
+</span><span data-line="179">            <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">filter_kwargs</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_keys_values_expression</span>
+</span><span data-line="180">        <span class="p">)</span>
+</span><span data-line="181">        <span class="k">yield from</span> <span class="p">(</span>
+</span><span data-line="182">            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">format_get_key</span><span class="p">(</span><span class="n">d</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">format_get_item</span><span class="p">(</span><span class="n">d</span><span class="p">))</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">response</span><span class="p">[</span><span class="s2">"Items"</span><span class="p">]</span>
+</span><span data-line="183">        <span class="p">)</span>
+</span><span data-line="184">
+</span><span data-line="185">    <span class="k">def</span><span class="w"> </span><span class="nf">iter_values</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+</span><span data-line="186">        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">filter_kwargs</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_values_expression</span><span class="p">)</span>
+</span><span data-line="187">        <span class="k">yield from</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">format_get_item</span><span class="p">(</span><span class="n">d</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">response</span><span class="p">[</span><span class="s2">"Items"</span><span class="p">])</span>
+</span><span data-line="188">
+</span><span data-line="189">    <span class="k">def</span><span class="w"> </span><span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+</span><span data-line="190">        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">filter_kwargs</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_keys_expression</span><span class="p">)</span>
+</span><span data-line="191">        <span class="k">yield from</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">format_get_key</span><span class="p">(</span><span class="n">d</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">response</span><span class="p">[</span><span class="s2">"Items"</span><span class="p">])</span>
+</span><span data-line="192">
+</span><span data-line="193">    <span class="k">def</span><span class="w"> </span><span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+</span><span data-line="194">        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">filter_kwargs</span><span class="p">,</span> <span class="n">Select</span><span class="o">=</span><span class="s2">"COUNT"</span><span class="p">)</span>
+</span><span data-line="195">        <span class="k">return</span> <span class="n">response</span><span class="p">[</span><span class="s2">"Count"</span><span class="p">]</span></div>
 
-</span><span data-line="194">
-</span><span data-line="195">
+</span><span data-line="196">
+</span><span data-line="197">
 <div class="viewcode-block" id="DynamoDbPartitionReader">
 <a class="viewcode-back" href="../../_autosummary/dynamodol.partition_query.html#dynamodol.partition_query.DynamoDbPartitionReader">[docs]</a>
-</span><span data-line="196"><span class="nd">@dataclass</span>
-</span><span data-line="197"><span class="k">class</span><span class="w"> </span><span class="nc">DynamoDbPartitionReader</span><span class="p">(</span><span class="n">DynamoDbQueryReader</span><span class="p">):</span>
-</span><span data-line="198"><span class="w">    </span><span class="sd">"""Reads from a partition of a DynamoDB table.</span>
-</span><span data-line="199">
-</span><span data-line="200"><span class="sd">    &gt;&gt;&gt; from dynamodol.base import load_sample_data</span>
-</span><span data-line="201"><span class="sd">    &gt;&gt;&gt; load_sample_data()</span>
-</span><span data-line="202"><span class="sd">    &gt;&gt;&gt; partition_reader = DynamoDbPartitionReader(partition='part1')</span>
-</span><span data-line="203"><span class="sd">    &gt;&gt;&gt; list(partition_reader)</span>
-</span><span data-line="204"><span class="sd">    [('part1', '01-01'),</span>
-</span><span data-line="205"><span class="sd">     ('part1', '01-02'),</span>
-</span><span data-line="206"><span class="sd">     ('part1', '01-03'),</span>
-</span><span data-line="207"><span class="sd">     ('part1', '01-04'),</span>
-</span><span data-line="208"><span class="sd">     ('part1', '02-01'),</span>
-</span><span data-line="209"><span class="sd">     ('part1', '03-02'),</span>
-</span><span data-line="210"><span class="sd">     ('part1', '04-03'),</span>
-</span><span data-line="211"><span class="sd">     ('part1', 'sort2')]</span>
-</span><span data-line="212"><span class="sd">    &gt;&gt;&gt; partition_reader[('part1', '01-01')]</span>
-</span><span data-line="213"><span class="sd">    """</span>
-</span><span data-line="214">
-</span><span data-line="215">    <span class="n">partition</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+</span><span data-line="198"><span class="nd">@dataclass</span>
+</span><span data-line="199"><span class="k">class</span><span class="w"> </span><span class="nc">DynamoDbPartitionReader</span><span class="p">(</span><span class="n">DynamoDbQueryReader</span><span class="p">):</span>
+</span><span data-line="200"><span class="w">    </span><span class="sd">"""Reads from a partition of a DynamoDB table.</span>
+</span><span data-line="201">
+</span><span data-line="202"><span class="sd">    &gt;&gt;&gt; from dynamodol.base import load_sample_data</span>
+</span><span data-line="203"><span class="sd">    &gt;&gt;&gt; load_sample_data()</span>
+</span><span data-line="204"><span class="sd">    &gt;&gt;&gt; partition_reader = DynamoDbPartitionReader(partition='part1')</span>
+</span><span data-line="205"><span class="sd">    &gt;&gt;&gt; list(partition_reader)</span>
+</span><span data-line="206"><span class="sd">    [('part1', '01-01'),</span>
+</span><span data-line="207"><span class="sd">     ('part1', '01-02'),</span>
+</span><span data-line="208"><span class="sd">     ('part1', '01-03'),</span>
+</span><span data-line="209"><span class="sd">     ('part1', '01-04'),</span>
+</span><span data-line="210"><span class="sd">     ('part1', '02-01'),</span>
+</span><span data-line="211"><span class="sd">     ('part1', '03-02'),</span>
+</span><span data-line="212"><span class="sd">     ('part1', '04-03'),</span>
+</span><span data-line="213"><span class="sd">     ('part1', 'sort2')]</span>
+</span><span data-line="214"><span class="sd">    &gt;&gt;&gt; partition_reader[('part1', '01-01')]</span>
+</span><span data-line="215"><span class="sd">    """</span>
 </span><span data-line="216">
-</span><span data-line="217">    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-</span><span data-line="218">        <span class="n">DynamoDbQueryReader</span><span class="o">.</span><span class="n">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-</span><span data-line="219">        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">partition</span><span class="p">:</span>
-</span><span data-line="220">            <span class="bp">self</span><span class="o">.</span><span class="n">partition</span> <span class="o">=</span> <span class="n">db_defaults</span><span class="p">[</span><span class="s2">"partition"</span><span class="p">]</span>
-</span><span data-line="221">        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">key_fields</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
-</span><span data-line="222">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-</span><span data-line="223">                <span class="s2">"DynamoDbPartitionReader must have a composite key of length 2 in the format (partition_key, sort_key)"</span>
-</span><span data-line="224">            <span class="p">)</span>
-</span><span data-line="225">        <span class="bp">self</span><span class="o">.</span><span class="n">key_query</span> <span class="o">=</span> <span class="n">Key</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">partition_key</span><span class="p">)</span><span class="o">.</span><span class="n">eq</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">partition</span><span class="p">)</span>
-</span><span data-line="226">
+</span><span data-line="217">    <span class="n">partition</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+</span><span data-line="218">
+</span><span data-line="219">    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+</span><span data-line="220">        <span class="n">DynamoDbQueryReader</span><span class="o">.</span><span class="n">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+</span><span data-line="221">        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">partition</span><span class="p">:</span>
+</span><span data-line="222">            <span class="bp">self</span><span class="o">.</span><span class="n">partition</span> <span class="o">=</span> <span class="n">db_defaults</span><span class="p">[</span><span class="s2">"partition"</span><span class="p">]</span>
+</span><span data-line="223">        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">key_fields</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+</span><span data-line="224">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+</span><span data-line="225">                <span class="s2">"DynamoDbPartitionReader must have a composite key of length 2 in the format (partition_key, sort_key)"</span>
+</span><span data-line="226">            <span class="p">)</span>
+</span><span data-line="227">        <span class="bp">self</span><span class="o">.</span><span class="n">key_query</span> <span class="o">=</span> <span class="n">Key</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">partition_key</span><span class="p">)</span><span class="o">.</span><span class="n">eq</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">partition</span><span class="p">)</span>
+</span><span data-line="228">
 <div class="viewcode-block" id="DynamoDbPartitionReader.format_get_key">
 <a class="viewcode-back" href="../../_autosummary/dynamodol.partition_query.html#dynamodol.partition_query.DynamoDbPartitionReader.format_get_key">[docs]</a>
-</span><span data-line="227">    <span class="k">def</span><span class="w"> </span><span class="nf">format_get_key</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">):</span>
-</span><span data-line="228"><span class="w">        </span><span class="sd">"""TODO: replace with _id_of_key, etc."""</span>
-</span><span data-line="229">        <span class="k">return</span> <span class="n">item</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">sort_key</span><span class="p">]</span></div>
+</span><span data-line="229">    <span class="k">def</span><span class="w"> </span><span class="nf">format_get_key</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">):</span>
+</span><span data-line="230"><span class="w">        </span><span class="sd">"""TODO: replace with _id_of_key, etc."""</span>
+</span><span data-line="231">        <span class="k">return</span> <span class="n">item</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">sort_key</span><span class="p">]</span></div>
 
-</span><span data-line="230">
-</span><span data-line="231">    <span class="k">def</span><span class="w"> </span><span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">):</span>
-</span><span data-line="232">        <span class="k">try</span><span class="p">:</span>
-</span><span data-line="233">            <span class="n">key</span> <span class="o">=</span> <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">partition_key</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">partition</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">sort_key</span><span class="p">:</span> <span class="n">k</span><span class="p">}</span>
-</span><span data-line="234">            <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="o">.</span><span class="n">get_item</span><span class="p">(</span><span class="n">Key</span><span class="o">=</span><span class="n">key</span><span class="p">)</span>
-</span><span data-line="235">            <span class="n">item</span> <span class="o">=</span> <span class="n">response</span><span class="p">[</span><span class="s2">"Item"</span><span class="p">]</span>
-</span><span data-line="236">            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">format_get_item</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
-</span><span data-line="237">        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-</span><span data-line="238">            <span class="k">raise</span> <span class="n">NoSuchKeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Key not found: </span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span></div>
+</span><span data-line="232">
+</span><span data-line="233">    <span class="k">def</span><span class="w"> </span><span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">):</span>
+</span><span data-line="234">        <span class="n">key</span> <span class="o">=</span> <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">partition_key</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">partition</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">sort_key</span><span class="p">:</span> <span class="n">k</span><span class="p">}</span>
+</span><span data-line="235">        <span class="n">item</span> <span class="o">=</span> <span class="n">get_item_or_raise</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">error_cls</span><span class="o">=</span><span class="n">NoSuchKeyError</span><span class="p">)</span>
+</span><span data-line="236">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">format_get_item</span><span class="p">(</span><span class="n">item</span><span class="p">)</span></div>
 
-</span><span data-line="239">
-</span><span data-line="240">
+</span><span data-line="237">
+</span><span data-line="238">
 <div class="viewcode-block" id="DynamoDbPrefixReader">
 <a class="viewcode-back" href="../../_autosummary/dynamodol.partition_query.html#dynamodol.partition_query.DynamoDbPrefixReader">[docs]</a>
-</span><span data-line="241"><span class="nd">@dataclass</span>
-</span><span data-line="242"><span class="k">class</span><span class="w"> </span><span class="nc">DynamoDbPrefixReader</span><span class="p">(</span><span class="n">DynamoDbPartitionReader</span><span class="p">):</span>
-</span><span data-line="243"><span class="w">    </span><span class="sd">"""Reads from a partition of a DynamoDB table, with the sort key filtered by a prefix.</span>
-</span><span data-line="244">
-</span><span data-line="245"><span class="sd">    &gt;&gt;&gt; from dynamodol.base import load_sample_data</span>
-</span><span data-line="246"><span class="sd">    &gt;&gt;&gt; load_sample_data()</span>
-</span><span data-line="247"><span class="sd">    &gt;&gt;&gt; prefix_reader = DynamoDbPrefixReader(key_fields=('partitionkey', 'sortkey'), table_name='sorted_table', partition='part1', prefix='01')</span>
-</span><span data-line="248"><span class="sd">    &gt;&gt;&gt; list(prefix_reader)</span>
-</span><span data-line="249"><span class="sd">    [('part1', '01-01'),</span>
-</span><span data-line="250"><span class="sd">     ('part1', '01-02'),</span>
-</span><span data-line="251"><span class="sd">     ('part1', '01-03'),</span>
-</span><span data-line="252"><span class="sd">     ('part1', '01-04')]</span>
-</span><span data-line="253"><span class="sd">    """</span>
+</span><span data-line="239"><span class="nd">@dataclass</span>
+</span><span data-line="240"><span class="k">class</span><span class="w"> </span><span class="nc">DynamoDbPrefixReader</span><span class="p">(</span><span class="n">DynamoDbPartitionReader</span><span class="p">):</span>
+</span><span data-line="241"><span class="w">    </span><span class="sd">"""Reads from a partition of a DynamoDB table, with the sort key filtered by a prefix.</span>
+</span><span data-line="242">
+</span><span data-line="243"><span class="sd">    &gt;&gt;&gt; from dynamodol.base import load_sample_data</span>
+</span><span data-line="244"><span class="sd">    &gt;&gt;&gt; load_sample_data()</span>
+</span><span data-line="245"><span class="sd">    &gt;&gt;&gt; prefix_reader = DynamoDbPrefixReader(key_fields=('partitionkey', 'sortkey'), table_name='sorted_table', partition='part1', prefix='01')</span>
+</span><span data-line="246"><span class="sd">    &gt;&gt;&gt; list(prefix_reader)</span>
+</span><span data-line="247"><span class="sd">    [('part1', '01-01'),</span>
+</span><span data-line="248"><span class="sd">     ('part1', '01-02'),</span>
+</span><span data-line="249"><span class="sd">     ('part1', '01-03'),</span>
+</span><span data-line="250"><span class="sd">     ('part1', '01-04')]</span>
+</span><span data-line="251"><span class="sd">    """</span>
+</span><span data-line="252">
+</span><span data-line="253">    <span class="n">prefix</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">""</span><span class="p">)</span>
 </span><span data-line="254">
-</span><span data-line="255">    <span class="n">prefix</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">""</span><span class="p">)</span>
-</span><span data-line="256">
-</span><span data-line="257">    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-</span><span data-line="258">        <span class="n">DynamoDbPartitionReader</span><span class="o">.</span><span class="n">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-</span><span data-line="259">        <span class="bp">self</span><span class="o">.</span><span class="n">key_query</span> <span class="o">=</span> <span class="n">Key</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">partition_key</span><span class="p">)</span><span class="o">.</span><span class="n">eq</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">partition</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">Key</span><span class="p">(</span>
-</span><span data-line="260">            <span class="bp">self</span><span class="o">.</span><span class="n">sort_key</span>
-</span><span data-line="261">        <span class="p">)</span><span class="o">.</span><span class="n">begins_with</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">prefix</span><span class="p">)</span>
-</span><span data-line="262">
+</span><span data-line="255">    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+</span><span data-line="256">        <span class="n">DynamoDbPartitionReader</span><span class="o">.</span><span class="n">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+</span><span data-line="257">        <span class="bp">self</span><span class="o">.</span><span class="n">key_query</span> <span class="o">=</span> <span class="n">Key</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">partition_key</span><span class="p">)</span><span class="o">.</span><span class="n">eq</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">partition</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">Key</span><span class="p">(</span>
+</span><span data-line="258">            <span class="bp">self</span><span class="o">.</span><span class="n">sort_key</span>
+</span><span data-line="259">        <span class="p">)</span><span class="o">.</span><span class="n">begins_with</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">prefix</span><span class="p">)</span>
+</span><span data-line="260">
 <div class="viewcode-block" id="DynamoDbPrefixReader.format_get_key">
 <a class="viewcode-back" href="../../_autosummary/dynamodol.partition_query.html#dynamodol.partition_query.DynamoDbPrefixReader.format_get_key">[docs]</a>
-</span><span data-line="263">    <span class="k">def</span><span class="w"> </span><span class="nf">format_get_key</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">):</span>
-</span><span data-line="264"><span class="w">        </span><span class="sd">"""TODO: replace with _id_of_key, etc."""</span>
-</span><span data-line="265">        <span class="k">return</span> <span class="n">item</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">sort_key</span><span class="p">][</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">prefix</span><span class="p">)</span> <span class="p">:]</span></div>
+</span><span data-line="261">    <span class="k">def</span><span class="w"> </span><span class="nf">format_get_key</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">):</span>
+</span><span data-line="262"><span class="w">        </span><span class="sd">"""TODO: replace with _id_of_key, etc."""</span>
+</span><span data-line="263">        <span class="k">return</span> <span class="n">item</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">sort_key</span><span class="p">][</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">prefix</span><span class="p">)</span> <span class="p">:]</span></div>
 
-</span><span data-line="266">
-</span><span data-line="267">    <span class="k">def</span><span class="w"> </span><span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">):</span>
-</span><span data-line="268">        <span class="k">try</span><span class="p">:</span>
-</span><span data-line="269">            <span class="n">key</span> <span class="o">=</span> <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">partition_key</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">partition</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">sort_key</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">prefix</span> <span class="o">+</span> <span class="n">k</span><span class="p">}</span>
-</span><span data-line="270">            <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="o">.</span><span class="n">get_item</span><span class="p">(</span><span class="n">Key</span><span class="o">=</span><span class="n">key</span><span class="p">)</span>
-</span><span data-line="271">            <span class="n">item</span> <span class="o">=</span> <span class="n">response</span><span class="p">[</span><span class="s2">"Item"</span><span class="p">]</span>
-</span><span data-line="272">            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">format_get_item</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
-</span><span data-line="273">        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-</span><span data-line="274">            <span class="k">raise</span> <span class="n">NoSuchKeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Key not found: </span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span></div>
+</span><span data-line="264">
+</span><span data-line="265">    <span class="k">def</span><span class="w"> </span><span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">):</span>
+</span><span data-line="266">        <span class="k">try</span><span class="p">:</span>
+</span><span data-line="267">            <span class="n">key</span> <span class="o">=</span> <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">partition_key</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">partition</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">sort_key</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">prefix</span> <span class="o">+</span> <span class="n">k</span><span class="p">}</span>
+</span><span data-line="268">        <span class="k">except</span> <span class="ne">TypeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>  <span class="c1"># a non-str key cannot carry the prefix</span>
+</span><span data-line="269">            <span class="k">raise</span> <span class="n">NoSuchKeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Key not found: </span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+</span><span data-line="270">        <span class="n">item</span> <span class="o">=</span> <span class="n">get_item_or_raise</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">error_cls</span><span class="o">=</span><span class="n">NoSuchKeyError</span><span class="p">)</span>
+</span><span data-line="271">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">format_get_item</span><span class="p">(</span><span class="n">item</span><span class="p">)</span></div>
 
-</span><span data-line="275">
-</span><span data-line="276">
+</span><span data-line="272">
+</span><span data-line="273">
 <div class="viewcode-block" id="DynamoDbPartitionPersister">
 <a class="viewcode-back" href="../../_autosummary/dynamodol.partition_query.html#dynamodol.partition_query.DynamoDbPartitionPersister">[docs]</a>
-</span><span data-line="277"><span class="k">class</span><span class="w"> </span><span class="nc">DynamoDbPartitionPersister</span><span class="p">(</span><span class="n">DynamoDbBasePersister</span><span class="p">,</span> <span class="n">DynamoDbPartitionReader</span><span class="p">):</span>
-</span><span data-line="278">    <span class="k">def</span><span class="w"> </span><span class="fm">__setitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
-</span><span data-line="279">        <span class="n">key</span> <span class="o">=</span> <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">partition_key</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">partition</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">sort_key</span><span class="p">:</span> <span class="n">k</span><span class="p">}</span>
-</span><span data-line="280">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-</span><span data-line="281">            <span class="n">v</span> <span class="o">=</span> <span class="p">(</span><span class="n">v</span><span class="p">,)</span>
-</span><span data-line="282">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
-</span><span data-line="283">            <span class="n">val</span> <span class="o">=</span> <span class="n">v</span>
-</span><span data-line="284">        <span class="k">else</span><span class="p">:</span>
-</span><span data-line="285">            <span class="n">val</span> <span class="o">=</span> <span class="p">{</span><span class="n">att</span><span class="p">:</span> <span class="n">key</span> <span class="k">for</span> <span class="n">att</span><span class="p">,</span> <span class="n">key</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data_fields</span><span class="p">,</span> <span class="n">v</span><span class="p">)}</span>
-</span><span data-line="286">
-</span><span data-line="287">        <span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="o">.</span><span class="n">put_item</span><span class="p">(</span><span class="n">Item</span><span class="o">=</span><span class="p">{</span><span class="o">**</span><span class="n">key</span><span class="p">,</span> <span class="o">**</span><span class="n">val</span><span class="p">})</span>
-</span><span data-line="288">
-</span><span data-line="289">    <span class="k">def</span><span class="w"> </span><span class="fm">__delitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">):</span>
-</span><span data-line="290">        <span class="n">key</span> <span class="o">=</span> <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">partition_key</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">partition</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">sort_key</span><span class="p">:</span> <span class="n">k</span><span class="p">}</span>
-</span><span data-line="291">        <span class="k">try</span><span class="p">:</span>
-</span><span data-line="292">            <span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="o">.</span><span class="n">delete_item</span><span class="p">(</span><span class="n">Key</span><span class="o">=</span><span class="n">key</span><span class="p">)</span>
-</span><span data-line="293">        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-</span><span data-line="294">            <span class="k">if</span> <span class="n">is_no_such_key_error</span><span class="p">(</span><span class="n">e</span><span class="p">):</span>
-</span><span data-line="295">                <span class="k">raise</span> <span class="n">NoSuchKeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Key not found: </span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
-</span><span data-line="296">            <span class="k">raise</span></div>
+</span><span data-line="274"><span class="k">class</span><span class="w"> </span><span class="nc">DynamoDbPartitionPersister</span><span class="p">(</span><span class="n">DynamoDbBasePersister</span><span class="p">,</span> <span class="n">DynamoDbPartitionReader</span><span class="p">):</span>
+</span><span data-line="275">    <span class="k">def</span><span class="w"> </span><span class="fm">__setitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+</span><span data-line="276">        <span class="n">key</span> <span class="o">=</span> <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">partition_key</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">partition</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">sort_key</span><span class="p">:</span> <span class="n">k</span><span class="p">}</span>
+</span><span data-line="277">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+</span><span data-line="278">            <span class="n">v</span> <span class="o">=</span> <span class="p">(</span><span class="n">v</span><span class="p">,)</span>
+</span><span data-line="279">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+</span><span data-line="280">            <span class="n">val</span> <span class="o">=</span> <span class="n">v</span>
+</span><span data-line="281">        <span class="k">else</span><span class="p">:</span>
+</span><span data-line="282">            <span class="n">val</span> <span class="o">=</span> <span class="p">{</span><span class="n">att</span><span class="p">:</span> <span class="n">key</span> <span class="k">for</span> <span class="n">att</span><span class="p">,</span> <span class="n">key</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data_fields</span><span class="p">,</span> <span class="n">v</span><span class="p">)}</span>
+</span><span data-line="283">
+</span><span data-line="284">        <span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="o">.</span><span class="n">put_item</span><span class="p">(</span><span class="n">Item</span><span class="o">=</span><span class="p">{</span><span class="o">**</span><span class="n">key</span><span class="p">,</span> <span class="o">**</span><span class="n">val</span><span class="p">})</span>
+</span><span data-line="285">
+</span><span data-line="286">    <span class="k">def</span><span class="w"> </span><span class="fm">__delitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">):</span>
+</span><span data-line="287">        <span class="n">key</span> <span class="o">=</span> <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">partition_key</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">partition</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">sort_key</span><span class="p">:</span> <span class="n">k</span><span class="p">}</span>
+</span><span data-line="288">        <span class="k">try</span><span class="p">:</span>
+</span><span data-line="289">            <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="o">.</span><span class="n">delete_item</span><span class="p">(</span><span class="n">Key</span><span class="o">=</span><span class="n">key</span><span class="p">,</span> <span class="n">ReturnValues</span><span class="o">=</span><span class="s2">"ALL_OLD"</span><span class="p">)</span>
+</span><span data-line="290">        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+</span><span data-line="291">            <span class="k">if</span> <span class="n">is_no_such_key_error</span><span class="p">(</span><span class="n">e</span><span class="p">):</span>
+</span><span data-line="292">                <span class="k">raise</span> <span class="n">NoSuchKeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Key not found: </span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+</span><span data-line="293">            <span class="k">raise</span>
+</span><span data-line="294">        <span class="n">raise_if_nothing_was_deleted</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">error_cls</span><span class="o">=</span><span class="n">NoSuchKeyError</span><span class="p">)</span></div>
 
 </span></pre></div>
         </article><button class="back-to-top" type="button">
@@ -457,7 +455,7 @@ data-aria-dark="Switch to auto color mode">
     </div>
   </div>
 </footer>
-      <script src="../../_static/documentation_options.js?v=22607128"></script>
+      <script src="../../_static/documentation_options.js?v=8618f531"></script>
       <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
