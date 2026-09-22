@@ -48,6 +48,65 @@ def is_no_such_key_error(error: BaseException) -> bool:
     return type(error).__name__ in NO_SUCH_KEY_ERROR_CODES
 
 
+#: Backend error codes that mean "this key cannot name an item" (wrong type, empty
+#: string, wrong arity for the key schema): such a key is absent, not a backend failure.
+KEY_CANNOT_NAME_AN_ITEM_ERROR_CODES = frozenset({"ValidationException"})
+
+
+def get_item_or_raise(table, key, k, *, error_cls=NoSuchKeyError, **get_item_kwargs):
+    """``table.get_item(Key=key)``'s ``Item``, raising ``error_cls`` only if it is absent.
+
+    Backend failures (throttling, credentials, a missing table) propagate unchanged.
+    A key the table's schema rejects outright is reported absent, as before.
+    """
+    try:
+        response = table.get_item(Key=key, **get_item_kwargs)
+    except Exception as e:
+        code = (getattr(e, "response", None) or {}).get("Error", {}).get("Code")
+        if code in KEY_CANNOT_NAME_AN_ITEM_ERROR_CODES:
+            raise error_cls(f"Key not found: {k}") from e
+        raise
+    return _item_or_raise(response, k, error_cls=error_cls)
+
+
+def _item_or_raise(get_item_response, k, *, error_cls=NoSuchKeyError):
+    """The ``Item`` of a ``get_item`` response, or ``NoSuchKeyError`` if there is none.
+
+    DynamoDB answers a lookup of an absent key with a response that simply has no
+    ``Item`` -- that, and only that, is "missing". A throttled request, bad
+    credentials or a missing table are backend errors and must surface as such, not
+    as a ``KeyError`` that makes ``k in store`` and ``store.get(k)`` quietly say
+    "absent".
+
+    >>> _item_or_raise({"Item": {"key": "k1"}}, "k1")
+    {'key': 'k1'}
+    >>> _item_or_raise({}, "k1")
+    Traceback (most recent call last):
+      ...
+    dynamodol.base.NoSuchKeyError: 'Key not found: k1'
+    """
+    if "Item" not in get_item_response:
+        raise error_cls(f"Key not found: {k}")
+    return get_item_response["Item"]
+
+
+def raise_if_nothing_was_deleted(delete_item_response, k, *, error_cls=NoSuchKeyError):
+    """Raise ``NoSuchKeyError`` if a ``ReturnValues='ALL_OLD'`` delete removed nothing.
+
+    DynamoDB's ``DeleteItem`` succeeds silently on an absent key -- it never reports a
+    ``NoSuchKey`` code (that is S3's) -- so the only sign the key was missing is that
+    no old ``Attributes`` came back. ``del store[missing]`` must raise ``KeyError``.
+
+    >>> raise_if_nothing_was_deleted({"Attributes": {"key": "k1"}}, "k1")
+    >>> raise_if_nothing_was_deleted({}, "k1")
+    Traceback (most recent call last):
+      ...
+    dynamodol.base.NoSuchKeyError: 'Key not found: k1'
+    """
+    if "Attributes" not in (delete_item_response or {}):
+        raise error_cls(f"Key not found: {k}")
+
+
 DFLT_TABLE_NAME = "dynamodol"
 DFLT_KEY_FIELDS = ("key",)
 DFLT_DATA_FIELDS = ("value",)
@@ -270,11 +329,10 @@ class DynamoDbBaseReader(KvReader):
                     )
                 _k = (k,)
             _k = {att: key for att, key in zip(self.key_fields, _k)}
-            response = self.table.get_item(Key=_k, **self._values_expression)
-            item = response["Item"]
-            return self.format_get_item(item)
-        except Exception as e:
-            raise NoSuchKeyError(f"Key not found: {k}")
+        except (ValueError, TypeError) as e:
+            raise NoSuchKeyError(f"Key not found: {k}") from e
+        item = get_item_or_raise(self.table, _k, k, **self._values_expression)
+        return self.format_get_item(item)
 
     def iter_items(self):
         response = self.table.scan(**self._keys_values_expression)
@@ -375,11 +433,12 @@ class DynamoDbBasePersister(DynamoDbBaseReader, KvPersister):
                     )
                 k = (k,)
             key = {att: key for att, key in zip(self.key_fields, k)}
-            self.table.delete_item(Key=key)
+            response = self.table.delete_item(Key=key, ReturnValues="ALL_OLD")
         except Exception as e:
             if is_no_such_key_error(e):
                 raise NoSuchKeyError(f"Key not found: {k}") from e
             raise
+        raise_if_nothing_was_deleted(response, k)
 
 
 def set_db_defaults(new_defaults: dict):

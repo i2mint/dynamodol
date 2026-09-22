@@ -9,6 +9,8 @@ from dynamodol.base import (
     DynamoDbBasePersister,
     db_defaults,
     is_no_such_key_error,
+    get_item_or_raise,
+    raise_if_nothing_was_deleted,
 )
 
 
@@ -229,13 +231,9 @@ class DynamoDbPartitionReader(DynamoDbQueryReader):
         return item[self.sort_key]
 
     def __getitem__(self, k):
-        try:
-            key = {self.partition_key: self.partition, self.sort_key: k}
-            response = self.table.get_item(Key=key)
-            item = response["Item"]
-            return self.format_get_item(item)
-        except Exception as e:
-            raise NoSuchKeyError(f"Key not found: {k}")
+        key = {self.partition_key: self.partition, self.sort_key: k}
+        item = get_item_or_raise(self.table, key, k, error_cls=NoSuchKeyError)
+        return self.format_get_item(item)
 
 
 @dataclass
@@ -267,11 +265,10 @@ class DynamoDbPrefixReader(DynamoDbPartitionReader):
     def __getitem__(self, k):
         try:
             key = {self.partition_key: self.partition, self.sort_key: self.prefix + k}
-            response = self.table.get_item(Key=key)
-            item = response["Item"]
-            return self.format_get_item(item)
-        except Exception as e:
-            raise NoSuchKeyError(f"Key not found: {k}")
+        except TypeError as e:  # a non-str key cannot carry the prefix
+            raise NoSuchKeyError(f"Key not found: {k}") from e
+        item = get_item_or_raise(self.table, key, k, error_cls=NoSuchKeyError)
+        return self.format_get_item(item)
 
 
 class DynamoDbPartitionPersister(DynamoDbBasePersister, DynamoDbPartitionReader):
@@ -289,8 +286,9 @@ class DynamoDbPartitionPersister(DynamoDbBasePersister, DynamoDbPartitionReader)
     def __delitem__(self, k):
         key = {self.partition_key: self.partition, self.sort_key: k}
         try:
-            self.table.delete_item(Key=key)
+            response = self.table.delete_item(Key=key, ReturnValues="ALL_OLD")
         except Exception as e:
             if is_no_such_key_error(e):
                 raise NoSuchKeyError(f"Key not found: {k}") from e
             raise
+        raise_if_nothing_was_deleted(response, k, error_cls=NoSuchKeyError)
