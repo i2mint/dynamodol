@@ -662,12 +662,13 @@ def _overrides_reader_protocol(reader) -> bool:
 
     The single-scan fast path reads the table itself, so it would skip an override that
     narrows the keys or maps the values (dynamodol's own subclasses, e.g. the prefix and
-    partition readers, are what the scan understands).
+    partition readers, are what the scan understands). Only those two methods are
+    checked: a subclass that narrows ``_scan_records`` or ``items()`` is not detected.
     """
     package = __name__.partition(".")[0]
     for name in _SCAN_FAST_PATH_METHODS:
         owner = next((c for c in type(reader).__mro__ if name in vars(c)), None)
-        if owner is not None and owner.__module__.partition(".")[0] != package:
+        if owner is not None and (owner.__module__ or "").partition(".")[0] != package:
             return True
     return False
 
