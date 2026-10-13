@@ -85,6 +85,8 @@ data-aria-dark="Switch to auto color mode">
     <div class="sy-scrollbar sy-rside-inner px-6 xl:top-16 xl:sticky xl:pl-0 pt-6 pb-4"><div class="localtoc"><h3>On this page</h3><ul>
 <li><a class="reference internal" href="#dynamodol.base.DynamoDbBasePersister"><code class="docutils literal notranslate"><span class="pre">DynamoDbBasePersister</span></code></a></li>
 <li><a class="reference internal" href="#dynamodol.base.DynamoDbBaseReader"><code class="docutils literal notranslate"><span class="pre">DynamoDbBaseReader</span></code></a><ul>
+<li><a class="reference internal" href="#dynamodol.base.DynamoDbBaseReader.ItemsView"><code class="docutils literal notranslate"><span class="pre">DynamoDbBaseReader.ItemsView</span></code></a></li>
+<li><a class="reference internal" href="#dynamodol.base.DynamoDbBaseReader.ValuesView"><code class="docutils literal notranslate"><span class="pre">DynamoDbBaseReader.ValuesView</span></code></a></li>
 <li><a class="reference internal" href="#dynamodol.base.DynamoDbBaseReader.format_get_item"><code class="docutils literal notranslate"><span class="pre">DynamoDbBaseReader.format_get_item()</span></code></a></li>
 <li><a class="reference internal" href="#dynamodol.base.DynamoDbBaseReader.format_get_key"><code class="docutils literal notranslate"><span class="pre">DynamoDbBaseReader.format_get_key()</span></code></a></li>
 </ul>
@@ -95,6 +97,8 @@ data-aria-dark="Switch to auto color mode">
 <li><a class="reference internal" href="#dynamodol.base.get_item_or_raise"><code class="docutils literal notranslate"><span class="pre">get_item_or_raise()</span></code></a></li>
 <li><a class="reference internal" href="#dynamodol.base.is_no_such_key_error"><code class="docutils literal notranslate"><span class="pre">is_no_such_key_error()</span></code></a></li>
 <li><a class="reference internal" href="#dynamodol.base.load_sample_data"><code class="docutils literal notranslate"><span class="pre">load_sample_data()</span></code></a></li>
+<li><a class="reference internal" href="#dynamodol.base.paginated"><code class="docutils literal notranslate"><span class="pre">paginated()</span></code></a></li>
+<li><a class="reference internal" href="#dynamodol.base.paginated_count"><code class="docutils literal notranslate"><span class="pre">paginated_count()</span></code></a></li>
 <li><a class="reference internal" href="#dynamodol.base.raise_if_nothing_was_deleted"><code class="docutils literal notranslate"><span class="pre">raise_if_nothing_was_deleted()</span></code></a></li>
 <li><a class="reference internal" href="#dynamodol.base.scan_items"><code class="docutils literal notranslate"><span class="pre">scan_items()</span></code></a></li>
 <li><a class="reference internal" href="#dynamodol.base.scan_values"><code class="docutils literal notranslate"><span class="pre">scan_values()</span></code></a></li>
@@ -171,6 +175,12 @@ data-aria-dark="Switch to auto color mode">
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#dynamodol.base.load_sample_data" title="dynamodol.base.load_sample_data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_sample_data</span></code></a>()</p></td>
 <td><p>For supporting doctests</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#dynamodol.base.paginated" title="dynamodol.base.paginated"><code class="xref py py-obj docutils literal notranslate"><span class="pre">paginated</span></code></a>(call, /, **kwargs)</p></td>
+<td><p>Yield the <code class="docutils literal notranslate"><span class="pre">Items</span></code> of a <code class="docutils literal notranslate"><span class="pre">scan</span></code>/<code class="docutils literal notranslate"><span class="pre">query</span></code> across <em>all</em> its pages.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#dynamodol.base.paginated_count" title="dynamodol.base.paginated_count"><code class="xref py py-obj docutils literal notranslate"><span class="pre">paginated_count</span></code></a>(call, /, **kwargs)</p></td>
+<td><p>The <code class="docutils literal notranslate"><span class="pre">Count</span></code> of a <code class="docutils literal notranslate"><span class="pre">Select='COUNT'</span></code> <code class="docutils literal notranslate"><span class="pre">scan</span></code>/<code class="docutils literal notranslate"><span class="pre">query</span></code> summed over all its pages.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#dynamodol.base.raise_if_nothing_was_deleted" title="dynamodol.base.raise_if_nothing_was_deleted"><code class="xref py py-obj docutils literal notranslate"><span class="pre">raise_if_nothing_was_deleted</span></code></a>(...[, error_cls])</p></td>
 <td><p>Raise <code class="docutils literal notranslate"><span class="pre">NoSuchKeyError</span></code> if a <code class="docutils literal notranslate"><span class="pre">ReturnValues='ALL_OLD'</span></code> delete removed nothing.</p></td>
@@ -300,6 +310,18 @@ the partition key (and sort key if applicable) from the output dict.</p>
 <p>MAJOR TODO: boto3 for DynamoDB casts all numbers to a Decimal type. We need to add a significant amount
 of mapping code to transform values between Decimal and Python int and float types when reading and writing.
 This library is currently only useful for tables that exclusively use string values.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="dynamodol.base.DynamoDbBaseReader.ItemsView">
+<span class="sig-name descname"><span class="pre">ItemsView</span></span><a class="headerlink" href="#dynamodol.base.DynamoDbBaseReader.ItemsView" title="Link to this definition">#</a></dt>
+<dd><p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">_BatchedItemsView</span></code></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="dynamodol.base.DynamoDbBaseReader.ValuesView">
+<span class="sig-name descname"><span class="pre">ValuesView</span></span><a class="headerlink" href="#dynamodol.base.DynamoDbBaseReader.ValuesView" title="Link to this definition">#</a></dt>
+<dd><p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">_BatchedValuesView</span></code></p>
+</dd></dl>
+
 <dl class="py method">
 <dt class="sig sig-object py" id="dynamodol.base.DynamoDbBaseReader.format_get_item">
 <span class="sig-name descname"><span class="pre">format_get_item</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">item</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dynamodol/base.html#DynamoDbBaseReader.format_get_item"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dynamodol.base.DynamoDbBaseReader.format_get_item" title="Link to this definition">#</a></dt>
@@ -367,6 +389,25 @@ only raises <code class="docutils literal notranslate"><span class="pre">Attribu
 <dt class="sig sig-object py" id="dynamodol.base.load_sample_data">
 <span class="sig-prename descclassname"><span class="pre">dynamodol.base.</span></span><span class="sig-name descname"><span class="pre">load_sample_data</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dynamodol/base.html#load_sample_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dynamodol.base.load_sample_data" title="Link to this definition">#</a></dt>
 <dd><p>For supporting doctests</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="dynamodol.base.paginated">
+<span class="sig-prename descclassname"><span class="pre">dynamodol.base.</span></span><span class="sig-name descname"><span class="pre">paginated</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">call</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dynamodol/base.html#paginated"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dynamodol.base.paginated" title="Link to this definition">#</a></dt>
+<dd><p>Yield the <code class="docutils literal notranslate"><span class="pre">Items</span></code> of a <code class="docutils literal notranslate"><span class="pre">scan</span></code>/<code class="docutils literal notranslate"><span class="pre">query</span></code> across <em>all</em> its pages.</p>
+<p>DynamoDB returns at most ~1 MB per call and says where it stopped
+(<code class="docutils literal notranslate"><span class="pre">LastEvaluatedKey</span></code>); a single call silently truncates a bigger table.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="dynamodol.base.paginated_count">
+<span class="sig-prename descclassname"><span class="pre">dynamodol.base.</span></span><span class="sig-name descname"><span class="pre">paginated_count</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">call</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dynamodol/base.html#paginated_count"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dynamodol.base.paginated_count" title="Link to this definition">#</a></dt>
+<dd><p>The <code class="docutils literal notranslate"><span class="pre">Count</span></code> of a <code class="docutils literal notranslate"><span class="pre">Select='COUNT'</span></code> <code class="docutils literal notranslate"><span class="pre">scan</span></code>/<code class="docutils literal notranslate"><span class="pre">query</span></code> summed over all its pages.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#int" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a></span></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
@@ -468,7 +509,7 @@ data_fields: Tuple or None - A tuple of data fields to return from queries. If d
     </div>
   </div>
 </footer>
-      <script src="../_static/documentation_options.js?v=bafade30"></script>
+      <script src="../_static/documentation_options.js?v=1e825a29"></script>
       <script src="../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../_static/clipboard.min.js?v=a7894cd8"></script>

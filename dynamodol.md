@@ -1,4 +1,4 @@
-> built 2026-10-13 07:38 UTC from 30054ea (master) · dynamodol 0.1.10. Details: build_info.json
+> built 2026-10-13 14:23 UTC from c4b314b (master) · dynamodol 0.1.11. Details: build_info.json
 
 # index.html.md
 
@@ -79,6 +79,8 @@ DynamoDB (through boto3) with a simple (dict-like or list-like) interface
 | [`get_item_or_raise`](_autosummary/dynamodol.base.html.md#dynamodol.base.get_item_or_raise)(table, key, k, \*[, error_cls]) | `table.get_item(Key=key)`'s `Item`, raising `error_cls` only if it is absent.                                    |
 | [`is_no_such_key_error`](_autosummary/dynamodol.base.html.md#dynamodol.base.is_no_such_key_error)(error)                       | Tell whether `error` reports a missing key.                                                                      |
 | [`load_sample_data`](_autosummary/dynamodol.base.html.md#dynamodol.base.load_sample_data)()                                | For supporting doctests                                                                                          |
+| [`paginated`](_autosummary/dynamodol.base.html.md#dynamodol.base.paginated)(call, /, \*\*kwargs)                    | Yield the `Items` of a `scan`/`query` across *all* its pages.                                                    |
+| [`paginated_count`](_autosummary/dynamodol.base.html.md#dynamodol.base.paginated_count)(call, /, \*\*kwargs)              | The `Count` of a `Select='COUNT'` `scan`/`query` summed over all its pages.                                      |
 | [`raise_if_nothing_was_deleted`](_autosummary/dynamodol.base.html.md#dynamodol.base.raise_if_nothing_was_deleted)(...[, error_cls])    | Raise `NoSuchKeyError` if a `ReturnValues='ALL_OLD'` delete removed nothing.                                     |
 | [`scan_items`](_autosummary/dynamodol.base.html.md#dynamodol.base.scan_items)(store)                                 | Iterate `(key, value)` pairs of an *unwrapped* dynamodol reader in one scan.                                     |
 | [`scan_values`](_autosummary/dynamodol.base.html.md#dynamodol.base.scan_values)(store)                                | Iterate the values of an *unwrapped* dynamodol reader in one scan (see `scan_items`).                            |
@@ -182,6 +184,14 @@ MAJOR TODO: boto3 for DynamoDB casts all numbers to a Decimal type. We need to a
 of mapping code to transform values between Decimal and Python int and float types when reading and writing.
 This library is currently only useful for tables that exclusively use string values.
 
+#### ItemsView
+
+alias of `_BatchedItemsView`
+
+#### ValuesView
+
+alias of `_BatchedValuesView`
+
 #### format_get_item(item)
 
 #### format_get_key(item)
@@ -231,6 +241,20 @@ True
 ### dynamodol.base.load_sample_data()
 
 For supporting doctests
+
+### dynamodol.base.paginated(call, , \*\*kwargs)
+
+Yield the `Items` of a `scan`/`query` across *all* its pages.
+
+DynamoDB returns at most ~1 MB per call and says where it stopped
+(`LastEvaluatedKey`); a single call silently truncates a bigger table.
+
+### dynamodol.base.paginated_count(call, , \*\*kwargs)
+
+The `Count` of a `Select='COUNT'` `scan`/`query` summed over all its pages.
+
+* **Return type:**
+  [`int`](https://docs.python.org/3/builtins/functions.html#int)
 
 ### dynamodol.base.raise_if_nothing_was_deleted(delete_item_response, k, \*, error_cls=<class 'dynamodol.base.NoSuchKeyError'>)
 
@@ -412,18 +436,16 @@ Bases: [`KeyError`](https://docs.python.org/3/builtins/exceptions.html#KeyError)
 
 # About this build
 
-This documentation was built on **2026-10-13 07:38 UTC** from commit <a href="https://github.com/i2mint/dynamodol/commit/30054ea68106076e328c5b831e3307145b41e7a2"><code>30054ea</code></a> on branch <code>master</code>, for **dynamodol 0.1.10** (from <code>pyproject.toml</code>).
+This documentation was built on **2026-10-13 14:23 UTC** from commit <a href="https://github.com/i2mint/dynamodol/commit/c4b314bc9f3b9fd68a503c39abcf61a1e9ac923d"><code>c4b314b</code></a> on branch <code>master</code>, for **dynamodol 0.1.11** (from <code>pyproject.toml</code>).
 
-#### WARNING
-The documentation and the package may be misaligned:
-
-- The documented version (0.1.10) is behind the latest release on PyPI (0.1.11): `pip install dynamodol` gives newer code than these docs describe.
+#### NOTE
+Nothing suggests a mismatch: the tree was clean at the commit above, and the documented version is the one on PyPI.
 
 ## Source
 
 |                     |                                                                                                                                                         |
 |---------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Commit              | <a href="https://github.com/i2mint/dynamodol/commit/30054ea68106076e328c5b831e3307145b41e7a2"><code>30054ea68106076e328c5b831e3307145b41e7a2</code></a> |
+| Commit              | <a href="https://github.com/i2mint/dynamodol/commit/c4b314bc9f3b9fd68a503c39abcf61a1e9ac923d"><code>c4b314bc9f3b9fd68a503c39abcf61a1e9ac923d</code></a> |
 | Branch              | <code>master</code>                                                                                                                                     |
 | Tags at this commit | none                                                                                                                                                    |
 | Working tree        | clean                                                                                                                                                   |
@@ -434,9 +456,9 @@ The documentation and the package may be misaligned:
 |              |                                                                                            |
 |--------------|--------------------------------------------------------------------------------------------|
 | Repository   | <code>i2mint/dynamodol</code>                                                              |
-| Run          | <a href="https://github.com/i2mint/dynamodol/actions/runs/38363805679">38363805679</a>     |
+| Run          | <a href="https://github.com/i2mint/dynamodol/actions/runs/38412696524">38412696524</a>     |
 | Ref          | <code>refs/heads/master</code>                                                             |
-| Event commit | <code>30054ea68106076e328c5b831e3307145b41e7a2</code> (in the history of the built commit) |
+| Event commit | <code>c4b314bc9f3b9fd68a503c39abcf61a1e9ac923d</code> (in the history of the built commit) |
 
 ## Tools
 
@@ -461,13 +483,13 @@ The documentation and the package may be misaligned:
 
 ## Package on PyPI
 
-Latest release: <a href="https://pypi.org/project/dynamodol/0.1.11/">0.1.11</a>, newer than the documented version (0.1.10).
+Latest release: <a href="https://pypi.org/project/dynamodol/0.1.11/">0.1.11</a>, the same as the documented version.
 
 ## Reproduce
 
 ```bash
 git clone https://github.com/i2mint/dynamodol && cd dynamodol
-git checkout 30054ea68106076e328c5b831e3307145b41e7a2
+git checkout c4b314bc9f3b9fd68a503c39abcf61a1e9ac923d
 pip install "epythet==0.2.15"
 epythet quickstart . --ignore tests/ scrap/ examples/
 ```

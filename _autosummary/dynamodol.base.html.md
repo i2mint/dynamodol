@@ -16,6 +16,8 @@ DynamoDB (through boto3) with a simple (dict-like or list-like) interface
 | [`get_item_or_raise`](#dynamodol.base.get_item_or_raise)(table, key, k, \*[, error_cls]) | `table.get_item(Key=key)`'s `Item`, raising `error_cls` only if it is absent.                                    |
 | [`is_no_such_key_error`](#dynamodol.base.is_no_such_key_error)(error)                       | Tell whether `error` reports a missing key.                                                                      |
 | [`load_sample_data`](#dynamodol.base.load_sample_data)()                                | For supporting doctests                                                                                          |
+| [`paginated`](#dynamodol.base.paginated)(call, /, \*\*kwargs)                    | Yield the `Items` of a `scan`/`query` across *all* its pages.                                                    |
+| [`paginated_count`](#dynamodol.base.paginated_count)(call, /, \*\*kwargs)              | The `Count` of a `Select='COUNT'` `scan`/`query` summed over all its pages.                                      |
 | [`raise_if_nothing_was_deleted`](#dynamodol.base.raise_if_nothing_was_deleted)(...[, error_cls])    | Raise `NoSuchKeyError` if a `ReturnValues='ALL_OLD'` delete removed nothing.                                     |
 | [`scan_items`](#dynamodol.base.scan_items)(store)                                 | Iterate `(key, value)` pairs of an *unwrapped* dynamodol reader in one scan.                                     |
 | [`scan_values`](#dynamodol.base.scan_values)(store)                                | Iterate the values of an *unwrapped* dynamodol reader in one scan (see `scan_items`).                            |
@@ -119,6 +121,14 @@ MAJOR TODO: boto3 for DynamoDB casts all numbers to a Decimal type. We need to a
 of mapping code to transform values between Decimal and Python int and float types when reading and writing.
 This library is currently only useful for tables that exclusively use string values.
 
+#### ItemsView
+
+alias of `_BatchedItemsView`
+
+#### ValuesView
+
+alias of `_BatchedValuesView`
+
 #### format_get_item(item)
 
 #### format_get_key(item)
@@ -168,6 +178,20 @@ True
 ### dynamodol.base.load_sample_data()
 
 For supporting doctests
+
+### dynamodol.base.paginated(call, , \*\*kwargs)
+
+Yield the `Items` of a `scan`/`query` across *all* its pages.
+
+DynamoDB returns at most ~1 MB per call and says where it stopped
+(`LastEvaluatedKey`); a single call silently truncates a bigger table.
+
+### dynamodol.base.paginated_count(call, , \*\*kwargs)
+
+The `Count` of a `Select='COUNT'` `scan`/`query` summed over all its pages.
+
+* **Return type:**
+  [`int`](https://docs.python.org/3/builtins/functions.html#int)
 
 ### dynamodol.base.raise_if_nothing_was_deleted(delete_item_response, k, \*, error_cls=<class 'dynamodol.base.NoSuchKeyError'>)
 
