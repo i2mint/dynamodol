@@ -174,17 +174,8 @@ class DynamoDbQueryReader(DynamoDbBaseReader):
             result["FilterExpression"] = self.attr_query
         return result
 
-    def iter_items(self):
-        response = self.table.query(
-            **self.filter_kwargs, **self._keys_values_expression
-        )
-        yield from (
-            (self.format_get_key(d), self.format_get_item(d)) for d in response["Items"]
-        )
-
-    def iter_values(self):
-        response = self.table.query(**self.filter_kwargs, **self._values_expression)
-        yield from (self.format_get_item(d) for d in response["Items"])
+    def _scan_records(self, projection):
+        return self.table.query(**self.filter_kwargs, **projection)["Items"]
 
     def __iter__(self):
         response = self.table.query(**self.filter_kwargs, **self._keys_expression)
