@@ -2,18 +2,18 @@
 
 # About this build
 
-This documentation was built on **2026-09-22 14:14 UTC** from commit <a href="https://github.com/i2mint/dynamodol/commit/6c44494e05aceb30a14a3e2064b99558b9923802"><code>6c44494</code></a> on branch <code>master</code>, for **dynamodol 0.1.9** (from <code>pyproject.toml</code>).
+This documentation was built on **2026-10-13 07:38 UTC** from commit <a href="https://github.com/i2mint/dynamodol/commit/30054ea68106076e328c5b831e3307145b41e7a2"><code>30054ea</code></a> on branch <code>master</code>, for **dynamodol 0.1.10** (from <code>pyproject.toml</code>).
 
 #### WARNING
 The documentation and the package may be misaligned:
 
-- The documented version (0.1.9) is behind the latest release on PyPI (0.1.10): `pip install dynamodol` gives newer code than these docs describe.
+- The documented version (0.1.10) is behind the latest release on PyPI (0.1.11): `pip install dynamodol` gives newer code than these docs describe.
 
 ## Source
 
 |                     |                                                                                                                                                         |
 |---------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Commit              | <a href="https://github.com/i2mint/dynamodol/commit/6c44494e05aceb30a14a3e2064b99558b9923802"><code>6c44494e05aceb30a14a3e2064b99558b9923802</code></a> |
+| Commit              | <a href="https://github.com/i2mint/dynamodol/commit/30054ea68106076e328c5b831e3307145b41e7a2"><code>30054ea68106076e328c5b831e3307145b41e7a2</code></a> |
 | Branch              | <code>master</code>                                                                                                                                     |
 | Tags at this commit | none                                                                                                                                                    |
 | Working tree        | clean                                                                                                                                                   |
@@ -24,18 +24,18 @@ The documentation and the package may be misaligned:
 |              |                                                                                            |
 |--------------|--------------------------------------------------------------------------------------------|
 | Repository   | <code>i2mint/dynamodol</code>                                                              |
-| Run          | <a href="https://github.com/i2mint/dynamodol/actions/runs/35738661058">35738661058</a>     |
+| Run          | <a href="https://github.com/i2mint/dynamodol/actions/runs/38363805679">38363805679</a>     |
 | Ref          | <code>refs/heads/master</code>                                                             |
-| Event commit | <code>6c44494e05aceb30a14a3e2064b99558b9923802</code> (in the history of the built commit) |
+| Event commit | <code>30054ea68106076e328c5b831e3307145b41e7a2</code> (in the history of the built commit) |
 
 ## Tools
 
 |          |         |
 |----------|---------|
-| epythet  | 0.2.12  |
+| epythet  | 0.2.15  |
 | Sphinx   | 9.1.0   |
 | docutils | 0.22.4  |
-| Python   | 3.12.14 |
+| Python   | 3.12.15 |
 
 ## Configuration as resolved
 
@@ -51,14 +51,14 @@ The documentation and the package may be misaligned:
 
 ## Package on PyPI
 
-Latest release: <a href="https://pypi.org/project/dynamodol/0.1.10/">0.1.10</a>, newer than the documented version (0.1.9).
+Latest release: <a href="https://pypi.org/project/dynamodol/0.1.11/">0.1.11</a>, newer than the documented version (0.1.10).
 
 ## Reproduce
 
 ```bash
 git clone https://github.com/i2mint/dynamodol && cd dynamodol
-git checkout 6c44494e05aceb30a14a3e2064b99558b9923802
-pip install "epythet==0.2.12"
+git checkout 30054ea68106076e328c5b831e3307145b41e7a2
+pip install "epythet==0.2.15"
 epythet quickstart . --ignore tests/ scrap/ examples/
 ```
 

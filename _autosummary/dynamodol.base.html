@@ -85,8 +85,6 @@ data-aria-dark="Switch to auto color mode">
     <div class="sy-scrollbar sy-rside-inner px-6 xl:top-16 xl:sticky xl:pl-0 pt-6 pb-4"><div class="localtoc"><h3>On this page</h3><ul>
 <li><a class="reference internal" href="#dynamodol.base.DynamoDbBasePersister"><code class="docutils literal notranslate"><span class="pre">DynamoDbBasePersister</span></code></a></li>
 <li><a class="reference internal" href="#dynamodol.base.DynamoDbBaseReader"><code class="docutils literal notranslate"><span class="pre">DynamoDbBaseReader</span></code></a><ul>
-<li><a class="reference internal" href="#dynamodol.base.DynamoDbBaseReader.ItemsView"><code class="docutils literal notranslate"><span class="pre">DynamoDbBaseReader.ItemsView</span></code></a></li>
-<li><a class="reference internal" href="#dynamodol.base.DynamoDbBaseReader.ValuesView"><code class="docutils literal notranslate"><span class="pre">DynamoDbBaseReader.ValuesView</span></code></a></li>
 <li><a class="reference internal" href="#dynamodol.base.DynamoDbBaseReader.format_get_item"><code class="docutils literal notranslate"><span class="pre">DynamoDbBaseReader.format_get_item()</span></code></a></li>
 <li><a class="reference internal" href="#dynamodol.base.DynamoDbBaseReader.format_get_key"><code class="docutils literal notranslate"><span class="pre">DynamoDbBaseReader.format_get_key()</span></code></a></li>
 </ul>
@@ -98,6 +96,8 @@ data-aria-dark="Switch to auto color mode">
 <li><a class="reference internal" href="#dynamodol.base.is_no_such_key_error"><code class="docutils literal notranslate"><span class="pre">is_no_such_key_error()</span></code></a></li>
 <li><a class="reference internal" href="#dynamodol.base.load_sample_data"><code class="docutils literal notranslate"><span class="pre">load_sample_data()</span></code></a></li>
 <li><a class="reference internal" href="#dynamodol.base.raise_if_nothing_was_deleted"><code class="docutils literal notranslate"><span class="pre">raise_if_nothing_was_deleted()</span></code></a></li>
+<li><a class="reference internal" href="#dynamodol.base.scan_items"><code class="docutils literal notranslate"><span class="pre">scan_items()</span></code></a></li>
+<li><a class="reference internal" href="#dynamodol.base.scan_values"><code class="docutils literal notranslate"><span class="pre">scan_values()</span></code></a></li>
 <li><a class="reference internal" href="#dynamodol.base.set_db_defaults"><code class="docutils literal notranslate"><span class="pre">set_db_defaults()</span></code></a></li>
 </ul>
 </div><div id="ethical-ad-placement" data-ea-publisher="readthedocs"></div></div>
@@ -174,6 +174,12 @@ data-aria-dark="Switch to auto color mode">
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#dynamodol.base.raise_if_nothing_was_deleted" title="dynamodol.base.raise_if_nothing_was_deleted"><code class="xref py py-obj docutils literal notranslate"><span class="pre">raise_if_nothing_was_deleted</span></code></a>(...[, error_cls])</p></td>
 <td><p>Raise <code class="docutils literal notranslate"><span class="pre">NoSuchKeyError</span></code> if a <code class="docutils literal notranslate"><span class="pre">ReturnValues='ALL_OLD'</span></code> delete removed nothing.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#dynamodol.base.scan_items" title="dynamodol.base.scan_items"><code class="xref py py-obj docutils literal notranslate"><span class="pre">scan_items</span></code></a>(store)</p></td>
+<td><p>Iterate <code class="docutils literal notranslate"><span class="pre">(key,</span> <span class="pre">value)</span></code> pairs of an <em>unwrapped</em> dynamodol reader in one scan.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#dynamodol.base.scan_values" title="dynamodol.base.scan_values"><code class="xref py py-obj docutils literal notranslate"><span class="pre">scan_values</span></code></a>(store)</p></td>
+<td><p>Iterate the values of an <em>unwrapped</em> dynamodol reader in one scan (see <code class="code docutils literal notranslate"><span class="pre">scan_items</span></code>).</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#dynamodol.base.set_db_defaults" title="dynamodol.base.set_db_defaults"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_db_defaults</span></code></a>(new_defaults)</p></td>
 <td><p>Sets global defaults for dynamodol so stores can be created without explicitly passing table details every time.</p></td>
@@ -294,20 +300,6 @@ the partition key (and sort key if applicable) from the output dict.</p>
 <p>MAJOR TODO: boto3 for DynamoDB casts all numbers to a Decimal type. We need to add a significant amount
 of mapping code to transform values between Decimal and Python int and float types when reading and writing.
 This library is currently only useful for tables that exclusively use string values.</p>
-<dl class="py class">
-<dt class="sig sig-object py" id="dynamodol.base.DynamoDbBaseReader.ItemsView">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">ItemsView</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mapping</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dynamodol/base.html#DynamoDbBaseReader.ItemsView"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dynamodol.base.DynamoDbBaseReader.ItemsView" title="Link to this definition">#</a></dt>
-<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/collections.abc.html#collections.abc.ItemsView" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ItemsView</span></code></a></p>
-<p>Items view backed by a single table scan (see <code class="docutils literal notranslate"><span class="pre">iter_items</span></code>).</p>
-</dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="dynamodol.base.DynamoDbBaseReader.ValuesView">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">ValuesView</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mapping</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dynamodol/base.html#DynamoDbBaseReader.ValuesView"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dynamodol.base.DynamoDbBaseReader.ValuesView" title="Link to this definition">#</a></dt>
-<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/collections.abc.html#collections.abc.ValuesView" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ValuesView</span></code></a></p>
-<p>Values view backed by a single table scan (see <code class="docutils literal notranslate"><span class="pre">iter_values</span></code>).</p>
-</dd></dl>
-
 <dl class="py method">
 <dt class="sig sig-object py" id="dynamodol.base.DynamoDbBaseReader.format_get_item">
 <span class="sig-name descname"><span class="pre">format_get_item</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">item</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dynamodol/base.html#DynamoDbBaseReader.format_get_item"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dynamodol.base.DynamoDbBaseReader.format_get_item" title="Link to this definition">#</a></dt>
@@ -336,7 +328,7 @@ string, wrong arity for the key schema): such a key is absent, not a backend fai
 <dl class="py exception">
 <dt class="sig sig-object py" id="dynamodol.base.NoSuchKeyError">
 <span class="property"><span class="k"><span class="pre">exception</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">dynamodol.base.</span></span><span class="sig-name descname"><span class="pre">NoSuchKeyError</span></span><a class="reference internal" href="../_modules/dynamodol/base.html#NoSuchKeyError"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dynamodol.base.NoSuchKeyError" title="Link to this definition">#</a></dt>
-<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/builtins/exceptions.html#KeyError" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">KeyError</span></code></a></p>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/builtins/exceptions.html#KeyError" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">KeyError</span></code></a></p>
 </dd></dl>
 
 <dl class="py function">
@@ -357,7 +349,7 @@ have a <code class="docutils literal notranslate"><span class="pre">__name__</sp
 only raises <code class="docutils literal notranslate"><span class="pre">AttributeError</span></code> and hides the error being inspected.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#bool" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a></span></p>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#bool" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code></a></span></p>
 </dd>
 </dl>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span data-line="1"><span class="gp">&gt;&gt;&gt; </span><span class="n">is_no_such_key_error</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">(</span><span class="s2">"nope"</span><span class="p">))</span>
@@ -394,12 +386,35 @@ no old <code class="docutils literal notranslate"><span class="pre">Attributes</
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="dynamodol.base.scan_items">
+<span class="sig-prename descclassname"><span class="pre">dynamodol.base.</span></span><span class="sig-name descname"><span class="pre">scan_items</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">store</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dynamodol/base.html#scan_items"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dynamodol.base.scan_items" title="Link to this definition">#</a></dt>
+<dd><p>Iterate <code class="docutils literal notranslate"><span class="pre">(key,</span> <span class="pre">value)</span></code> pairs of an <em>unwrapped</em> dynamodol reader in one scan.</p>
+<p>The opt-in fast path that <code class="docutils literal notranslate"><span class="pre">store.items()</span></code> deliberately is not: <code class="docutils literal notranslate"><span class="pre">items()</span></code> goes
+through <code class="docutils literal notranslate"><span class="pre">__iter__</span></code> and <code class="docutils literal notranslate"><span class="pre">__getitem__</span></code> (one get per key) so that it is correct
+under any dol wrapper. Passing a wrapped store raises <code class="docutils literal notranslate"><span class="pre">TypeError</span></code>, because a
+free function cannot apply the wrapper’s key mapping, scope or value decoding.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span data-line="1"><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">dynamodol</span>
+</span><span data-line="2"><span class="gp">&gt;&gt;&gt; </span><span class="n">dynamodol</span><span class="o">.</span><span class="n">scan_items</span><span class="p">(</span><span class="nb">object</span><span class="p">())</span>
+</span><span data-line="3"><span class="gt">Traceback (most recent call last):</span>
+</span><span data-line="4"><span class="w">  </span><span class="c">...</span>
+</span><span data-line="5"><span class="gr">TypeError</span>: <span class="n">`scan_items` needs an unwrapped dynamodol reader, got object. A wrapped store (key codec, filt_iter, value codec...) must be iterated with its own `.items()` / `.values()`, which apply the wrapper's scope and codecs (one `get` per key).</span>
+</span></pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="dynamodol.base.scan_values">
+<span class="sig-prename descclassname"><span class="pre">dynamodol.base.</span></span><span class="sig-name descname"><span class="pre">scan_values</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">store</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dynamodol/base.html#scan_values"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dynamodol.base.scan_values" title="Link to this definition">#</a></dt>
+<dd><p>Iterate the values of an <em>unwrapped</em> dynamodol reader in one scan (see <code class="code docutils literal notranslate"><span class="pre">scan_items</span></code>).</p>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="dynamodol.base.set_db_defaults">
 <span class="sig-prename descclassname"><span class="pre">dynamodol.base.</span></span><span class="sig-name descname"><span class="pre">set_db_defaults</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">new_defaults</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dynamodol/base.html#set_db_defaults"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dynamodol.base.set_db_defaults" title="Link to this definition">#</a></dt>
 <dd><p>Sets global defaults for dynamodol so stores can be created without explicitly passing table details every time.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>new_defaults</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#dict" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a></span>) – <p>A dict containing one or more of the following keys
+<dd class="field-odd"><p><strong>new_defaults</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#dict" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a></span>) – <p>A dict containing one or more of the following keys
 table_name: str - The name of the table
 key_fields: Tuple - A tuple of length 1 or 2 containing the partition key and (optional) sort key for the table
 data_fields: Tuple or None - A tuple of data fields to return from queries. If data_fields is None, data</p>
@@ -453,7 +468,7 @@ data_fields: Tuple or None - A tuple of data fields to return from queries. If d
     </div>
   </div>
 </footer>
-      <script src="../_static/documentation_options.js?v=8618f531"></script>
+      <script src="../_static/documentation_options.js?v=bafade30"></script>
       <script src="../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../_static/clipboard.min.js?v=a7894cd8"></script>

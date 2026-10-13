@@ -1,4 +1,4 @@
-> built 2026-09-22 14:14 UTC from 6c44494 (master) · dynamodol 0.1.9. Details: build_info.json
+> built 2026-10-13 07:38 UTC from 30054ea (master) · dynamodol 0.1.10. Details: build_info.json
 
 # index.html.md
 
@@ -80,6 +80,8 @@ DynamoDB (through boto3) with a simple (dict-like or list-like) interface
 | [`is_no_such_key_error`](_autosummary/dynamodol.base.html.md#dynamodol.base.is_no_such_key_error)(error)                       | Tell whether `error` reports a missing key.                                                                      |
 | [`load_sample_data`](_autosummary/dynamodol.base.html.md#dynamodol.base.load_sample_data)()                                | For supporting doctests                                                                                          |
 | [`raise_if_nothing_was_deleted`](_autosummary/dynamodol.base.html.md#dynamodol.base.raise_if_nothing_was_deleted)(...[, error_cls])    | Raise `NoSuchKeyError` if a `ReturnValues='ALL_OLD'` delete removed nothing.                                     |
+| [`scan_items`](_autosummary/dynamodol.base.html.md#dynamodol.base.scan_items)(store)                                 | Iterate `(key, value)` pairs of an *unwrapped* dynamodol reader in one scan.                                     |
+| [`scan_values`](_autosummary/dynamodol.base.html.md#dynamodol.base.scan_values)(store)                                | Iterate the values of an *unwrapped* dynamodol reader in one scan (see `scan_items`).                            |
 | [`set_db_defaults`](_autosummary/dynamodol.base.html.md#dynamodol.base.set_db_defaults)(new_defaults)                     | Sets global defaults for dynamodol so stores can be created without explicitly passing table details every time. |
 
 ### Classes
@@ -180,18 +182,6 @@ MAJOR TODO: boto3 for DynamoDB casts all numbers to a Decimal type. We need to a
 of mapping code to transform values between Decimal and Python int and float types when reading and writing.
 This library is currently only useful for tables that exclusively use string values.
 
-#### *class* ItemsView(mapping)
-
-Bases: [`ItemsView`](https://docs.python.org/3/library/collections.abc.html#collections.abc.ItemsView)
-
-Items view backed by a single table scan (see `iter_items`).
-
-#### *class* ValuesView(mapping)
-
-Bases: [`ValuesView`](https://docs.python.org/3/library/collections.abc.html#collections.abc.ValuesView)
-
-Values view backed by a single table scan (see `iter_values`).
-
 #### format_get_item(item)
 
 #### format_get_key(item)
@@ -257,6 +247,27 @@ Traceback (most recent call last):
   ...
 dynamodol.base.NoSuchKeyError: 'Key not found: k1'
 ```
+
+### dynamodol.base.scan_items(store)
+
+Iterate `(key, value)` pairs of an *unwrapped* dynamodol reader in one scan.
+
+The opt-in fast path that `store.items()` deliberately is not: `items()` goes
+through `__iter__` and `__getitem__` (one get per key) so that it is correct
+under any dol wrapper. Passing a wrapped store raises `TypeError`, because a
+free function cannot apply the wrapper’s key mapping, scope or value decoding.
+
+```pycon
+>>> import dynamodol
+>>> dynamodol.scan_items(object())
+Traceback (most recent call last):
+  ...
+TypeError: `scan_items` needs an unwrapped dynamodol reader, got object. A wrapped store (key codec, filt_iter, value codec...) must be iterated with its own `.items()` / `.values()`, which apply the wrapper's scope and codecs (one `get` per key).
+```
+
+### dynamodol.base.scan_values(store)
+
+Iterate the values of an *unwrapped* dynamodol reader in one scan (see `scan_items`).
 
 ### dynamodol.base.set_db_defaults(new_defaults)
 
@@ -401,18 +412,18 @@ Bases: [`KeyError`](https://docs.python.org/3/builtins/exceptions.html#KeyError)
 
 # About this build
 
-This documentation was built on **2026-09-22 14:14 UTC** from commit <a href="https://github.com/i2mint/dynamodol/commit/6c44494e05aceb30a14a3e2064b99558b9923802"><code>6c44494</code></a> on branch <code>master</code>, for **dynamodol 0.1.9** (from <code>pyproject.toml</code>).
+This documentation was built on **2026-10-13 07:38 UTC** from commit <a href="https://github.com/i2mint/dynamodol/commit/30054ea68106076e328c5b831e3307145b41e7a2"><code>30054ea</code></a> on branch <code>master</code>, for **dynamodol 0.1.10** (from <code>pyproject.toml</code>).
 
 #### WARNING
 The documentation and the package may be misaligned:
 
-- The documented version (0.1.9) is behind the latest release on PyPI (0.1.10): `pip install dynamodol` gives newer code than these docs describe.
+- The documented version (0.1.10) is behind the latest release on PyPI (0.1.11): `pip install dynamodol` gives newer code than these docs describe.
 
 ## Source
 
 |                     |                                                                                                                                                         |
 |---------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Commit              | <a href="https://github.com/i2mint/dynamodol/commit/6c44494e05aceb30a14a3e2064b99558b9923802"><code>6c44494e05aceb30a14a3e2064b99558b9923802</code></a> |
+| Commit              | <a href="https://github.com/i2mint/dynamodol/commit/30054ea68106076e328c5b831e3307145b41e7a2"><code>30054ea68106076e328c5b831e3307145b41e7a2</code></a> |
 | Branch              | <code>master</code>                                                                                                                                     |
 | Tags at this commit | none                                                                                                                                                    |
 | Working tree        | clean                                                                                                                                                   |
@@ -423,18 +434,18 @@ The documentation and the package may be misaligned:
 |              |                                                                                            |
 |--------------|--------------------------------------------------------------------------------------------|
 | Repository   | <code>i2mint/dynamodol</code>                                                              |
-| Run          | <a href="https://github.com/i2mint/dynamodol/actions/runs/35738661058">35738661058</a>     |
+| Run          | <a href="https://github.com/i2mint/dynamodol/actions/runs/38363805679">38363805679</a>     |
 | Ref          | <code>refs/heads/master</code>                                                             |
-| Event commit | <code>6c44494e05aceb30a14a3e2064b99558b9923802</code> (in the history of the built commit) |
+| Event commit | <code>30054ea68106076e328c5b831e3307145b41e7a2</code> (in the history of the built commit) |
 
 ## Tools
 
 |          |         |
 |----------|---------|
-| epythet  | 0.2.12  |
+| epythet  | 0.2.15  |
 | Sphinx   | 9.1.0   |
 | docutils | 0.22.4  |
-| Python   | 3.12.14 |
+| Python   | 3.12.15 |
 
 ## Configuration as resolved
 
@@ -450,14 +461,14 @@ The documentation and the package may be misaligned:
 
 ## Package on PyPI
 
-Latest release: <a href="https://pypi.org/project/dynamodol/0.1.10/">0.1.10</a>, newer than the documented version (0.1.9).
+Latest release: <a href="https://pypi.org/project/dynamodol/0.1.11/">0.1.11</a>, newer than the documented version (0.1.10).
 
 ## Reproduce
 
 ```bash
 git clone https://github.com/i2mint/dynamodol && cd dynamodol
-git checkout 6c44494e05aceb30a14a3e2064b99558b9923802
-pip install "epythet==0.2.12"
+git checkout 30054ea68106076e328c5b831e3307145b41e7a2
+pip install "epythet==0.2.15"
 epythet quickstart . --ignore tests/ scrap/ examples/
 ```
 

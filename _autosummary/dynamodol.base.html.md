@@ -17,6 +17,8 @@ DynamoDB (through boto3) with a simple (dict-like or list-like) interface
 | [`is_no_such_key_error`](#dynamodol.base.is_no_such_key_error)(error)                       | Tell whether `error` reports a missing key.                                                                      |
 | [`load_sample_data`](#dynamodol.base.load_sample_data)()                                | For supporting doctests                                                                                          |
 | [`raise_if_nothing_was_deleted`](#dynamodol.base.raise_if_nothing_was_deleted)(...[, error_cls])    | Raise `NoSuchKeyError` if a `ReturnValues='ALL_OLD'` delete removed nothing.                                     |
+| [`scan_items`](#dynamodol.base.scan_items)(store)                                 | Iterate `(key, value)` pairs of an *unwrapped* dynamodol reader in one scan.                                     |
+| [`scan_values`](#dynamodol.base.scan_values)(store)                                | Iterate the values of an *unwrapped* dynamodol reader in one scan (see `scan_items`).                            |
 | [`set_db_defaults`](#dynamodol.base.set_db_defaults)(new_defaults)                     | Sets global defaults for dynamodol so stores can be created without explicitly passing table details every time. |
 
 ### Classes
@@ -117,18 +119,6 @@ MAJOR TODO: boto3 for DynamoDB casts all numbers to a Decimal type. We need to a
 of mapping code to transform values between Decimal and Python int and float types when reading and writing.
 This library is currently only useful for tables that exclusively use string values.
 
-#### *class* ItemsView(mapping)
-
-Bases: [`ItemsView`](https://docs.python.org/3/library/collections.abc.html#collections.abc.ItemsView)
-
-Items view backed by a single table scan (see `iter_items`).
-
-#### *class* ValuesView(mapping)
-
-Bases: [`ValuesView`](https://docs.python.org/3/library/collections.abc.html#collections.abc.ValuesView)
-
-Values view backed by a single table scan (see `iter_values`).
-
 #### format_get_item(item)
 
 #### format_get_key(item)
@@ -194,6 +184,27 @@ Traceback (most recent call last):
   ...
 dynamodol.base.NoSuchKeyError: 'Key not found: k1'
 ```
+
+### dynamodol.base.scan_items(store)
+
+Iterate `(key, value)` pairs of an *unwrapped* dynamodol reader in one scan.
+
+The opt-in fast path that `store.items()` deliberately is not: `items()` goes
+through `__iter__` and `__getitem__` (one get per key) so that it is correct
+under any dol wrapper. Passing a wrapped store raises `TypeError`, because a
+free function cannot apply the wrapper’s key mapping, scope or value decoding.
+
+```pycon
+>>> import dynamodol
+>>> dynamodol.scan_items(object())
+Traceback (most recent call last):
+  ...
+TypeError: `scan_items` needs an unwrapped dynamodol reader, got object. A wrapped store (key codec, filt_iter, value codec...) must be iterated with its own `.items()` / `.values()`, which apply the wrapper's scope and codecs (one `get` per key).
+```
+
+### dynamodol.base.scan_values(store)
+
+Iterate the values of an *unwrapped* dynamodol reader in one scan (see `scan_items`).
 
 ### dynamodol.base.set_db_defaults(new_defaults)
 

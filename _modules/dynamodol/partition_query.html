@@ -294,139 +294,130 @@ data-aria-dark="Switch to auto color mode">
 </span><span data-line="174">            <span class="n">result</span><span class="p">[</span><span class="s2">"FilterExpression"</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">attr_query</span>
 </span><span data-line="175">        <span class="k">return</span> <span class="n">result</span>
 </span><span data-line="176">
-</span><span data-line="177">    <span class="k">def</span><span class="w"> </span><span class="nf">iter_items</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-</span><span data-line="178">        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="o">.</span><span class="n">query</span><span class="p">(</span>
-</span><span data-line="179">            <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">filter_kwargs</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_keys_values_expression</span>
-</span><span data-line="180">        <span class="p">)</span>
-</span><span data-line="181">        <span class="k">yield from</span> <span class="p">(</span>
-</span><span data-line="182">            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">format_get_key</span><span class="p">(</span><span class="n">d</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">format_get_item</span><span class="p">(</span><span class="n">d</span><span class="p">))</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">response</span><span class="p">[</span><span class="s2">"Items"</span><span class="p">]</span>
-</span><span data-line="183">        <span class="p">)</span>
-</span><span data-line="184">
-</span><span data-line="185">    <span class="k">def</span><span class="w"> </span><span class="nf">iter_values</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-</span><span data-line="186">        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">filter_kwargs</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_values_expression</span><span class="p">)</span>
-</span><span data-line="187">        <span class="k">yield from</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">format_get_item</span><span class="p">(</span><span class="n">d</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">response</span><span class="p">[</span><span class="s2">"Items"</span><span class="p">])</span>
-</span><span data-line="188">
-</span><span data-line="189">    <span class="k">def</span><span class="w"> </span><span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-</span><span data-line="190">        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">filter_kwargs</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_keys_expression</span><span class="p">)</span>
-</span><span data-line="191">        <span class="k">yield from</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">format_get_key</span><span class="p">(</span><span class="n">d</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">response</span><span class="p">[</span><span class="s2">"Items"</span><span class="p">])</span>
-</span><span data-line="192">
-</span><span data-line="193">    <span class="k">def</span><span class="w"> </span><span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-</span><span data-line="194">        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">filter_kwargs</span><span class="p">,</span> <span class="n">Select</span><span class="o">=</span><span class="s2">"COUNT"</span><span class="p">)</span>
-</span><span data-line="195">        <span class="k">return</span> <span class="n">response</span><span class="p">[</span><span class="s2">"Count"</span><span class="p">]</span></div>
+</span><span data-line="177">    <span class="k">def</span><span class="w"> </span><span class="nf">_scan_records</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">projection</span><span class="p">):</span>
+</span><span data-line="178">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">filter_kwargs</span><span class="p">,</span> <span class="o">**</span><span class="n">projection</span><span class="p">)[</span><span class="s2">"Items"</span><span class="p">]</span>
+</span><span data-line="179">
+</span><span data-line="180">    <span class="k">def</span><span class="w"> </span><span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+</span><span data-line="181">        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">filter_kwargs</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_keys_expression</span><span class="p">)</span>
+</span><span data-line="182">        <span class="k">yield from</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">format_get_key</span><span class="p">(</span><span class="n">d</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">response</span><span class="p">[</span><span class="s2">"Items"</span><span class="p">])</span>
+</span><span data-line="183">
+</span><span data-line="184">    <span class="k">def</span><span class="w"> </span><span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+</span><span data-line="185">        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">filter_kwargs</span><span class="p">,</span> <span class="n">Select</span><span class="o">=</span><span class="s2">"COUNT"</span><span class="p">)</span>
+</span><span data-line="186">        <span class="k">return</span> <span class="n">response</span><span class="p">[</span><span class="s2">"Count"</span><span class="p">]</span></div>
 
-</span><span data-line="196">
-</span><span data-line="197">
+</span><span data-line="187">
+</span><span data-line="188">
 <div class="viewcode-block" id="DynamoDbPartitionReader">
 <a class="viewcode-back" href="../../_autosummary/dynamodol.partition_query.html#dynamodol.partition_query.DynamoDbPartitionReader">[docs]</a>
-</span><span data-line="198"><span class="nd">@dataclass</span>
-</span><span data-line="199"><span class="k">class</span><span class="w"> </span><span class="nc">DynamoDbPartitionReader</span><span class="p">(</span><span class="n">DynamoDbQueryReader</span><span class="p">):</span>
-</span><span data-line="200"><span class="w">    </span><span class="sd">"""Reads from a partition of a DynamoDB table.</span>
-</span><span data-line="201">
-</span><span data-line="202"><span class="sd">    &gt;&gt;&gt; from dynamodol.base import load_sample_data</span>
-</span><span data-line="203"><span class="sd">    &gt;&gt;&gt; load_sample_data()</span>
-</span><span data-line="204"><span class="sd">    &gt;&gt;&gt; partition_reader = DynamoDbPartitionReader(partition='part1')</span>
-</span><span data-line="205"><span class="sd">    &gt;&gt;&gt; list(partition_reader)</span>
-</span><span data-line="206"><span class="sd">    [('part1', '01-01'),</span>
-</span><span data-line="207"><span class="sd">     ('part1', '01-02'),</span>
-</span><span data-line="208"><span class="sd">     ('part1', '01-03'),</span>
-</span><span data-line="209"><span class="sd">     ('part1', '01-04'),</span>
-</span><span data-line="210"><span class="sd">     ('part1', '02-01'),</span>
-</span><span data-line="211"><span class="sd">     ('part1', '03-02'),</span>
-</span><span data-line="212"><span class="sd">     ('part1', '04-03'),</span>
-</span><span data-line="213"><span class="sd">     ('part1', 'sort2')]</span>
-</span><span data-line="214"><span class="sd">    &gt;&gt;&gt; partition_reader[('part1', '01-01')]</span>
-</span><span data-line="215"><span class="sd">    """</span>
-</span><span data-line="216">
-</span><span data-line="217">    <span class="n">partition</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
-</span><span data-line="218">
-</span><span data-line="219">    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-</span><span data-line="220">        <span class="n">DynamoDbQueryReader</span><span class="o">.</span><span class="n">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-</span><span data-line="221">        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">partition</span><span class="p">:</span>
-</span><span data-line="222">            <span class="bp">self</span><span class="o">.</span><span class="n">partition</span> <span class="o">=</span> <span class="n">db_defaults</span><span class="p">[</span><span class="s2">"partition"</span><span class="p">]</span>
-</span><span data-line="223">        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">key_fields</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
-</span><span data-line="224">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-</span><span data-line="225">                <span class="s2">"DynamoDbPartitionReader must have a composite key of length 2 in the format (partition_key, sort_key)"</span>
-</span><span data-line="226">            <span class="p">)</span>
-</span><span data-line="227">        <span class="bp">self</span><span class="o">.</span><span class="n">key_query</span> <span class="o">=</span> <span class="n">Key</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">partition_key</span><span class="p">)</span><span class="o">.</span><span class="n">eq</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">partition</span><span class="p">)</span>
-</span><span data-line="228">
+</span><span data-line="189"><span class="nd">@dataclass</span>
+</span><span data-line="190"><span class="k">class</span><span class="w"> </span><span class="nc">DynamoDbPartitionReader</span><span class="p">(</span><span class="n">DynamoDbQueryReader</span><span class="p">):</span>
+</span><span data-line="191"><span class="w">    </span><span class="sd">"""Reads from a partition of a DynamoDB table.</span>
+</span><span data-line="192">
+</span><span data-line="193"><span class="sd">    &gt;&gt;&gt; from dynamodol.base import load_sample_data</span>
+</span><span data-line="194"><span class="sd">    &gt;&gt;&gt; load_sample_data()</span>
+</span><span data-line="195"><span class="sd">    &gt;&gt;&gt; partition_reader = DynamoDbPartitionReader(partition='part1')</span>
+</span><span data-line="196"><span class="sd">    &gt;&gt;&gt; list(partition_reader)</span>
+</span><span data-line="197"><span class="sd">    [('part1', '01-01'),</span>
+</span><span data-line="198"><span class="sd">     ('part1', '01-02'),</span>
+</span><span data-line="199"><span class="sd">     ('part1', '01-03'),</span>
+</span><span data-line="200"><span class="sd">     ('part1', '01-04'),</span>
+</span><span data-line="201"><span class="sd">     ('part1', '02-01'),</span>
+</span><span data-line="202"><span class="sd">     ('part1', '03-02'),</span>
+</span><span data-line="203"><span class="sd">     ('part1', '04-03'),</span>
+</span><span data-line="204"><span class="sd">     ('part1', 'sort2')]</span>
+</span><span data-line="205"><span class="sd">    &gt;&gt;&gt; partition_reader[('part1', '01-01')]</span>
+</span><span data-line="206"><span class="sd">    """</span>
+</span><span data-line="207">
+</span><span data-line="208">    <span class="n">partition</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+</span><span data-line="209">
+</span><span data-line="210">    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+</span><span data-line="211">        <span class="n">DynamoDbQueryReader</span><span class="o">.</span><span class="n">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+</span><span data-line="212">        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">partition</span><span class="p">:</span>
+</span><span data-line="213">            <span class="bp">self</span><span class="o">.</span><span class="n">partition</span> <span class="o">=</span> <span class="n">db_defaults</span><span class="p">[</span><span class="s2">"partition"</span><span class="p">]</span>
+</span><span data-line="214">        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">key_fields</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+</span><span data-line="215">            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+</span><span data-line="216">                <span class="s2">"DynamoDbPartitionReader must have a composite key of length 2 in the format (partition_key, sort_key)"</span>
+</span><span data-line="217">            <span class="p">)</span>
+</span><span data-line="218">        <span class="bp">self</span><span class="o">.</span><span class="n">key_query</span> <span class="o">=</span> <span class="n">Key</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">partition_key</span><span class="p">)</span><span class="o">.</span><span class="n">eq</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">partition</span><span class="p">)</span>
+</span><span data-line="219">
 <div class="viewcode-block" id="DynamoDbPartitionReader.format_get_key">
 <a class="viewcode-back" href="../../_autosummary/dynamodol.partition_query.html#dynamodol.partition_query.DynamoDbPartitionReader.format_get_key">[docs]</a>
-</span><span data-line="229">    <span class="k">def</span><span class="w"> </span><span class="nf">format_get_key</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">):</span>
-</span><span data-line="230"><span class="w">        </span><span class="sd">"""TODO: replace with _id_of_key, etc."""</span>
-</span><span data-line="231">        <span class="k">return</span> <span class="n">item</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">sort_key</span><span class="p">]</span></div>
+</span><span data-line="220">    <span class="k">def</span><span class="w"> </span><span class="nf">format_get_key</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">):</span>
+</span><span data-line="221"><span class="w">        </span><span class="sd">"""TODO: replace with _id_of_key, etc."""</span>
+</span><span data-line="222">        <span class="k">return</span> <span class="n">item</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">sort_key</span><span class="p">]</span></div>
 
-</span><span data-line="232">
-</span><span data-line="233">    <span class="k">def</span><span class="w"> </span><span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">):</span>
-</span><span data-line="234">        <span class="n">key</span> <span class="o">=</span> <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">partition_key</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">partition</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">sort_key</span><span class="p">:</span> <span class="n">k</span><span class="p">}</span>
-</span><span data-line="235">        <span class="n">item</span> <span class="o">=</span> <span class="n">get_item_or_raise</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">error_cls</span><span class="o">=</span><span class="n">NoSuchKeyError</span><span class="p">)</span>
-</span><span data-line="236">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">format_get_item</span><span class="p">(</span><span class="n">item</span><span class="p">)</span></div>
+</span><span data-line="223">
+</span><span data-line="224">    <span class="k">def</span><span class="w"> </span><span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">):</span>
+</span><span data-line="225">        <span class="n">key</span> <span class="o">=</span> <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">partition_key</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">partition</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">sort_key</span><span class="p">:</span> <span class="n">k</span><span class="p">}</span>
+</span><span data-line="226">        <span class="n">item</span> <span class="o">=</span> <span class="n">get_item_or_raise</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">error_cls</span><span class="o">=</span><span class="n">NoSuchKeyError</span><span class="p">)</span>
+</span><span data-line="227">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">format_get_item</span><span class="p">(</span><span class="n">item</span><span class="p">)</span></div>
 
-</span><span data-line="237">
-</span><span data-line="238">
+</span><span data-line="228">
+</span><span data-line="229">
 <div class="viewcode-block" id="DynamoDbPrefixReader">
 <a class="viewcode-back" href="../../_autosummary/dynamodol.partition_query.html#dynamodol.partition_query.DynamoDbPrefixReader">[docs]</a>
-</span><span data-line="239"><span class="nd">@dataclass</span>
-</span><span data-line="240"><span class="k">class</span><span class="w"> </span><span class="nc">DynamoDbPrefixReader</span><span class="p">(</span><span class="n">DynamoDbPartitionReader</span><span class="p">):</span>
-</span><span data-line="241"><span class="w">    </span><span class="sd">"""Reads from a partition of a DynamoDB table, with the sort key filtered by a prefix.</span>
-</span><span data-line="242">
-</span><span data-line="243"><span class="sd">    &gt;&gt;&gt; from dynamodol.base import load_sample_data</span>
-</span><span data-line="244"><span class="sd">    &gt;&gt;&gt; load_sample_data()</span>
-</span><span data-line="245"><span class="sd">    &gt;&gt;&gt; prefix_reader = DynamoDbPrefixReader(key_fields=('partitionkey', 'sortkey'), table_name='sorted_table', partition='part1', prefix='01')</span>
-</span><span data-line="246"><span class="sd">    &gt;&gt;&gt; list(prefix_reader)</span>
-</span><span data-line="247"><span class="sd">    [('part1', '01-01'),</span>
-</span><span data-line="248"><span class="sd">     ('part1', '01-02'),</span>
-</span><span data-line="249"><span class="sd">     ('part1', '01-03'),</span>
-</span><span data-line="250"><span class="sd">     ('part1', '01-04')]</span>
-</span><span data-line="251"><span class="sd">    """</span>
-</span><span data-line="252">
-</span><span data-line="253">    <span class="n">prefix</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">""</span><span class="p">)</span>
-</span><span data-line="254">
-</span><span data-line="255">    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-</span><span data-line="256">        <span class="n">DynamoDbPartitionReader</span><span class="o">.</span><span class="n">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-</span><span data-line="257">        <span class="bp">self</span><span class="o">.</span><span class="n">key_query</span> <span class="o">=</span> <span class="n">Key</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">partition_key</span><span class="p">)</span><span class="o">.</span><span class="n">eq</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">partition</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">Key</span><span class="p">(</span>
-</span><span data-line="258">            <span class="bp">self</span><span class="o">.</span><span class="n">sort_key</span>
-</span><span data-line="259">        <span class="p">)</span><span class="o">.</span><span class="n">begins_with</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">prefix</span><span class="p">)</span>
-</span><span data-line="260">
+</span><span data-line="230"><span class="nd">@dataclass</span>
+</span><span data-line="231"><span class="k">class</span><span class="w"> </span><span class="nc">DynamoDbPrefixReader</span><span class="p">(</span><span class="n">DynamoDbPartitionReader</span><span class="p">):</span>
+</span><span data-line="232"><span class="w">    </span><span class="sd">"""Reads from a partition of a DynamoDB table, with the sort key filtered by a prefix.</span>
+</span><span data-line="233">
+</span><span data-line="234"><span class="sd">    &gt;&gt;&gt; from dynamodol.base import load_sample_data</span>
+</span><span data-line="235"><span class="sd">    &gt;&gt;&gt; load_sample_data()</span>
+</span><span data-line="236"><span class="sd">    &gt;&gt;&gt; prefix_reader = DynamoDbPrefixReader(key_fields=('partitionkey', 'sortkey'), table_name='sorted_table', partition='part1', prefix='01')</span>
+</span><span data-line="237"><span class="sd">    &gt;&gt;&gt; list(prefix_reader)</span>
+</span><span data-line="238"><span class="sd">    [('part1', '01-01'),</span>
+</span><span data-line="239"><span class="sd">     ('part1', '01-02'),</span>
+</span><span data-line="240"><span class="sd">     ('part1', '01-03'),</span>
+</span><span data-line="241"><span class="sd">     ('part1', '01-04')]</span>
+</span><span data-line="242"><span class="sd">    """</span>
+</span><span data-line="243">
+</span><span data-line="244">    <span class="n">prefix</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">""</span><span class="p">)</span>
+</span><span data-line="245">
+</span><span data-line="246">    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+</span><span data-line="247">        <span class="n">DynamoDbPartitionReader</span><span class="o">.</span><span class="n">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+</span><span data-line="248">        <span class="bp">self</span><span class="o">.</span><span class="n">key_query</span> <span class="o">=</span> <span class="n">Key</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">partition_key</span><span class="p">)</span><span class="o">.</span><span class="n">eq</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">partition</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">Key</span><span class="p">(</span>
+</span><span data-line="249">            <span class="bp">self</span><span class="o">.</span><span class="n">sort_key</span>
+</span><span data-line="250">        <span class="p">)</span><span class="o">.</span><span class="n">begins_with</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">prefix</span><span class="p">)</span>
+</span><span data-line="251">
 <div class="viewcode-block" id="DynamoDbPrefixReader.format_get_key">
 <a class="viewcode-back" href="../../_autosummary/dynamodol.partition_query.html#dynamodol.partition_query.DynamoDbPrefixReader.format_get_key">[docs]</a>
-</span><span data-line="261">    <span class="k">def</span><span class="w"> </span><span class="nf">format_get_key</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">):</span>
-</span><span data-line="262"><span class="w">        </span><span class="sd">"""TODO: replace with _id_of_key, etc."""</span>
-</span><span data-line="263">        <span class="k">return</span> <span class="n">item</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">sort_key</span><span class="p">][</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">prefix</span><span class="p">)</span> <span class="p">:]</span></div>
+</span><span data-line="252">    <span class="k">def</span><span class="w"> </span><span class="nf">format_get_key</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">):</span>
+</span><span data-line="253"><span class="w">        </span><span class="sd">"""TODO: replace with _id_of_key, etc."""</span>
+</span><span data-line="254">        <span class="k">return</span> <span class="n">item</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">sort_key</span><span class="p">][</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">prefix</span><span class="p">)</span> <span class="p">:]</span></div>
 
+</span><span data-line="255">
+</span><span data-line="256">    <span class="k">def</span><span class="w"> </span><span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">):</span>
+</span><span data-line="257">        <span class="k">try</span><span class="p">:</span>
+</span><span data-line="258">            <span class="n">key</span> <span class="o">=</span> <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">partition_key</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">partition</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">sort_key</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">prefix</span> <span class="o">+</span> <span class="n">k</span><span class="p">}</span>
+</span><span data-line="259">        <span class="k">except</span> <span class="ne">TypeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>  <span class="c1"># a non-str key cannot carry the prefix</span>
+</span><span data-line="260">            <span class="k">raise</span> <span class="n">NoSuchKeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Key not found: </span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+</span><span data-line="261">        <span class="n">item</span> <span class="o">=</span> <span class="n">get_item_or_raise</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">error_cls</span><span class="o">=</span><span class="n">NoSuchKeyError</span><span class="p">)</span>
+</span><span data-line="262">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">format_get_item</span><span class="p">(</span><span class="n">item</span><span class="p">)</span></div>
+
+</span><span data-line="263">
 </span><span data-line="264">
-</span><span data-line="265">    <span class="k">def</span><span class="w"> </span><span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">):</span>
-</span><span data-line="266">        <span class="k">try</span><span class="p">:</span>
-</span><span data-line="267">            <span class="n">key</span> <span class="o">=</span> <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">partition_key</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">partition</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">sort_key</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">prefix</span> <span class="o">+</span> <span class="n">k</span><span class="p">}</span>
-</span><span data-line="268">        <span class="k">except</span> <span class="ne">TypeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>  <span class="c1"># a non-str key cannot carry the prefix</span>
-</span><span data-line="269">            <span class="k">raise</span> <span class="n">NoSuchKeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Key not found: </span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
-</span><span data-line="270">        <span class="n">item</span> <span class="o">=</span> <span class="n">get_item_or_raise</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">error_cls</span><span class="o">=</span><span class="n">NoSuchKeyError</span><span class="p">)</span>
-</span><span data-line="271">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">format_get_item</span><span class="p">(</span><span class="n">item</span><span class="p">)</span></div>
-
-</span><span data-line="272">
-</span><span data-line="273">
 <div class="viewcode-block" id="DynamoDbPartitionPersister">
 <a class="viewcode-back" href="../../_autosummary/dynamodol.partition_query.html#dynamodol.partition_query.DynamoDbPartitionPersister">[docs]</a>
-</span><span data-line="274"><span class="k">class</span><span class="w"> </span><span class="nc">DynamoDbPartitionPersister</span><span class="p">(</span><span class="n">DynamoDbBasePersister</span><span class="p">,</span> <span class="n">DynamoDbPartitionReader</span><span class="p">):</span>
-</span><span data-line="275">    <span class="k">def</span><span class="w"> </span><span class="fm">__setitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
-</span><span data-line="276">        <span class="n">key</span> <span class="o">=</span> <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">partition_key</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">partition</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">sort_key</span><span class="p">:</span> <span class="n">k</span><span class="p">}</span>
-</span><span data-line="277">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-</span><span data-line="278">            <span class="n">v</span> <span class="o">=</span> <span class="p">(</span><span class="n">v</span><span class="p">,)</span>
-</span><span data-line="279">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
-</span><span data-line="280">            <span class="n">val</span> <span class="o">=</span> <span class="n">v</span>
-</span><span data-line="281">        <span class="k">else</span><span class="p">:</span>
-</span><span data-line="282">            <span class="n">val</span> <span class="o">=</span> <span class="p">{</span><span class="n">att</span><span class="p">:</span> <span class="n">key</span> <span class="k">for</span> <span class="n">att</span><span class="p">,</span> <span class="n">key</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data_fields</span><span class="p">,</span> <span class="n">v</span><span class="p">)}</span>
-</span><span data-line="283">
-</span><span data-line="284">        <span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="o">.</span><span class="n">put_item</span><span class="p">(</span><span class="n">Item</span><span class="o">=</span><span class="p">{</span><span class="o">**</span><span class="n">key</span><span class="p">,</span> <span class="o">**</span><span class="n">val</span><span class="p">})</span>
-</span><span data-line="285">
-</span><span data-line="286">    <span class="k">def</span><span class="w"> </span><span class="fm">__delitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">):</span>
-</span><span data-line="287">        <span class="n">key</span> <span class="o">=</span> <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">partition_key</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">partition</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">sort_key</span><span class="p">:</span> <span class="n">k</span><span class="p">}</span>
-</span><span data-line="288">        <span class="k">try</span><span class="p">:</span>
-</span><span data-line="289">            <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="o">.</span><span class="n">delete_item</span><span class="p">(</span><span class="n">Key</span><span class="o">=</span><span class="n">key</span><span class="p">,</span> <span class="n">ReturnValues</span><span class="o">=</span><span class="s2">"ALL_OLD"</span><span class="p">)</span>
-</span><span data-line="290">        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-</span><span data-line="291">            <span class="k">if</span> <span class="n">is_no_such_key_error</span><span class="p">(</span><span class="n">e</span><span class="p">):</span>
-</span><span data-line="292">                <span class="k">raise</span> <span class="n">NoSuchKeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Key not found: </span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
-</span><span data-line="293">            <span class="k">raise</span>
-</span><span data-line="294">        <span class="n">raise_if_nothing_was_deleted</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">error_cls</span><span class="o">=</span><span class="n">NoSuchKeyError</span><span class="p">)</span></div>
+</span><span data-line="265"><span class="k">class</span><span class="w"> </span><span class="nc">DynamoDbPartitionPersister</span><span class="p">(</span><span class="n">DynamoDbBasePersister</span><span class="p">,</span> <span class="n">DynamoDbPartitionReader</span><span class="p">):</span>
+</span><span data-line="266">    <span class="k">def</span><span class="w"> </span><span class="fm">__setitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+</span><span data-line="267">        <span class="n">key</span> <span class="o">=</span> <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">partition_key</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">partition</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">sort_key</span><span class="p">:</span> <span class="n">k</span><span class="p">}</span>
+</span><span data-line="268">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+</span><span data-line="269">            <span class="n">v</span> <span class="o">=</span> <span class="p">(</span><span class="n">v</span><span class="p">,)</span>
+</span><span data-line="270">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+</span><span data-line="271">            <span class="n">val</span> <span class="o">=</span> <span class="n">v</span>
+</span><span data-line="272">        <span class="k">else</span><span class="p">:</span>
+</span><span data-line="273">            <span class="n">val</span> <span class="o">=</span> <span class="p">{</span><span class="n">att</span><span class="p">:</span> <span class="n">key</span> <span class="k">for</span> <span class="n">att</span><span class="p">,</span> <span class="n">key</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data_fields</span><span class="p">,</span> <span class="n">v</span><span class="p">)}</span>
+</span><span data-line="274">
+</span><span data-line="275">        <span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="o">.</span><span class="n">put_item</span><span class="p">(</span><span class="n">Item</span><span class="o">=</span><span class="p">{</span><span class="o">**</span><span class="n">key</span><span class="p">,</span> <span class="o">**</span><span class="n">val</span><span class="p">})</span>
+</span><span data-line="276">
+</span><span data-line="277">    <span class="k">def</span><span class="w"> </span><span class="fm">__delitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">):</span>
+</span><span data-line="278">        <span class="n">key</span> <span class="o">=</span> <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">partition_key</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">partition</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">sort_key</span><span class="p">:</span> <span class="n">k</span><span class="p">}</span>
+</span><span data-line="279">        <span class="k">try</span><span class="p">:</span>
+</span><span data-line="280">            <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="o">.</span><span class="n">delete_item</span><span class="p">(</span><span class="n">Key</span><span class="o">=</span><span class="n">key</span><span class="p">,</span> <span class="n">ReturnValues</span><span class="o">=</span><span class="s2">"ALL_OLD"</span><span class="p">)</span>
+</span><span data-line="281">        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+</span><span data-line="282">            <span class="k">if</span> <span class="n">is_no_such_key_error</span><span class="p">(</span><span class="n">e</span><span class="p">):</span>
+</span><span data-line="283">                <span class="k">raise</span> <span class="n">NoSuchKeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Key not found: </span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+</span><span data-line="284">            <span class="k">raise</span>
+</span><span data-line="285">        <span class="n">raise_if_nothing_was_deleted</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">error_cls</span><span class="o">=</span><span class="n">NoSuchKeyError</span><span class="p">)</span></div>
 
 </span></pre></div>
         </article><button class="back-to-top" type="button">
@@ -455,7 +446,7 @@ data-aria-dark="Switch to auto color mode">
     </div>
   </div>
 </footer>
-      <script src="../../_static/documentation_options.js?v=8618f531"></script>
+      <script src="../../_static/documentation_options.js?v=bafade30"></script>
       <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>

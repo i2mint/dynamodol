@@ -21,6 +21,8 @@ dynamodol.base
       is_no_such_key_error
       load_sample_data
       raise_if_nothing_was_deleted
+      scan_items
+      scan_values
       set_db_defaults
    
    .. rubric:: Classes
