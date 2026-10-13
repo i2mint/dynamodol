@@ -9,10 +9,7 @@ from lazyprop import lazyprop
 from typing import Any, Tuple
 from collections.abc import Iterable, Mapping
 
-from dol import KvReader, KvPersister, Store, BaseValuesView, BaseItemsView
-
-
-_not_found = object()  # sentinel: distinguishes "absent" from a stored None
+from dol import KvReader, KvPersister, Store
 
 
 class NoSuchKeyError(KeyError):
@@ -184,28 +181,6 @@ class DynamoDbBaseReader(KvReader):
     data_fields: tuple[str] = field(default=None)
     exclude_keys_on_read: bool = field(default=True)
 
-    class ValuesView(BaseValuesView):
-        """Values view backed by a single table scan (see ``iter_values``)."""
-
-        def __contains__(self, v):
-            return any(value is v or value == v for value in self)
-
-        def __iter__(self):
-            return self._mapping.iter_values()
-
-    class ItemsView(BaseItemsView):
-        """Items view backed by a single table scan (see ``iter_items``)."""
-
-        def __contains__(self, item):
-            k, v = item
-            value = self._mapping.get(k, _not_found)
-            if value is _not_found:
-                return False
-            return value is v or value == v
-
-        def __iter__(self):
-            return self._mapping.iter_items()
-
     def __post_init__(self):
         for k, v in db_defaults.items():
             if getattr(self, k, None) is None:
@@ -334,15 +309,28 @@ class DynamoDbBaseReader(KvReader):
         item = get_item_or_raise(self.table, _k, k, **self._values_expression)
         return self.format_get_item(item)
 
-    def iter_items(self):
-        response = self.table.scan(**self._keys_values_expression)
-        yield from (
-            (self.format_get_key(d), self.format_get_item(d)) for d in response["Items"]
-        )
+    def _scan_records(self, projection):
+        """The raw records for a ``projection`` (an ``Expression*`` kwargs dict)."""
+        return self.table.scan(**projection)["Items"]
 
-    def iter_values(self):
-        response = self.table.scan(**self._values_expression)
-        yield from (self.format_get_item(d) for d in response["Items"])
+    #: Removed methods -> what replaces them (see `__getattr__`).
+    _removed_methods = {
+        "iter_items": "dynamodol.scan_items(store)",
+        "iter_values": "dynamodol.scan_values(store)",
+    }
+
+    def __getattr__(self, name):
+        if name in type(self)._removed_methods:
+            raise AttributeError(
+                f"`{name}` was removed: as a method it ran bound to the inner store, so "
+                f"on a wrapped store (key codec, filt_iter...) it returned out-of-scope "
+                f"keys and raw values (i2mint/dynamodol#1). `.items()` / `.values()` "
+                f"are now correct on wrapped stores; for a single-scan fast path on an "
+                f"unwrapped store use {type(self)._removed_methods[name]}."
+            )
+        raise AttributeError(
+            f"{type(self).__name__!r} object has no attribute {name!r}"
+        )
 
     def __iter__(self):
         # This is extremely inefficient and should not be used with large tables in production
@@ -484,3 +472,40 @@ def load_sample_data():
 
 
 # TODO class DynamoDbStore(DynamoDbBasePersister, Store): ...
+
+
+def _leaf_reader(store, *, fn):
+    if not isinstance(store, DynamoDbBaseReader):
+        raise TypeError(
+            f"`{fn}` needs an unwrapped dynamodol reader, got "
+            f"{type(store).__name__}. A wrapped store (key codec, filt_iter, value "
+            f"codec...) must be iterated with its own `.items()` / `.values()`, which "
+            f"apply the wrapper's scope and codecs (one `get` per key)."
+        )
+    return store
+
+
+def scan_items(store):
+    """Iterate ``(key, value)`` pairs of an *unwrapped* dynamodol reader in one scan.
+
+    The opt-in fast path that ``store.items()`` deliberately is not: ``items()`` goes
+    through ``__iter__`` and ``__getitem__`` (one get per key) so that it is correct
+    under any dol wrapper. Passing a wrapped store raises ``TypeError``, because a
+    free function cannot apply the wrapper's key mapping, scope or value decoding.
+
+    >>> import dynamodol
+    >>> dynamodol.scan_items(object())
+    Traceback (most recent call last):
+      ...
+    TypeError: `scan_items` needs an unwrapped dynamodol reader, got object. A wrapped store (key codec, filt_iter, value codec...) must be iterated with its own `.items()` / `.values()`, which apply the wrapper's scope and codecs (one `get` per key).
+    """
+    reader = _leaf_reader(store, fn="scan_items")
+    for record in reader._scan_records(reader._keys_values_expression):
+        yield reader.format_get_key(record), reader.format_get_item(record)
+
+
+def scan_values(store):
+    """Iterate the values of an *unwrapped* dynamodol reader in one scan (see `scan_items`)."""
+    reader = _leaf_reader(store, fn="scan_values")
+    for record in reader._scan_records(reader._values_expression):
+        yield reader.format_get_item(record)
