@@ -123,3 +123,45 @@ def test_base_persister_scan():
         data_fields=DATA_FIELDS,
     )
     assert list(dynamodol.scan_items(s)) == [("k1", "A")]
+
+
+# --- a reader subclass that overrides __iter__/__getitem__ (dynamodol#9) ----------
+
+
+class OnlyAlice(DynamoDbPrefixReader):
+    def __iter__(self):
+        return (k for k in super().__iter__() if k.startswith("alice/"))
+
+
+class Shouting(DynamoDbPrefixReader):
+    def __getitem__(self, k):
+        return super().__getitem__(k).lower()
+
+
+def test_scan_honours_a_subclass_that_overrides_iter():
+    s = _leaf(OnlyAlice)
+    assert list(s.items()) == [("alice/notes.txt", "ALICE-SECRET")]
+    assert list(dynamodol.scan_items(s)) == list(s.items())
+    assert list(dynamodol.scan_values(s)) == ["ALICE-SECRET"]  # no BOB-SECRET
+
+
+def test_scan_honours_a_subclass_that_overrides_getitem():
+    s = _leaf(Shouting)
+    assert list(dynamodol.scan_items(s)) == list(s.items())
+    assert list(dynamodol.scan_values(s)) == ["alice-secret", "bob-secret"]
+
+
+def test_scan_of_an_override_inherited_through_a_subclass_delegates():
+    class Deeper(OnlyAlice):
+        pass
+
+    assert list(dynamodol.scan_values(_leaf(Deeper))) == ["ALICE-SECRET"]
+
+
+def test_dynamodols_own_subclasses_keep_the_single_scan(monkeypatch):
+    s = _leaf()  # DynamoDbPrefixReader: overrides __iter__, but inside dynamodol
+    calls = []
+    monkeypatch.setattr(
+        DynamoDbPrefixReader, "_scan_records", lambda self, projection: calls.append(1) or []
+    )
+    assert list(dynamodol.scan_items(s)) == [] and len(calls) == 1

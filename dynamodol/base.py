@@ -654,12 +654,32 @@ def load_sample_data():
 # TODO class DynamoDbStore(DynamoDbBasePersister, Store): ...
 
 
+_SCAN_FAST_PATH_METHODS = ("__iter__", "__getitem__")
+
+
+def _overrides_reader_protocol(reader) -> bool:
+    """Whether ``type(reader)`` overrides ``__iter__``/``__getitem__`` outside dynamodol.
+
+    The single-scan fast path reads the table itself, so it would skip an override that
+    narrows the keys or maps the values (dynamodol's own subclasses, e.g. the prefix and
+    partition readers, are what the scan understands). Only those two methods are
+    checked: a subclass that narrows ``_scan_records`` or ``items()`` is not detected.
+    """
+    package = __name__.partition(".")[0]
+    for name in _SCAN_FAST_PATH_METHODS:
+        owner = next((c for c in type(reader).__mro__ if name in vars(c)), None)
+        if owner is not None and (owner.__module__ or "").partition(".")[0] != package:
+            return True
+    return False
+
+
 def _leaf_reader(store, *, fn):
     """``store`` if it is an unwrapped dynamodol reader (the single-scan fast path),
-    ``None`` if it is any other mapping (a dol-wrapped store: use its own ``.items()`` /
-    ``.values()``, which apply the wrapper's scope and codecs); ``TypeError`` otherwise."""
+    ``None`` if it is any other mapping (a dol-wrapped store, or a reader subclass that
+    overrides ``__iter__``/``__getitem__``: use its own ``.items()`` / ``.values()``, which
+    apply its scope and codecs); ``TypeError`` otherwise."""
     if isinstance(store, DynamoDbBaseReader):
-        return store
+        return None if _overrides_reader_protocol(store) else store
     if isinstance(store, Mapping):
         return None
     raise TypeError(
@@ -674,7 +694,8 @@ def scan_items(store):
     A bare dynamodol reader is read in one scan: the opt-in fast path that
     ``store.items()`` deliberately is not, since ``items()`` batches ``BatchGetItem``
     (100 keys per call) so that it is correct under any dol wrapper. A *wrapped* store
-    (key codec, ``filt_iter``, value codec...) has its own mapping, scope and decoding,
+    (key codec, ``filt_iter``, value codec...), or a reader subclass that overrides
+    ``__iter__``/``__getitem__``, has its own mapping, scope and decoding,
     which a free function cannot reproduce from the table: for it this is simply
     ``iter(store.items())``. Anything that is not a mapping raises ``TypeError``.
 
