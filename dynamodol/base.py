@@ -146,6 +146,28 @@ def decimal_to_float(x):
     return x
 
 
+class _RemovedMethod:
+    """Attribute that raises an ``AttributeError`` naming the method's replacement.
+
+    A descriptor (rather than a ``__getattr__``) so it cannot mask unrelated
+    ``AttributeError``s raised inside the reader's own properties.
+    """
+
+    def __init__(self, name, replacement):
+        self.name, self.replacement = name, replacement
+
+    def __get__(self, instance, owner=None):
+        if instance is None:  # class access (dol's class-wrap enumerates dir(cls))
+            return self
+        raise AttributeError(
+            f"`{self.name}` was removed: as a method it ran bound to the inner store, "
+            f"so on a wrapped store (key codec, filt_iter...) it returned out-of-scope "
+            f"keys and raw values (i2mint/dynamodol#1). `.items()` / `.values()` are "
+            f"now correct on wrapped stores; for a single-scan fast path on an "
+            f"unwrapped store use {self.replacement}."
+        )
+
+
 @dataclass
 class DynamoDbBaseReader(KvReader):
     """A basic key-value reader for DynamoDb
@@ -313,24 +335,8 @@ class DynamoDbBaseReader(KvReader):
         """The raw records for a ``projection`` (an ``Expression*`` kwargs dict)."""
         return self.table.scan(**projection)["Items"]
 
-    #: Removed methods -> what replaces them (see `__getattr__`).
-    _removed_methods = {
-        "iter_items": "dynamodol.scan_items(store)",
-        "iter_values": "dynamodol.scan_values(store)",
-    }
-
-    def __getattr__(self, name):
-        if name in type(self)._removed_methods:
-            raise AttributeError(
-                f"`{name}` was removed: as a method it ran bound to the inner store, so "
-                f"on a wrapped store (key codec, filt_iter...) it returned out-of-scope "
-                f"keys and raw values (i2mint/dynamodol#1). `.items()` / `.values()` "
-                f"are now correct on wrapped stores; for a single-scan fast path on an "
-                f"unwrapped store use {type(self)._removed_methods[name]}."
-            )
-        raise AttributeError(
-            f"{type(self).__name__!r} object has no attribute {name!r}"
-        )
+    iter_items = _RemovedMethod("iter_items", "dynamodol.scan_items(store)")
+    iter_values = _RemovedMethod("iter_values", "dynamodol.scan_values(store)")
 
     def __iter__(self):
         # This is extremely inefficient and should not be used with large tables in production

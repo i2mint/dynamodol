@@ -1,6 +1,7 @@
 """`.items()` / `.values()` on a wrapped store must honour the wrapper (dynamodol#1, dol#83)."""
 
 import pytest
+from botocore.exceptions import ClientError
 from dol import KeyCodecs, Pipe, filt_iter, wrap_kvs
 
 import dynamodol
@@ -71,8 +72,19 @@ def test_removed_methods_point_to_replacement():
         _leaf().iter_items
     with pytest.raises(AttributeError, match="scan_values"):
         alice_only(_leaf()).iter_values
-    with pytest.raises(AttributeError, match="no attribute 'nope'"):
-        _leaf().nope
+    assert not hasattr(_leaf(), "iter_items")
+
+
+def test_real_attribute_errors_inside_properties_are_not_masked():
+    class BadDb:  # no `.Table`: e.g. a boto3 *client* passed where a resource is expected
+        def create_table(self, **kwargs):
+            raise ClientError({"Error": {"Code": "InUse"}}, "CreateTable")
+
+    s = DynamoDbPrefixReader(
+        db=BadDb(), table_name="t", key_fields=("p", "s"), partition="x"
+    )
+    with pytest.raises(AttributeError, match="'BadDb' object has no attribute 'Table'"):
+        s["k"]
 
 
 def test_base_persister_scan():
