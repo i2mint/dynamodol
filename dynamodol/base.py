@@ -649,33 +649,40 @@ def load_sample_data():
 
 
 def _leaf_reader(store, *, fn):
-    if not isinstance(store, DynamoDbBaseReader):
-        raise TypeError(
-            f"`{fn}` needs an unwrapped dynamodol reader, got "
-            f"{type(store).__name__}. A wrapped store (key codec, filt_iter, value "
-            f"codec...) must be iterated with its own `.items()` / `.values()`, which "
-            f"apply the wrapper's scope and codecs (one `get` per key)."
-        )
-    return store
+    """``store`` if it is an unwrapped dynamodol reader (the single-scan fast path),
+    ``None`` if it is any other mapping (a dol-wrapped store: use its own ``.items()`` /
+    ``.values()``, which apply the wrapper's scope and codecs); ``TypeError`` otherwise."""
+    if isinstance(store, DynamoDbBaseReader):
+        return store
+    if isinstance(store, Mapping):
+        return None
+    raise TypeError(
+        f"`{fn}` needs a dynamodol reader (bare, or wrapped with a key codec, "
+        f"filt_iter, value codec...), got {type(store).__name__}."
+    )
 
 
 def scan_items(store):
-    """Iterate ``(key, value)`` pairs of an *unwrapped* dynamodol reader in one scan.
+    """Iterate ``(key, value)`` pairs of a dynamodol store.
 
-    The opt-in fast path that ``store.items()`` deliberately is not: ``items()`` goes
-    through ``__iter__`` and ``__getitem__`` (one get per key) so that it is correct
-    under any dol wrapper. Passing a wrapped store raises ``TypeError``, because a
-    free function cannot apply the wrapper's key mapping, scope or value decoding.
+    A bare dynamodol reader is read in one scan: the opt-in fast path that
+    ``store.items()`` deliberately is not, since ``items()`` batches ``BatchGetItem``
+    (100 keys per call) so that it is correct under any dol wrapper. A *wrapped* store
+    (key codec, ``filt_iter``, value codec...) has its own mapping, scope and decoding,
+    which a free function cannot reproduce from the table: for it this is simply
+    ``iter(store.items())``. Anything that is not a mapping raises ``TypeError``.
 
     >>> import dynamodol
     >>> dynamodol.scan_items(object())
     Traceback (most recent call last):
       ...
-    TypeError: `scan_items` needs an unwrapped dynamodol reader, got object. A wrapped store (key codec, filt_iter, value codec...) must be iterated with its own `.items()` / `.values()`, which apply the wrapper's scope and codecs (one `get` per key).
+    TypeError: `scan_items` needs a dynamodol reader (bare, or wrapped with a key codec, filt_iter, value codec...), got object.
     """
     reader = _leaf_reader(
         store, fn="scan_items"
     )  # eager: fail at the call, not at first next()
+    if reader is None:
+        return iter(store.items())
     records = reader._scan_records(reader._keys_values_expression)
     return (
         (reader.format_get_key(record), reader.format_get_item(record))
@@ -684,7 +691,10 @@ def scan_items(store):
 
 
 def scan_values(store):
-    """Iterate the values of an *unwrapped* dynamodol reader in one scan (see `scan_items`)."""
+    """Iterate the values of a dynamodol store (see `scan_items`: a wrapped store is
+    iterated with its own ``.values()``)."""
     reader = _leaf_reader(store, fn="scan_values")
+    if reader is None:
+        return iter(store.values())
     records = reader._scan_records(reader._values_expression)
     return (reader.format_get_item(record) for record in records)
