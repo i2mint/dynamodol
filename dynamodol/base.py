@@ -9,6 +9,7 @@ from lazyprop import lazyprop
 from typing import Any, Tuple
 from collections.abc import Iterable, ItemsView, Mapping, ValuesView
 
+import threading
 from contextlib import contextmanager
 
 from dol import KvReader, KvPersister, Store, inner_most_key
@@ -179,9 +180,15 @@ BATCH_GET_MAX_KEYS = 100  # DynamoDB's limit for one BatchGetItem call
 
 
 def _chunks(items, size):
-    items = list(items)
-    for i in range(0, len(items), size):
-        yield items[i : i + size]
+    """Consecutive lists of at most ``size`` of the (lazily consumed) ``items``."""
+    chunk = []
+    for item in items:
+        chunk.append(item)
+        if len(chunk) >= size:
+            yield chunk
+            chunk = []
+    if chunk:
+        yield chunk
 
 
 def _leaf_reader_of(store):
@@ -432,7 +439,14 @@ class DynamoDbBaseReader(KvReader):
     def _ident(self, primary_key):
         return tuple(primary_key[f] for f in self.key_fields)
 
-    _prefetched_items = None  # {identity: item} while a view looks up the items it just read
+    @property
+    def _prefetched_items(self):
+        """``{identity: item}`` while *this thread's* view looks up the items it just read."""
+        return getattr(self.__dict__.setdefault("_local", threading.local()), "items", None)
+
+    @_prefetched_items.setter
+    def _prefetched_items(self, items):
+        self.__dict__.setdefault("_local", threading.local()).items = items
 
     def _batch_get(self, keys) -> dict:
         """``{identity: item}`` for the store keys ``keys``, by ``BatchGetItem`` (<= 100 per call).

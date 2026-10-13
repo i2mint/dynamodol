@@ -177,3 +177,33 @@ def test_batch_get_backend_error_propagates():
     store.db.batch_get_item = throttled
     with pytest.raises(Exception, match="Throughput"):
         list(store.items())
+
+
+def test_items_are_read_lazily_not_all_keys_and_a_full_count_up_front():
+    store, table = _base(rows=_rows(6), page_size=1)
+    next(iter(store.items()))
+    scans = [c for c in table.calls if c[0] == "scan"]
+    assert len(scans) <= 6 and all(kw.get("Select") != "COUNT" for _, kw in scans)
+
+
+def test_a_batch_in_one_thread_is_invisible_to_others_and_never_left_behind():
+    import threading
+
+    store, table = _base(rows=_rows(3))
+    entered, release, seen = threading.Event(), threading.Event(), {}
+
+    def hold():  # thread A: inside its lookup, holding its batch
+        with store._using_items({("k0000",): {"key": "k0000", "value": "STALE"}}):
+            entered.set()
+            release.wait(5)
+
+    t = threading.Thread(target=hold)
+    t.start()
+    entered.wait(5)
+    seen["other_thread"] = store["k0000"]  # must not be served from A's batch
+    release.set()
+    t.join()
+    assert seen["other_thread"] == "v0" and store._prefetched_items is None
+    del store["k0000"]  # (the fake's put_item matches whole items, so replace by delete+put)
+    store["k0000"] = "NEW"
+    assert store["k0000"] == "NEW"
