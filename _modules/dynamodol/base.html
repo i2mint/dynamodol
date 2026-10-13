@@ -805,61 +805,82 @@ data-aria-dark="Switch to auto color mode">
 </span><span data-line="654"><span class="c1"># TODO class DynamoDbStore(DynamoDbBasePersister, Store): ...</span>
 </span><span data-line="655">
 </span><span data-line="656">
-</span><span data-line="657"><span class="k">def</span><span class="w"> </span><span class="nf">_leaf_reader</span><span class="p">(</span><span class="n">store</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">fn</span><span class="p">):</span>
-</span><span data-line="658"><span class="w">    </span><span class="sd">"""``store`` if it is an unwrapped dynamodol reader (the single-scan fast path),</span>
-</span><span data-line="659"><span class="sd">    ``None`` if it is any other mapping (a dol-wrapped store: use its own ``.items()`` /</span>
-</span><span data-line="660"><span class="sd">    ``.values()``, which apply the wrapper's scope and codecs); ``TypeError`` otherwise."""</span>
-</span><span data-line="661">    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">store</span><span class="p">,</span> <span class="n">DynamoDbBaseReader</span><span class="p">):</span>
-</span><span data-line="662">        <span class="k">return</span> <span class="n">store</span>
-</span><span data-line="663">    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">store</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">):</span>
-</span><span data-line="664">        <span class="k">return</span> <span class="kc">None</span>
-</span><span data-line="665">    <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
-</span><span data-line="666">        <span class="sa">f</span><span class="s2">"`</span><span class="si">{</span><span class="n">fn</span><span class="si">}</span><span class="s2">` needs a dynamodol reader (bare, or wrapped with a key codec, "</span>
-</span><span data-line="667">        <span class="sa">f</span><span class="s2">"filt_iter, value codec...), got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">store</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">."</span>
-</span><span data-line="668">    <span class="p">)</span>
-</span><span data-line="669">
-</span><span data-line="670">
+</span><span data-line="657"><span class="n">_SCAN_FAST_PATH_METHODS</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"__iter__"</span><span class="p">,</span> <span class="s2">"__getitem__"</span><span class="p">)</span>
+</span><span data-line="658">
+</span><span data-line="659">
+</span><span data-line="660"><span class="k">def</span><span class="w"> </span><span class="nf">_overrides_reader_protocol</span><span class="p">(</span><span class="n">reader</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+</span><span data-line="661"><span class="w">    </span><span class="sd">"""Whether ``type(reader)`` overrides ``__iter__``/``__getitem__`` outside dynamodol.</span>
+</span><span data-line="662">
+</span><span data-line="663"><span class="sd">    The single-scan fast path reads the table itself, so it would skip an override that</span>
+</span><span data-line="664"><span class="sd">    narrows the keys or maps the values (dynamodol's own subclasses, e.g. the prefix and</span>
+</span><span data-line="665"><span class="sd">    partition readers, are what the scan understands). Only those two methods are</span>
+</span><span data-line="666"><span class="sd">    checked: a subclass that narrows ``_scan_records`` or ``items()`` is not detected.</span>
+</span><span data-line="667"><span class="sd">    """</span>
+</span><span data-line="668">    <span class="n">package</span> <span class="o">=</span> <span class="vm">__name__</span><span class="o">.</span><span class="n">partition</span><span class="p">(</span><span class="s2">"."</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+</span><span data-line="669">    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">_SCAN_FAST_PATH_METHODS</span><span class="p">:</span>
+</span><span data-line="670">        <span class="n">owner</span> <span class="o">=</span> <span class="nb">next</span><span class="p">((</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">type</span><span class="p">(</span><span class="n">reader</span><span class="p">)</span><span class="o">.</span><span class="vm">__mro__</span> <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">vars</span><span class="p">(</span><span class="n">c</span><span class="p">)),</span> <span class="kc">None</span><span class="p">)</span>
+</span><span data-line="671">        <span class="k">if</span> <span class="n">owner</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="p">(</span><span class="n">owner</span><span class="o">.</span><span class="vm">__module__</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span><span class="o">.</span><span class="n">partition</span><span class="p">(</span><span class="s2">"."</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="n">package</span><span class="p">:</span>
+</span><span data-line="672">            <span class="k">return</span> <span class="kc">True</span>
+</span><span data-line="673">    <span class="k">return</span> <span class="kc">False</span>
+</span><span data-line="674">
+</span><span data-line="675">
+</span><span data-line="676"><span class="k">def</span><span class="w"> </span><span class="nf">_leaf_reader</span><span class="p">(</span><span class="n">store</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">fn</span><span class="p">):</span>
+</span><span data-line="677"><span class="w">    </span><span class="sd">"""``store`` if it is an unwrapped dynamodol reader (the single-scan fast path),</span>
+</span><span data-line="678"><span class="sd">    ``None`` if it is any other mapping (a dol-wrapped store, or a reader subclass that</span>
+</span><span data-line="679"><span class="sd">    overrides ``__iter__``/``__getitem__``: use its own ``.items()`` / ``.values()``, which</span>
+</span><span data-line="680"><span class="sd">    apply its scope and codecs); ``TypeError`` otherwise."""</span>
+</span><span data-line="681">    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">store</span><span class="p">,</span> <span class="n">DynamoDbBaseReader</span><span class="p">):</span>
+</span><span data-line="682">        <span class="k">return</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">_overrides_reader_protocol</span><span class="p">(</span><span class="n">store</span><span class="p">)</span> <span class="k">else</span> <span class="n">store</span>
+</span><span data-line="683">    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">store</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">):</span>
+</span><span data-line="684">        <span class="k">return</span> <span class="kc">None</span>
+</span><span data-line="685">    <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+</span><span data-line="686">        <span class="sa">f</span><span class="s2">"`</span><span class="si">{</span><span class="n">fn</span><span class="si">}</span><span class="s2">` needs a dynamodol reader (bare, or wrapped with a key codec, "</span>
+</span><span data-line="687">        <span class="sa">f</span><span class="s2">"filt_iter, value codec...), got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">store</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">."</span>
+</span><span data-line="688">    <span class="p">)</span>
+</span><span data-line="689">
+</span><span data-line="690">
 <div class="viewcode-block" id="scan_items">
 <a class="viewcode-back" href="../../_autosummary/dynamodol.base.html#dynamodol.base.scan_items">[docs]</a>
-</span><span data-line="671"><span class="k">def</span><span class="w"> </span><span class="nf">scan_items</span><span class="p">(</span><span class="n">store</span><span class="p">):</span>
-</span><span data-line="672"><span class="w">    </span><span class="sd">"""Iterate ``(key, value)`` pairs of a dynamodol store.</span>
-</span><span data-line="673">
-</span><span data-line="674"><span class="sd">    A bare dynamodol reader is read in one scan: the opt-in fast path that</span>
-</span><span data-line="675"><span class="sd">    ``store.items()`` deliberately is not, since ``items()`` batches ``BatchGetItem``</span>
-</span><span data-line="676"><span class="sd">    (100 keys per call) so that it is correct under any dol wrapper. A *wrapped* store</span>
-</span><span data-line="677"><span class="sd">    (key codec, ``filt_iter``, value codec...) has its own mapping, scope and decoding,</span>
-</span><span data-line="678"><span class="sd">    which a free function cannot reproduce from the table: for it this is simply</span>
-</span><span data-line="679"><span class="sd">    ``iter(store.items())``. Anything that is not a mapping raises ``TypeError``.</span>
-</span><span data-line="680">
-</span><span data-line="681"><span class="sd">    &gt;&gt;&gt; import dynamodol</span>
-</span><span data-line="682"><span class="sd">    &gt;&gt;&gt; dynamodol.scan_items(object())</span>
-</span><span data-line="683"><span class="sd">    Traceback (most recent call last):</span>
-</span><span data-line="684"><span class="sd">      ...</span>
-</span><span data-line="685"><span class="sd">    TypeError: `scan_items` needs a dynamodol reader (bare, or wrapped with a key codec, filt_iter, value codec...), got object.</span>
-</span><span data-line="686"><span class="sd">    """</span>
-</span><span data-line="687">    <span class="n">reader</span> <span class="o">=</span> <span class="n">_leaf_reader</span><span class="p">(</span>
-</span><span data-line="688">        <span class="n">store</span><span class="p">,</span> <span class="n">fn</span><span class="o">=</span><span class="s2">"scan_items"</span>
-</span><span data-line="689">    <span class="p">)</span>  <span class="c1"># eager: fail at the call, not at first next()</span>
-</span><span data-line="690">    <span class="k">if</span> <span class="n">reader</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-</span><span data-line="691">        <span class="k">return</span> <span class="nb">iter</span><span class="p">(</span><span class="n">store</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
-</span><span data-line="692">    <span class="n">records</span> <span class="o">=</span> <span class="n">reader</span><span class="o">.</span><span class="n">_scan_records</span><span class="p">(</span><span class="n">reader</span><span class="o">.</span><span class="n">_keys_values_expression</span><span class="p">)</span>
-</span><span data-line="693">    <span class="k">return</span> <span class="p">(</span>
-</span><span data-line="694">        <span class="p">(</span><span class="n">reader</span><span class="o">.</span><span class="n">format_get_key</span><span class="p">(</span><span class="n">record</span><span class="p">),</span> <span class="n">reader</span><span class="o">.</span><span class="n">format_get_item</span><span class="p">(</span><span class="n">record</span><span class="p">))</span>
-</span><span data-line="695">        <span class="k">for</span> <span class="n">record</span> <span class="ow">in</span> <span class="n">records</span>
-</span><span data-line="696">    <span class="p">)</span></div>
+</span><span data-line="691"><span class="k">def</span><span class="w"> </span><span class="nf">scan_items</span><span class="p">(</span><span class="n">store</span><span class="p">):</span>
+</span><span data-line="692"><span class="w">    </span><span class="sd">"""Iterate ``(key, value)`` pairs of a dynamodol store.</span>
+</span><span data-line="693">
+</span><span data-line="694"><span class="sd">    A bare dynamodol reader is read in one scan: the opt-in fast path that</span>
+</span><span data-line="695"><span class="sd">    ``store.items()`` deliberately is not, since ``items()`` batches ``BatchGetItem``</span>
+</span><span data-line="696"><span class="sd">    (100 keys per call) so that it is correct under any dol wrapper. A *wrapped* store</span>
+</span><span data-line="697"><span class="sd">    (key codec, ``filt_iter``, value codec...), or a reader subclass that overrides</span>
+</span><span data-line="698"><span class="sd">    ``__iter__``/``__getitem__``, has its own mapping, scope and decoding,</span>
+</span><span data-line="699"><span class="sd">    which a free function cannot reproduce from the table: for it this is simply</span>
+</span><span data-line="700"><span class="sd">    ``iter(store.items())``. Anything that is not a mapping raises ``TypeError``.</span>
+</span><span data-line="701">
+</span><span data-line="702"><span class="sd">    &gt;&gt;&gt; import dynamodol</span>
+</span><span data-line="703"><span class="sd">    &gt;&gt;&gt; dynamodol.scan_items(object())</span>
+</span><span data-line="704"><span class="sd">    Traceback (most recent call last):</span>
+</span><span data-line="705"><span class="sd">      ...</span>
+</span><span data-line="706"><span class="sd">    TypeError: `scan_items` needs a dynamodol reader (bare, or wrapped with a key codec, filt_iter, value codec...), got object.</span>
+</span><span data-line="707"><span class="sd">    """</span>
+</span><span data-line="708">    <span class="n">reader</span> <span class="o">=</span> <span class="n">_leaf_reader</span><span class="p">(</span>
+</span><span data-line="709">        <span class="n">store</span><span class="p">,</span> <span class="n">fn</span><span class="o">=</span><span class="s2">"scan_items"</span>
+</span><span data-line="710">    <span class="p">)</span>  <span class="c1"># eager: fail at the call, not at first next()</span>
+</span><span data-line="711">    <span class="k">if</span> <span class="n">reader</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+</span><span data-line="712">        <span class="k">return</span> <span class="nb">iter</span><span class="p">(</span><span class="n">store</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
+</span><span data-line="713">    <span class="n">records</span> <span class="o">=</span> <span class="n">reader</span><span class="o">.</span><span class="n">_scan_records</span><span class="p">(</span><span class="n">reader</span><span class="o">.</span><span class="n">_keys_values_expression</span><span class="p">)</span>
+</span><span data-line="714">    <span class="k">return</span> <span class="p">(</span>
+</span><span data-line="715">        <span class="p">(</span><span class="n">reader</span><span class="o">.</span><span class="n">format_get_key</span><span class="p">(</span><span class="n">record</span><span class="p">),</span> <span class="n">reader</span><span class="o">.</span><span class="n">format_get_item</span><span class="p">(</span><span class="n">record</span><span class="p">))</span>
+</span><span data-line="716">        <span class="k">for</span> <span class="n">record</span> <span class="ow">in</span> <span class="n">records</span>
+</span><span data-line="717">    <span class="p">)</span></div>
 
-</span><span data-line="697">
-</span><span data-line="698">
+</span><span data-line="718">
+</span><span data-line="719">
 <div class="viewcode-block" id="scan_values">
 <a class="viewcode-back" href="../../_autosummary/dynamodol.base.html#dynamodol.base.scan_values">[docs]</a>
-</span><span data-line="699"><span class="k">def</span><span class="w"> </span><span class="nf">scan_values</span><span class="p">(</span><span class="n">store</span><span class="p">):</span>
-</span><span data-line="700"><span class="w">    </span><span class="sd">"""Iterate the values of a dynamodol store (see `scan_items`: a wrapped store is</span>
-</span><span data-line="701"><span class="sd">    iterated with its own ``.values()``)."""</span>
-</span><span data-line="702">    <span class="n">reader</span> <span class="o">=</span> <span class="n">_leaf_reader</span><span class="p">(</span><span class="n">store</span><span class="p">,</span> <span class="n">fn</span><span class="o">=</span><span class="s2">"scan_values"</span><span class="p">)</span>
-</span><span data-line="703">    <span class="k">if</span> <span class="n">reader</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-</span><span data-line="704">        <span class="k">return</span> <span class="nb">iter</span><span class="p">(</span><span class="n">store</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
-</span><span data-line="705">    <span class="n">records</span> <span class="o">=</span> <span class="n">reader</span><span class="o">.</span><span class="n">_scan_records</span><span class="p">(</span><span class="n">reader</span><span class="o">.</span><span class="n">_values_expression</span><span class="p">)</span>
-</span><span data-line="706">    <span class="k">return</span> <span class="p">(</span><span class="n">reader</span><span class="o">.</span><span class="n">format_get_item</span><span class="p">(</span><span class="n">record</span><span class="p">)</span> <span class="k">for</span> <span class="n">record</span> <span class="ow">in</span> <span class="n">records</span><span class="p">)</span></div>
+</span><span data-line="720"><span class="k">def</span><span class="w"> </span><span class="nf">scan_values</span><span class="p">(</span><span class="n">store</span><span class="p">):</span>
+</span><span data-line="721"><span class="w">    </span><span class="sd">"""Iterate the values of a dynamodol store (see `scan_items`: a wrapped store is</span>
+</span><span data-line="722"><span class="sd">    iterated with its own ``.values()``)."""</span>
+</span><span data-line="723">    <span class="n">reader</span> <span class="o">=</span> <span class="n">_leaf_reader</span><span class="p">(</span><span class="n">store</span><span class="p">,</span> <span class="n">fn</span><span class="o">=</span><span class="s2">"scan_values"</span><span class="p">)</span>
+</span><span data-line="724">    <span class="k">if</span> <span class="n">reader</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+</span><span data-line="725">        <span class="k">return</span> <span class="nb">iter</span><span class="p">(</span><span class="n">store</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+</span><span data-line="726">    <span class="n">records</span> <span class="o">=</span> <span class="n">reader</span><span class="o">.</span><span class="n">_scan_records</span><span class="p">(</span><span class="n">reader</span><span class="o">.</span><span class="n">_values_expression</span><span class="p">)</span>
+</span><span data-line="727">    <span class="k">return</span> <span class="p">(</span><span class="n">reader</span><span class="o">.</span><span class="n">format_get_item</span><span class="p">(</span><span class="n">record</span><span class="p">)</span> <span class="k">for</span> <span class="n">record</span> <span class="ow">in</span> <span class="n">records</span><span class="p">)</span></div>
 
 </span></pre></div>
         </article><button class="back-to-top" type="button">
@@ -888,7 +909,7 @@ data-aria-dark="Switch to auto color mode">
     </div>
   </div>
 </footer>
-      <script src="../../_static/documentation_options.js?v=297ad043"></script>
+      <script src="../../_static/documentation_options.js?v=8d02545a"></script>
       <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>

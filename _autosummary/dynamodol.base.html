@@ -433,7 +433,8 @@ no old <code class="docutils literal notranslate"><span class="pre">Attributes</
 <p>A bare dynamodol reader is read in one scan: the opt-in fast path that
 <code class="docutils literal notranslate"><span class="pre">store.items()</span></code> deliberately is not, since <code class="docutils literal notranslate"><span class="pre">items()</span></code> batches <code class="docutils literal notranslate"><span class="pre">BatchGetItem</span></code>
 (100 keys per call) so that it is correct under any dol wrapper. A <em>wrapped</em> store
-(key codec, <code class="docutils literal notranslate"><span class="pre">filt_iter</span></code>, value codec…) has its own mapping, scope and decoding,
+(key codec, <code class="docutils literal notranslate"><span class="pre">filt_iter</span></code>, value codec…), or a reader subclass that overrides
+<code class="docutils literal notranslate"><span class="pre">__iter__</span></code>/<code class="docutils literal notranslate"><span class="pre">__getitem__</span></code>, has its own mapping, scope and decoding,
 which a free function cannot reproduce from the table: for it this is simply
 <code class="docutils literal notranslate"><span class="pre">iter(store.items())</span></code>. Anything that is not a mapping raises <code class="docutils literal notranslate"><span class="pre">TypeError</span></code>.</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span data-line="1"><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">dynamodol</span>
@@ -512,7 +513,7 @@ data_fields: Tuple or None - A tuple of data fields to return from queries. If d
     </div>
   </div>
 </footer>
-      <script src="../_static/documentation_options.js?v=297ad043"></script>
+      <script src="../_static/documentation_options.js?v=8d02545a"></script>
       <script src="../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../_static/clipboard.min.js?v=a7894cd8"></script>

@@ -216,7 +216,8 @@ Iterate `(key, value)` pairs of a dynamodol store.
 A bare dynamodol reader is read in one scan: the opt-in fast path that
 `store.items()` deliberately is not, since `items()` batches `BatchGetItem`
 (100 keys per call) so that it is correct under any dol wrapper. A *wrapped* store
-(key codec, `filt_iter`, value codec…) has its own mapping, scope and decoding,
+(key codec, `filt_iter`, value codec…), or a reader subclass that overrides
+`__iter__`/`__getitem__`, has its own mapping, scope and decoding,
 which a free function cannot reproduce from the table: for it this is simply
 `iter(store.items())`. Anything that is not a mapping raises `TypeError`.
 
