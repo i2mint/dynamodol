@@ -1,32 +1,32 @@
 {
   "schema_version": 1,
-  "built_at": "2026-10-13T14:23:31Z",
+  "built_at": "2026-10-13T14:31:59Z",
   "package": {
     "name": "dynamodol",
-    "version": "0.1.11",
+    "version": "0.1.12",
     "display_name": "dynamodol",
     "source": "pyproject.toml"
   },
   "git": {
     "available": true,
-    "commit": "c4b314bc9f3b9fd68a503c39abcf61a1e9ac923d",
-    "short_commit": "c4b314b",
+    "commit": "e59de6a9318246cabe1be0058a4cb4f3f8a73879",
+    "short_commit": "e59de6a",
     "branch": "master",
     "tags": [],
     "dirty": false,
     "remote_url": "https://github.com/i2mint/dynamodol",
-    "commit_url": "https://github.com/i2mint/dynamodol/commit/c4b314bc9f3b9fd68a503c39abcf61a1e9ac923d",
+    "commit_url": "https://github.com/i2mint/dynamodol/commit/e59de6a9318246cabe1be0058a4cb4f3f8a73879",
     "error": null
   },
   "ci": {
     "provider": "github",
     "repository": "i2mint/dynamodol",
-    "sha": "c4b314bc9f3b9fd68a503c39abcf61a1e9ac923d",
+    "sha": "e59de6a9318246cabe1be0058a4cb4f3f8a73879",
     "sha_in_history": true,
     "ref": "refs/heads/master",
     "ref_name": "master",
-    "run_id": "38412696524",
-    "run_url": "https://github.com/i2mint/dynamodol/actions/runs/38412696524",
+    "run_id": "38413911801",
+    "run_url": "https://github.com/i2mint/dynamodol/actions/runs/38413911801",
     "server_url": "https://github.com"
   },
   "tools": {
@@ -60,14 +60,16 @@
   },
   "pypi": {
     "checked": true,
-    "latest": "0.1.11",
-    "relation": "same",
+    "latest": "0.1.13",
+    "relation": "behind",
     "error": null
   },
-  "reproduce": "git clone https://github.com/i2mint/dynamodol && cd dynamodol\ngit checkout c4b314bc9f3b9fd68a503c39abcf61a1e9ac923d\npip install \"epythet==0.2.15\"\nepythet quickstart . --ignore tests/ scrap/ examples/",
+  "reproduce": "git clone https://github.com/i2mint/dynamodol && cd dynamodol\ngit checkout e59de6a9318246cabe1be0058a4cb4f3f8a73879\npip install \"epythet==0.2.15\"\nepythet quickstart . --ignore tests/ scrap/ examples/",
   "warnings": [],
   "alignment": {
-    "aligned": true,
-    "notes": []
+    "aligned": false,
+    "notes": [
+      "The documented version (0.1.12) is behind the latest release on PyPI (0.1.13): `pip install dynamodol` gives newer code than these docs describe."
+    ]
   }
 }

@@ -558,292 +558,308 @@ data-aria-dark="Switch to auto color mode">
 </span><span data-line="417">
 </span><span data-line="418">    <span class="n">ItemsView</span> <span class="o">=</span> <span class="n">_BatchedItemsView</span>
 </span><span data-line="419">    <span class="n">ValuesView</span> <span class="o">=</span> <span class="n">_BatchedValuesView</span>
-</span><span data-line="420">    <span class="n">_no_such_key_error</span> <span class="o">=</span> <span class="n">NoSuchKeyError</span>  <span class="c1"># what a missing key raises (subclasses: their own)</span>
-</span><span data-line="421">
-</span><span data-line="422">    <span class="k">def</span><span class="w"> </span><span class="nf">_primary_key</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-</span><span data-line="423"><span class="w">        </span><span class="sd">"""The item's primary key (``{key field: value}``) that the store key ``k`` names.</span>
-</span><span data-line="424">
-</span><span data-line="425"><span class="sd">        Raises ``NoSuchKeyError`` for a key of the wrong shape.</span>
-</span><span data-line="426"><span class="sd">        """</span>
-</span><span data-line="427">        <span class="k">try</span><span class="p">:</span>
-</span><span data-line="428">            <span class="n">_k</span> <span class="o">=</span> <span class="n">k</span>
-</span><span data-line="429">            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-</span><span data-line="430">                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sort_key</span><span class="p">:</span>
-</span><span data-line="431">                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-</span><span data-line="432">                        <span class="s2">"If a sort key is defined, object keys must be tuples."</span>
-</span><span data-line="433">                    <span class="p">)</span>
-</span><span data-line="434">                <span class="n">_k</span> <span class="o">=</span> <span class="p">(</span><span class="n">k</span><span class="p">,)</span>
-</span><span data-line="435">            <span class="k">return</span> <span class="p">{</span><span class="n">att</span><span class="p">:</span> <span class="n">key</span> <span class="k">for</span> <span class="n">att</span><span class="p">,</span> <span class="n">key</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">key_fields</span><span class="p">,</span> <span class="n">_k</span><span class="p">)}</span>
-</span><span data-line="436">        <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-</span><span data-line="437">            <span class="k">raise</span> <span class="n">NoSuchKeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Key not found: </span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
-</span><span data-line="438">
-</span><span data-line="439">    <span class="k">def</span><span class="w"> </span><span class="nf">_ident</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">primary_key</span><span class="p">):</span>
-</span><span data-line="440">        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">primary_key</span><span class="p">[</span><span class="n">f</span><span class="p">]</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">key_fields</span><span class="p">)</span>
-</span><span data-line="441">
-</span><span data-line="442">    <span class="nd">@property</span>
-</span><span data-line="443">    <span class="k">def</span><span class="w"> </span><span class="nf">_prefetched_items</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-</span><span data-line="444"><span class="w">        </span><span class="sd">"""``{identity: item}`` while *this thread's* view looks up the items it just read."""</span>
-</span><span data-line="445">        <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">"_local"</span><span class="p">,</span> <span class="n">threading</span><span class="o">.</span><span class="n">local</span><span class="p">()),</span> <span class="s2">"items"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-</span><span data-line="446">
-</span><span data-line="447">    <span class="nd">@_prefetched_items</span><span class="o">.</span><span class="n">setter</span>
-</span><span data-line="448">    <span class="k">def</span><span class="w"> </span><span class="nf">_prefetched_items</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">items</span><span class="p">):</span>
-</span><span data-line="449">        <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">"_local"</span><span class="p">,</span> <span class="n">threading</span><span class="o">.</span><span class="n">local</span><span class="p">())</span><span class="o">.</span><span class="n">items</span> <span class="o">=</span> <span class="n">items</span>
+</span><span data-line="420">    <span class="n">_no_such_key_error</span> <span class="o">=</span> <span class="p">(</span>
+</span><span data-line="421">        <span class="n">NoSuchKeyError</span>  <span class="c1"># what a missing key raises (subclasses: their own)</span>
+</span><span data-line="422">    <span class="p">)</span>
+</span><span data-line="423">
+</span><span data-line="424">    <span class="k">def</span><span class="w"> </span><span class="nf">_primary_key</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+</span><span data-line="425"><span class="w">        </span><span class="sd">"""The item's primary key (``{key field: value}``) that the store key ``k`` names.</span>
+</span><span data-line="426">
+</span><span data-line="427"><span class="sd">        Raises ``NoSuchKeyError`` for a key of the wrong shape.</span>
+</span><span data-line="428"><span class="sd">        """</span>
+</span><span data-line="429">        <span class="k">try</span><span class="p">:</span>
+</span><span data-line="430">            <span class="n">_k</span> <span class="o">=</span> <span class="n">k</span>
+</span><span data-line="431">            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+</span><span data-line="432">                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sort_key</span><span class="p">:</span>
+</span><span data-line="433">                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+</span><span data-line="434">                        <span class="s2">"If a sort key is defined, object keys must be tuples."</span>
+</span><span data-line="435">                    <span class="p">)</span>
+</span><span data-line="436">                <span class="n">_k</span> <span class="o">=</span> <span class="p">(</span><span class="n">k</span><span class="p">,)</span>
+</span><span data-line="437">            <span class="k">return</span> <span class="p">{</span><span class="n">att</span><span class="p">:</span> <span class="n">key</span> <span class="k">for</span> <span class="n">att</span><span class="p">,</span> <span class="n">key</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">key_fields</span><span class="p">,</span> <span class="n">_k</span><span class="p">)}</span>
+</span><span data-line="438">        <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+</span><span data-line="439">            <span class="k">raise</span> <span class="n">NoSuchKeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Key not found: </span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+</span><span data-line="440">
+</span><span data-line="441">    <span class="k">def</span><span class="w"> </span><span class="nf">_ident</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">primary_key</span><span class="p">):</span>
+</span><span data-line="442">        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">primary_key</span><span class="p">[</span><span class="n">f</span><span class="p">]</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">key_fields</span><span class="p">)</span>
+</span><span data-line="443">
+</span><span data-line="444">    <span class="nd">@property</span>
+</span><span data-line="445">    <span class="k">def</span><span class="w"> </span><span class="nf">_prefetched_items</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+</span><span data-line="446"><span class="w">        </span><span class="sd">"""``{identity: item}`` while *this thread's* view looks up the items it just read."""</span>
+</span><span data-line="447">        <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span>
+</span><span data-line="448">            <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">"_local"</span><span class="p">,</span> <span class="n">threading</span><span class="o">.</span><span class="n">local</span><span class="p">()),</span> <span class="s2">"items"</span><span class="p">,</span> <span class="kc">None</span>
+</span><span data-line="449">        <span class="p">)</span>
 </span><span data-line="450">
-</span><span data-line="451">    <span class="k">def</span><span class="w"> </span><span class="nf">_batch_get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keys</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-</span><span data-line="452"><span class="w">        </span><span class="sd">"""``{identity: item}`` for the store keys ``keys``, by ``BatchGetItem`` (&lt;= 100 per call).</span>
-</span><span data-line="453">
-</span><span data-line="454"><span class="sd">        Keys that name no item, or that the backend does not return, are simply absent</span>
-</span><span data-line="455"><span class="sd">        (they are looked up one by one later).</span>
-</span><span data-line="456"><span class="sd">        """</span>
-</span><span data-line="457">        <span class="n">wanted</span> <span class="o">=</span> <span class="p">{}</span>
-</span><span data-line="458">        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">:</span>
-</span><span data-line="459">            <span class="k">try</span><span class="p">:</span>
-</span><span data-line="460">                <span class="n">primary_key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_primary_key</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
-</span><span data-line="461">                <span class="n">wanted</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_ident</span><span class="p">(</span><span class="n">primary_key</span><span class="p">)]</span> <span class="o">=</span> <span class="n">primary_key</span>
-</span><span data-line="462">            <span class="k">except</span> <span class="p">(</span><span class="n">NoSuchKeyError</span><span class="p">,</span> <span class="ne">KeyError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">):</span>
-</span><span data-line="463">                <span class="k">continue</span>
-</span><span data-line="464">        <span class="n">items</span> <span class="o">=</span> <span class="p">{}</span>
-</span><span data-line="465">        <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="n">_chunks</span><span class="p">(</span><span class="n">wanted</span><span class="o">.</span><span class="n">values</span><span class="p">(),</span> <span class="n">BATCH_GET_MAX_KEYS</span><span class="p">):</span>
-</span><span data-line="466">            <span class="n">request</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"Keys"</span><span class="p">:</span> <span class="n">part</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_keys_values_expression</span><span class="p">}</span>
-</span><span data-line="467">            <span class="k">try</span><span class="p">:</span>
-</span><span data-line="468">                <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">db</span><span class="o">.</span><span class="n">batch_get_item</span><span class="p">(</span><span class="n">RequestItems</span><span class="o">=</span><span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">table_name</span><span class="p">:</span> <span class="n">request</span><span class="p">})</span>
-</span><span data-line="469">            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-</span><span data-line="470">                <span class="n">code</span> <span class="o">=</span> <span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="s2">"response"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"Error"</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"Code"</span><span class="p">)</span>
-</span><span data-line="471">                <span class="k">if</span> <span class="n">code</span> <span class="ow">in</span> <span class="n">KEY_CANNOT_NAME_AN_ITEM_ERROR_CODES</span><span class="p">:</span>
-</span><span data-line="472">                    <span class="k">continue</span>
-</span><span data-line="473">                <span class="k">raise</span>
-</span><span data-line="474">            <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">response</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"Responses"</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">table_name</span><span class="p">,</span> <span class="p">[]):</span>
-</span><span data-line="475">                <span class="n">items</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_ident</span><span class="p">(</span><span class="n">item</span><span class="p">)]</span> <span class="o">=</span> <span class="n">item</span>
-</span><span data-line="476">        <span class="k">return</span> <span class="n">items</span>
-</span><span data-line="477">
-</span><span data-line="478">    <span class="nd">@contextmanager</span>
-</span><span data-line="479">    <span class="k">def</span><span class="w"> </span><span class="nf">_using_items</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">items</span><span class="p">):</span>
-</span><span data-line="480">        <span class="n">previous</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prefetched_items</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prefetched_items</span><span class="p">,</span> <span class="n">items</span>
-</span><span data-line="481">        <span class="k">try</span><span class="p">:</span>
-</span><span data-line="482">            <span class="k">yield</span>
-</span><span data-line="483">        <span class="k">finally</span><span class="p">:</span>
-</span><span data-line="484">            <span class="bp">self</span><span class="o">.</span><span class="n">_prefetched_items</span> <span class="o">=</span> <span class="n">previous</span>
-</span><span data-line="485">
-</span><span data-line="486">    <span class="k">def</span><span class="w"> </span><span class="nf">_item_of_primary_key</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">primary_key</span><span class="p">,</span> <span class="n">k</span><span class="p">):</span>
-</span><span data-line="487">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prefetched_items</span><span class="p">:</span>
-</span><span data-line="488">            <span class="n">item</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prefetched_items</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ident</span><span class="p">(</span><span class="n">primary_key</span><span class="p">))</span>
-</span><span data-line="489">            <span class="k">if</span> <span class="n">item</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-</span><span data-line="490">                <span class="k">return</span> <span class="n">item</span>
-</span><span data-line="491">        <span class="k">return</span> <span class="n">get_item_or_raise</span><span class="p">(</span>
-</span><span data-line="492">            <span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="p">,</span>
-</span><span data-line="493">            <span class="n">primary_key</span><span class="p">,</span>
-</span><span data-line="494">            <span class="n">k</span><span class="p">,</span>
-</span><span data-line="495">            <span class="n">error_cls</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_no_such_key_error</span><span class="p">,</span>
-</span><span data-line="496">            <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_values_expression</span><span class="p">,</span>
-</span><span data-line="497">        <span class="p">)</span>
-</span><span data-line="498">
-</span><span data-line="499">    <span class="k">def</span><span class="w"> </span><span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">):</span>
-</span><span data-line="500">        <span class="n">primary_key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_primary_key</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
-</span><span data-line="501">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">format_get_item</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_item_of_primary_key</span><span class="p">(</span><span class="n">primary_key</span><span class="p">,</span> <span class="n">k</span><span class="p">))</span>
-</span><span data-line="502">
-</span><span data-line="503">    <span class="k">def</span><span class="w"> </span><span class="nf">_scan_records</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">projection</span><span class="p">):</span>
-</span><span data-line="504"><span class="w">        </span><span class="sd">"""The raw records for a ``projection`` (an ``Expression*`` kwargs dict)."""</span>
-</span><span data-line="505">        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">paginated</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="o">.</span><span class="n">scan</span><span class="p">,</span> <span class="o">**</span><span class="n">projection</span><span class="p">))</span>
-</span><span data-line="506">
-</span><span data-line="507">    <span class="n">iter_items</span> <span class="o">=</span> <span class="n">_RemovedMethod</span><span class="p">(</span><span class="s2">"iter_items"</span><span class="p">,</span> <span class="s2">"dynamodol.scan_items(store)"</span><span class="p">)</span>
-</span><span data-line="508">    <span class="n">iter_values</span> <span class="o">=</span> <span class="n">_RemovedMethod</span><span class="p">(</span><span class="s2">"iter_values"</span><span class="p">,</span> <span class="s2">"dynamodol.scan_values(store)"</span><span class="p">)</span>
-</span><span data-line="509">
-</span><span data-line="510">    <span class="k">def</span><span class="w"> </span><span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-</span><span data-line="511">        <span class="c1"># This is extremely inefficient and should not be used with large tables in production</span>
-</span><span data-line="512">        <span class="k">for</span> <span class="n">record</span> <span class="ow">in</span> <span class="n">paginated</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="o">.</span><span class="n">scan</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_keys_expression</span><span class="p">):</span>
-</span><span data-line="513">            <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">format_get_key</span><span class="p">(</span><span class="n">record</span><span class="p">)</span>
-</span><span data-line="514">
-</span><span data-line="515">    <span class="k">def</span><span class="w"> </span><span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-</span><span data-line="516">        <span class="c1"># This is extremely inefficient and should not be used with large tables in production</span>
-</span><span data-line="517">        <span class="k">return</span> <span class="n">paginated_count</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="o">.</span><span class="n">scan</span><span class="p">,</span> <span class="n">Select</span><span class="o">=</span><span class="s2">"COUNT"</span><span class="p">)</span>
-</span><span data-line="518">
-</span><span data-line="519">    <span class="nd">@staticmethod</span>
-</span><span data-line="520">    <span class="nd">@wraps</span><span class="p">(</span><span class="n">get_db</span><span class="p">)</span>
-</span><span data-line="521">    <span class="k">def</span><span class="w"> </span><span class="nf">mk_db</span><span class="p">(</span><span class="o">**</span><span class="n">db_kwargs</span><span class="p">):</span>
-</span><span data-line="522">        <span class="k">return</span> <span class="n">get_db</span><span class="p">(</span><span class="o">**</span><span class="n">db_kwargs</span><span class="p">)</span></div>
-
-</span><span data-line="523">
+</span><span data-line="451">    <span class="nd">@_prefetched_items</span><span class="o">.</span><span class="n">setter</span>
+</span><span data-line="452">    <span class="k">def</span><span class="w"> </span><span class="nf">_prefetched_items</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">items</span><span class="p">):</span>
+</span><span data-line="453">        <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">"_local"</span><span class="p">,</span> <span class="n">threading</span><span class="o">.</span><span class="n">local</span><span class="p">())</span><span class="o">.</span><span class="n">items</span> <span class="o">=</span> <span class="n">items</span>
+</span><span data-line="454">
+</span><span data-line="455">    <span class="k">def</span><span class="w"> </span><span class="nf">_batch_get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keys</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+</span><span data-line="456"><span class="w">        </span><span class="sd">"""``{identity: item}`` for the store keys ``keys``, by ``BatchGetItem`` (&lt;= 100 per call).</span>
+</span><span data-line="457">
+</span><span data-line="458"><span class="sd">        Keys that name no item, or that the backend does not return, are simply absent</span>
+</span><span data-line="459"><span class="sd">        (they are looked up one by one later).</span>
+</span><span data-line="460"><span class="sd">        """</span>
+</span><span data-line="461">        <span class="n">wanted</span> <span class="o">=</span> <span class="p">{}</span>
+</span><span data-line="462">        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">:</span>
+</span><span data-line="463">            <span class="k">try</span><span class="p">:</span>
+</span><span data-line="464">                <span class="n">primary_key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_primary_key</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+</span><span data-line="465">                <span class="n">wanted</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_ident</span><span class="p">(</span><span class="n">primary_key</span><span class="p">)]</span> <span class="o">=</span> <span class="n">primary_key</span>
+</span><span data-line="466">            <span class="k">except</span> <span class="p">(</span><span class="n">NoSuchKeyError</span><span class="p">,</span> <span class="ne">KeyError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">):</span>
+</span><span data-line="467">                <span class="k">continue</span>
+</span><span data-line="468">        <span class="n">items</span> <span class="o">=</span> <span class="p">{}</span>
+</span><span data-line="469">        <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="n">_chunks</span><span class="p">(</span><span class="n">wanted</span><span class="o">.</span><span class="n">values</span><span class="p">(),</span> <span class="n">BATCH_GET_MAX_KEYS</span><span class="p">):</span>
+</span><span data-line="470">            <span class="n">request</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"Keys"</span><span class="p">:</span> <span class="n">part</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_keys_values_expression</span><span class="p">}</span>
+</span><span data-line="471">            <span class="k">try</span><span class="p">:</span>
+</span><span data-line="472">                <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">db</span><span class="o">.</span><span class="n">batch_get_item</span><span class="p">(</span>
+</span><span data-line="473">                    <span class="n">RequestItems</span><span class="o">=</span><span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">table_name</span><span class="p">:</span> <span class="n">request</span><span class="p">}</span>
+</span><span data-line="474">                <span class="p">)</span>
+</span><span data-line="475">            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+</span><span data-line="476">                <span class="n">code</span> <span class="o">=</span> <span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="s2">"response"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"Error"</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"Code"</span><span class="p">)</span>
+</span><span data-line="477">                <span class="k">if</span> <span class="n">code</span> <span class="ow">in</span> <span class="n">KEY_CANNOT_NAME_AN_ITEM_ERROR_CODES</span><span class="p">:</span>
+</span><span data-line="478">                    <span class="k">continue</span>
+</span><span data-line="479">                <span class="k">raise</span>
+</span><span data-line="480">            <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">response</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"Responses"</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">table_name</span><span class="p">,</span> <span class="p">[]):</span>
+</span><span data-line="481">                <span class="n">items</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_ident</span><span class="p">(</span><span class="n">item</span><span class="p">)]</span> <span class="o">=</span> <span class="n">item</span>
+</span><span data-line="482">        <span class="k">return</span> <span class="n">items</span>
+</span><span data-line="483">
+</span><span data-line="484">    <span class="nd">@contextmanager</span>
+</span><span data-line="485">    <span class="k">def</span><span class="w"> </span><span class="nf">_using_items</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">items</span><span class="p">):</span>
+</span><span data-line="486">        <span class="n">previous</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prefetched_items</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prefetched_items</span><span class="p">,</span> <span class="n">items</span>
+</span><span data-line="487">        <span class="k">try</span><span class="p">:</span>
+</span><span data-line="488">            <span class="k">yield</span>
+</span><span data-line="489">        <span class="k">finally</span><span class="p">:</span>
+</span><span data-line="490">            <span class="bp">self</span><span class="o">.</span><span class="n">_prefetched_items</span> <span class="o">=</span> <span class="n">previous</span>
+</span><span data-line="491">
+</span><span data-line="492">    <span class="k">def</span><span class="w"> </span><span class="nf">_item_of_primary_key</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">primary_key</span><span class="p">,</span> <span class="n">k</span><span class="p">):</span>
+</span><span data-line="493">        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prefetched_items</span><span class="p">:</span>
+</span><span data-line="494">            <span class="n">item</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prefetched_items</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ident</span><span class="p">(</span><span class="n">primary_key</span><span class="p">))</span>
+</span><span data-line="495">            <span class="k">if</span> <span class="n">item</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+</span><span data-line="496">                <span class="k">return</span> <span class="n">item</span>
+</span><span data-line="497">        <span class="k">return</span> <span class="n">get_item_or_raise</span><span class="p">(</span>
+</span><span data-line="498">            <span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="p">,</span>
+</span><span data-line="499">            <span class="n">primary_key</span><span class="p">,</span>
+</span><span data-line="500">            <span class="n">k</span><span class="p">,</span>
+</span><span data-line="501">            <span class="n">error_cls</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_no_such_key_error</span><span class="p">,</span>
+</span><span data-line="502">            <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_values_expression</span><span class="p">,</span>
+</span><span data-line="503">        <span class="p">)</span>
+</span><span data-line="504">
+</span><span data-line="505">    <span class="k">def</span><span class="w"> </span><span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">):</span>
+</span><span data-line="506">        <span class="n">primary_key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_primary_key</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+</span><span data-line="507">        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">format_get_item</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_item_of_primary_key</span><span class="p">(</span><span class="n">primary_key</span><span class="p">,</span> <span class="n">k</span><span class="p">))</span>
+</span><span data-line="508">
+</span><span data-line="509">    <span class="k">def</span><span class="w"> </span><span class="nf">_scan_records</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">projection</span><span class="p">):</span>
+</span><span data-line="510"><span class="w">        </span><span class="sd">"""The raw records for a ``projection`` (an ``Expression*`` kwargs dict)."""</span>
+</span><span data-line="511">        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">paginated</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="o">.</span><span class="n">scan</span><span class="p">,</span> <span class="o">**</span><span class="n">projection</span><span class="p">))</span>
+</span><span data-line="512">
+</span><span data-line="513">    <span class="n">iter_items</span> <span class="o">=</span> <span class="n">_RemovedMethod</span><span class="p">(</span><span class="s2">"iter_items"</span><span class="p">,</span> <span class="s2">"dynamodol.scan_items(store)"</span><span class="p">)</span>
+</span><span data-line="514">    <span class="n">iter_values</span> <span class="o">=</span> <span class="n">_RemovedMethod</span><span class="p">(</span><span class="s2">"iter_values"</span><span class="p">,</span> <span class="s2">"dynamodol.scan_values(store)"</span><span class="p">)</span>
+</span><span data-line="515">
+</span><span data-line="516">    <span class="k">def</span><span class="w"> </span><span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+</span><span data-line="517">        <span class="c1"># This is extremely inefficient and should not be used with large tables in production</span>
+</span><span data-line="518">        <span class="k">for</span> <span class="n">record</span> <span class="ow">in</span> <span class="n">paginated</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="o">.</span><span class="n">scan</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_keys_expression</span><span class="p">):</span>
+</span><span data-line="519">            <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">format_get_key</span><span class="p">(</span><span class="n">record</span><span class="p">)</span>
+</span><span data-line="520">
+</span><span data-line="521">    <span class="k">def</span><span class="w"> </span><span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+</span><span data-line="522">        <span class="c1"># This is extremely inefficient and should not be used with large tables in production</span>
+</span><span data-line="523">        <span class="k">return</span> <span class="n">paginated_count</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="o">.</span><span class="n">scan</span><span class="p">,</span> <span class="n">Select</span><span class="o">=</span><span class="s2">"COUNT"</span><span class="p">)</span>
 </span><span data-line="524">
+</span><span data-line="525">    <span class="nd">@staticmethod</span>
+</span><span data-line="526">    <span class="nd">@wraps</span><span class="p">(</span><span class="n">get_db</span><span class="p">)</span>
+</span><span data-line="527">    <span class="k">def</span><span class="w"> </span><span class="nf">mk_db</span><span class="p">(</span><span class="o">**</span><span class="n">db_kwargs</span><span class="p">):</span>
+</span><span data-line="528">        <span class="k">return</span> <span class="n">get_db</span><span class="p">(</span><span class="o">**</span><span class="n">db_kwargs</span><span class="p">)</span></div>
+
+</span><span data-line="529">
+</span><span data-line="530">
 <div class="viewcode-block" id="DynamoDbBasePersister">
 <a class="viewcode-back" href="../../_autosummary/dynamodol.base.html#dynamodol.base.DynamoDbBasePersister">[docs]</a>
-</span><span data-line="525"><span class="k">class</span><span class="w"> </span><span class="nc">DynamoDbBasePersister</span><span class="p">(</span><span class="n">DynamoDbBaseReader</span><span class="p">,</span> <span class="n">KvPersister</span><span class="p">):</span>
-</span><span data-line="526"><span class="w">    </span><span class="sd">"""</span>
-</span><span data-line="527"><span class="sd">    A basic DynamoDb persister.</span>
-</span><span data-line="528"><span class="sd">    &gt;&gt;&gt; s = DynamoDbBasePersister(table_name=DFLT_TABLE_NAME, key_fields=DFLT_KEY_FIELDS, data_fields=())</span>
-</span><span data-line="529"><span class="sd">    &gt;&gt;&gt; k = '777' # Each collection will happily accept user-defined _key values.</span>
-</span><span data-line="530"><span class="sd">    &gt;&gt;&gt; v = {'val': 'bar'}</span>
-</span><span data-line="531"><span class="sd">    &gt;&gt;&gt; for _key in s:</span>
-</span><span data-line="532"><span class="sd">    ...     del s[_key]</span>
-</span><span data-line="533"><span class="sd">    ...</span>
-</span><span data-line="534"><span class="sd">    &gt;&gt;&gt; k in s</span>
-</span><span data-line="535"><span class="sd">    False</span>
-</span><span data-line="536"><span class="sd">    &gt;&gt;&gt; len(s)</span>
-</span><span data-line="537"><span class="sd">    0</span>
-</span><span data-line="538"><span class="sd">    &gt;&gt;&gt; s[k] = v</span>
-</span><span data-line="539"><span class="sd">    &gt;&gt;&gt; len(s)</span>
-</span><span data-line="540"><span class="sd">    1</span>
-</span><span data-line="541"><span class="sd">    &gt;&gt;&gt; s[k]</span>
-</span><span data-line="542"><span class="sd">    {'val': 'bar'}</span>
-</span><span data-line="543"><span class="sd">    &gt;&gt;&gt; s.get(k)</span>
-</span><span data-line="544"><span class="sd">    {'val': 'bar'}</span>
-</span><span data-line="545"><span class="sd">    &gt;&gt;&gt; s.get('does_not_exist', {'default': 'val'})  # testing s.get with default</span>
-</span><span data-line="546"><span class="sd">    {'default': 'val'}</span>
-</span><span data-line="547"><span class="sd">    &gt;&gt;&gt; list(s.values())</span>
-</span><span data-line="548"><span class="sd">    [{'val': 'bar'}]</span>
-</span><span data-line="549"><span class="sd">    &gt;&gt;&gt; k in s  # testing __contains__ again</span>
-</span><span data-line="550"><span class="sd">    True</span>
-</span><span data-line="551"><span class="sd">    &gt;&gt;&gt; del s[k]</span>
-</span><span data-line="552"><span class="sd">    &gt;&gt;&gt; len(s)</span>
-</span><span data-line="553"><span class="sd">    0</span>
-</span><span data-line="554"><span class="sd">    &gt;&gt;&gt; s = DynamoDbPersister(table_name='dynamodol2', key_fields=('name',))</span>
-</span><span data-line="555"><span class="sd">    &gt;&gt;&gt; for _key in s:</span>
-</span><span data-line="556"><span class="sd">    ...   del s[_key]</span>
-</span><span data-line="557"><span class="sd">    &gt;&gt;&gt; len(s)</span>
-</span><span data-line="558"><span class="sd">    0</span>
-</span><span data-line="559"><span class="sd">    &gt;&gt;&gt; s['guido'] = {'yob': 1956, 'proj': 'python', 'bdfl': False}</span>
-</span><span data-line="560"><span class="sd">    &gt;&gt;&gt; s['guido']</span>
-</span><span data-line="561"><span class="sd">    {'proj': 'python', 'yob': Decimal('1956'), 'bdfl': False}</span>
-</span><span data-line="562"><span class="sd">    &gt;&gt;&gt; s['vitalik'] = {'yob': 1994, 'proj': 'ethereum', 'bdfl': True}</span>
-</span><span data-line="563"><span class="sd">    &gt;&gt;&gt; s['vitalik']</span>
-</span><span data-line="564"><span class="sd">    {'proj': 'ethereum', 'yob': Decimal('1994'), 'bdfl': True}</span>
-</span><span data-line="565"><span class="sd">    &gt;&gt;&gt; for key, val in s.items():</span>
-</span><span data-line="566"><span class="sd">    ...   print(f"{key}: {val}")</span>
-</span><span data-line="567"><span class="sd">    'vitalik': {'proj': 'ethereum', 'yob': Decimal('1994'), 'bdfl': True}</span>
-</span><span data-line="568"><span class="sd">    'guido': {'proj': 'python', 'yob': Decimal('1956'), 'bdfl': False}</span>
-</span><span data-line="569"><span class="sd">    """</span>
-</span><span data-line="570">
-</span><span data-line="571">    <span class="k">def</span><span class="w"> </span><span class="fm">__setitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
-</span><span data-line="572">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-</span><span data-line="573">            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sort_key</span><span class="p">:</span>
-</span><span data-line="574">                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-</span><span data-line="575">                    <span class="s2">"If a sort key is defined, object keys must be tuples."</span>
-</span><span data-line="576">                <span class="p">)</span>
-</span><span data-line="577">            <span class="k">else</span><span class="p">:</span>
-</span><span data-line="578">                <span class="n">k</span> <span class="o">=</span> <span class="p">(</span><span class="n">k</span><span class="p">,)</span>
-</span><span data-line="579">        <span class="n">key</span> <span class="o">=</span> <span class="p">{</span><span class="n">att</span><span class="p">:</span> <span class="n">key</span> <span class="k">for</span> <span class="n">att</span><span class="p">,</span> <span class="n">key</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">key_fields</span><span class="p">,</span> <span class="n">k</span><span class="p">)}</span>
-</span><span data-line="580">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
-</span><span data-line="581">            <span class="n">val</span> <span class="o">=</span> <span class="n">v</span>
-</span><span data-line="582">        <span class="k">else</span><span class="p">:</span>
-</span><span data-line="583">            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-</span><span data-line="584">                <span class="n">v</span> <span class="o">=</span> <span class="p">(</span><span class="n">v</span><span class="p">,)</span>
-</span><span data-line="585">            <span class="n">val</span> <span class="o">=</span> <span class="p">{</span><span class="n">att</span><span class="p">:</span> <span class="n">key</span> <span class="k">for</span> <span class="n">att</span><span class="p">,</span> <span class="n">key</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data_fields</span><span class="p">,</span> <span class="n">v</span><span class="p">)}</span>
-</span><span data-line="586">
-</span><span data-line="587">        <span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="o">.</span><span class="n">put_item</span><span class="p">(</span><span class="n">Item</span><span class="o">=</span><span class="p">{</span><span class="o">**</span><span class="n">key</span><span class="p">,</span> <span class="o">**</span><span class="n">val</span><span class="p">})</span>
-</span><span data-line="588">
-</span><span data-line="589">    <span class="k">def</span><span class="w"> </span><span class="fm">__delitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">):</span>
-</span><span data-line="590">        <span class="k">try</span><span class="p">:</span>
-</span><span data-line="591">            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-</span><span data-line="592">                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sort_key</span><span class="p">:</span>
-</span><span data-line="593">                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-</span><span data-line="594">                        <span class="s2">"If a sort key is defined, object keys must be tuples."</span>
-</span><span data-line="595">                    <span class="p">)</span>
-</span><span data-line="596">                <span class="n">k</span> <span class="o">=</span> <span class="p">(</span><span class="n">k</span><span class="p">,)</span>
-</span><span data-line="597">            <span class="n">key</span> <span class="o">=</span> <span class="p">{</span><span class="n">att</span><span class="p">:</span> <span class="n">key</span> <span class="k">for</span> <span class="n">att</span><span class="p">,</span> <span class="n">key</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">key_fields</span><span class="p">,</span> <span class="n">k</span><span class="p">)}</span>
-</span><span data-line="598">            <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="o">.</span><span class="n">delete_item</span><span class="p">(</span><span class="n">Key</span><span class="o">=</span><span class="n">key</span><span class="p">,</span> <span class="n">ReturnValues</span><span class="o">=</span><span class="s2">"ALL_OLD"</span><span class="p">)</span>
-</span><span data-line="599">        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-</span><span data-line="600">            <span class="k">if</span> <span class="n">is_no_such_key_error</span><span class="p">(</span><span class="n">e</span><span class="p">):</span>
-</span><span data-line="601">                <span class="k">raise</span> <span class="n">NoSuchKeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Key not found: </span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
-</span><span data-line="602">            <span class="k">raise</span>
-</span><span data-line="603">        <span class="n">raise_if_nothing_was_deleted</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span></div>
+</span><span data-line="531"><span class="k">class</span><span class="w"> </span><span class="nc">DynamoDbBasePersister</span><span class="p">(</span><span class="n">DynamoDbBaseReader</span><span class="p">,</span> <span class="n">KvPersister</span><span class="p">):</span>
+</span><span data-line="532"><span class="w">    </span><span class="sd">"""</span>
+</span><span data-line="533"><span class="sd">    A basic DynamoDb persister.</span>
+</span><span data-line="534"><span class="sd">    &gt;&gt;&gt; s = DynamoDbBasePersister(table_name=DFLT_TABLE_NAME, key_fields=DFLT_KEY_FIELDS, data_fields=())</span>
+</span><span data-line="535"><span class="sd">    &gt;&gt;&gt; k = '777' # Each collection will happily accept user-defined _key values.</span>
+</span><span data-line="536"><span class="sd">    &gt;&gt;&gt; v = {'val': 'bar'}</span>
+</span><span data-line="537"><span class="sd">    &gt;&gt;&gt; for _key in s:</span>
+</span><span data-line="538"><span class="sd">    ...     del s[_key]</span>
+</span><span data-line="539"><span class="sd">    ...</span>
+</span><span data-line="540"><span class="sd">    &gt;&gt;&gt; k in s</span>
+</span><span data-line="541"><span class="sd">    False</span>
+</span><span data-line="542"><span class="sd">    &gt;&gt;&gt; len(s)</span>
+</span><span data-line="543"><span class="sd">    0</span>
+</span><span data-line="544"><span class="sd">    &gt;&gt;&gt; s[k] = v</span>
+</span><span data-line="545"><span class="sd">    &gt;&gt;&gt; len(s)</span>
+</span><span data-line="546"><span class="sd">    1</span>
+</span><span data-line="547"><span class="sd">    &gt;&gt;&gt; s[k]</span>
+</span><span data-line="548"><span class="sd">    {'val': 'bar'}</span>
+</span><span data-line="549"><span class="sd">    &gt;&gt;&gt; s.get(k)</span>
+</span><span data-line="550"><span class="sd">    {'val': 'bar'}</span>
+</span><span data-line="551"><span class="sd">    &gt;&gt;&gt; s.get('does_not_exist', {'default': 'val'})  # testing s.get with default</span>
+</span><span data-line="552"><span class="sd">    {'default': 'val'}</span>
+</span><span data-line="553"><span class="sd">    &gt;&gt;&gt; list(s.values())</span>
+</span><span data-line="554"><span class="sd">    [{'val': 'bar'}]</span>
+</span><span data-line="555"><span class="sd">    &gt;&gt;&gt; k in s  # testing __contains__ again</span>
+</span><span data-line="556"><span class="sd">    True</span>
+</span><span data-line="557"><span class="sd">    &gt;&gt;&gt; del s[k]</span>
+</span><span data-line="558"><span class="sd">    &gt;&gt;&gt; len(s)</span>
+</span><span data-line="559"><span class="sd">    0</span>
+</span><span data-line="560"><span class="sd">    &gt;&gt;&gt; s = DynamoDbPersister(table_name='dynamodol2', key_fields=('name',))</span>
+</span><span data-line="561"><span class="sd">    &gt;&gt;&gt; for _key in s:</span>
+</span><span data-line="562"><span class="sd">    ...   del s[_key]</span>
+</span><span data-line="563"><span class="sd">    &gt;&gt;&gt; len(s)</span>
+</span><span data-line="564"><span class="sd">    0</span>
+</span><span data-line="565"><span class="sd">    &gt;&gt;&gt; s['guido'] = {'yob': 1956, 'proj': 'python', 'bdfl': False}</span>
+</span><span data-line="566"><span class="sd">    &gt;&gt;&gt; s['guido']</span>
+</span><span data-line="567"><span class="sd">    {'proj': 'python', 'yob': Decimal('1956'), 'bdfl': False}</span>
+</span><span data-line="568"><span class="sd">    &gt;&gt;&gt; s['vitalik'] = {'yob': 1994, 'proj': 'ethereum', 'bdfl': True}</span>
+</span><span data-line="569"><span class="sd">    &gt;&gt;&gt; s['vitalik']</span>
+</span><span data-line="570"><span class="sd">    {'proj': 'ethereum', 'yob': Decimal('1994'), 'bdfl': True}</span>
+</span><span data-line="571"><span class="sd">    &gt;&gt;&gt; for key, val in s.items():</span>
+</span><span data-line="572"><span class="sd">    ...   print(f"{key}: {val}")</span>
+</span><span data-line="573"><span class="sd">    'vitalik': {'proj': 'ethereum', 'yob': Decimal('1994'), 'bdfl': True}</span>
+</span><span data-line="574"><span class="sd">    'guido': {'proj': 'python', 'yob': Decimal('1956'), 'bdfl': False}</span>
+</span><span data-line="575"><span class="sd">    """</span>
+</span><span data-line="576">
+</span><span data-line="577">    <span class="k">def</span><span class="w"> </span><span class="fm">__setitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+</span><span data-line="578">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+</span><span data-line="579">            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sort_key</span><span class="p">:</span>
+</span><span data-line="580">                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+</span><span data-line="581">                    <span class="s2">"If a sort key is defined, object keys must be tuples."</span>
+</span><span data-line="582">                <span class="p">)</span>
+</span><span data-line="583">            <span class="k">else</span><span class="p">:</span>
+</span><span data-line="584">                <span class="n">k</span> <span class="o">=</span> <span class="p">(</span><span class="n">k</span><span class="p">,)</span>
+</span><span data-line="585">        <span class="n">key</span> <span class="o">=</span> <span class="p">{</span><span class="n">att</span><span class="p">:</span> <span class="n">key</span> <span class="k">for</span> <span class="n">att</span><span class="p">,</span> <span class="n">key</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">key_fields</span><span class="p">,</span> <span class="n">k</span><span class="p">)}</span>
+</span><span data-line="586">        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+</span><span data-line="587">            <span class="n">val</span> <span class="o">=</span> <span class="n">v</span>
+</span><span data-line="588">        <span class="k">else</span><span class="p">:</span>
+</span><span data-line="589">            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+</span><span data-line="590">                <span class="n">v</span> <span class="o">=</span> <span class="p">(</span><span class="n">v</span><span class="p">,)</span>
+</span><span data-line="591">            <span class="n">val</span> <span class="o">=</span> <span class="p">{</span><span class="n">att</span><span class="p">:</span> <span class="n">key</span> <span class="k">for</span> <span class="n">att</span><span class="p">,</span> <span class="n">key</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data_fields</span><span class="p">,</span> <span class="n">v</span><span class="p">)}</span>
+</span><span data-line="592">
+</span><span data-line="593">        <span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="o">.</span><span class="n">put_item</span><span class="p">(</span><span class="n">Item</span><span class="o">=</span><span class="p">{</span><span class="o">**</span><span class="n">key</span><span class="p">,</span> <span class="o">**</span><span class="n">val</span><span class="p">})</span>
+</span><span data-line="594">
+</span><span data-line="595">    <span class="k">def</span><span class="w"> </span><span class="fm">__delitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">):</span>
+</span><span data-line="596">        <span class="k">try</span><span class="p">:</span>
+</span><span data-line="597">            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+</span><span data-line="598">                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sort_key</span><span class="p">:</span>
+</span><span data-line="599">                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+</span><span data-line="600">                        <span class="s2">"If a sort key is defined, object keys must be tuples."</span>
+</span><span data-line="601">                    <span class="p">)</span>
+</span><span data-line="602">                <span class="n">k</span> <span class="o">=</span> <span class="p">(</span><span class="n">k</span><span class="p">,)</span>
+</span><span data-line="603">            <span class="n">key</span> <span class="o">=</span> <span class="p">{</span><span class="n">att</span><span class="p">:</span> <span class="n">key</span> <span class="k">for</span> <span class="n">att</span><span class="p">,</span> <span class="n">key</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">key_fields</span><span class="p">,</span> <span class="n">k</span><span class="p">)}</span>
+</span><span data-line="604">            <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="o">.</span><span class="n">delete_item</span><span class="p">(</span><span class="n">Key</span><span class="o">=</span><span class="n">key</span><span class="p">,</span> <span class="n">ReturnValues</span><span class="o">=</span><span class="s2">"ALL_OLD"</span><span class="p">)</span>
+</span><span data-line="605">        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+</span><span data-line="606">            <span class="k">if</span> <span class="n">is_no_such_key_error</span><span class="p">(</span><span class="n">e</span><span class="p">):</span>
+</span><span data-line="607">                <span class="k">raise</span> <span class="n">NoSuchKeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Key not found: </span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+</span><span data-line="608">            <span class="k">raise</span>
+</span><span data-line="609">        <span class="n">raise_if_nothing_was_deleted</span><span class="p">(</span><span class="n">response</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span></div>
 
-</span><span data-line="604">
-</span><span data-line="605">
+</span><span data-line="610">
+</span><span data-line="611">
 <div class="viewcode-block" id="set_db_defaults">
 <a class="viewcode-back" href="../../_autosummary/dynamodol.base.html#dynamodol.base.set_db_defaults">[docs]</a>
-</span><span data-line="606"><span class="k">def</span><span class="w"> </span><span class="nf">set_db_defaults</span><span class="p">(</span><span class="n">new_defaults</span><span class="p">:</span> <span class="nb">dict</span><span class="p">):</span>
-</span><span data-line="607"><span class="w">    </span><span class="sd">"""Sets global defaults for dynamodol so stores can be created without explicitly passing table details every time.</span>
-</span><span data-line="608">
-</span><span data-line="609"><span class="sd">    :param new_defaults: A dict containing one or more of the following keys</span>
-</span><span data-line="610"><span class="sd">        table_name: str - The name of the table</span>
-</span><span data-line="611"><span class="sd">        key_fields: Tuple - A tuple of length 1 or 2 containing the partition key and (optional) sort key for the table</span>
-</span><span data-line="612"><span class="sd">        data_fields: Tuple or None - A tuple of data fields to return from queries. If data_fields is None, data</span>
-</span><span data-line="613"><span class="sd">                                     will be returned as dicts instead of tuples.</span>
-</span><span data-line="614"><span class="sd">    """</span>
-</span><span data-line="615">    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">new_defaults</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-</span><span data-line="616">        <span class="n">db_defaults</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span></div>
+</span><span data-line="612"><span class="k">def</span><span class="w"> </span><span class="nf">set_db_defaults</span><span class="p">(</span><span class="n">new_defaults</span><span class="p">:</span> <span class="nb">dict</span><span class="p">):</span>
+</span><span data-line="613"><span class="w">    </span><span class="sd">"""Sets global defaults for dynamodol so stores can be created without explicitly passing table details every time.</span>
+</span><span data-line="614">
+</span><span data-line="615"><span class="sd">    :param new_defaults: A dict containing one or more of the following keys</span>
+</span><span data-line="616"><span class="sd">        table_name: str - The name of the table</span>
+</span><span data-line="617"><span class="sd">        key_fields: Tuple - A tuple of length 1 or 2 containing the partition key and (optional) sort key for the table</span>
+</span><span data-line="618"><span class="sd">        data_fields: Tuple or None - A tuple of data fields to return from queries. If data_fields is None, data</span>
+</span><span data-line="619"><span class="sd">                                     will be returned as dicts instead of tuples.</span>
+</span><span data-line="620"><span class="sd">    """</span>
+</span><span data-line="621">    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">new_defaults</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+</span><span data-line="622">        <span class="n">db_defaults</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span></div>
 
-</span><span data-line="617">
-</span><span data-line="618">
+</span><span data-line="623">
+</span><span data-line="624">
 <div class="viewcode-block" id="load_sample_data">
 <a class="viewcode-back" href="../../_autosummary/dynamodol.base.html#dynamodol.base.load_sample_data">[docs]</a>
-</span><span data-line="619"><span class="k">def</span><span class="w"> </span><span class="nf">load_sample_data</span><span class="p">():</span>
-</span><span data-line="620"><span class="w">    </span><span class="sd">"""For supporting doctests"""</span>
-</span><span data-line="621">    <span class="n">set_db_defaults</span><span class="p">(</span>
-</span><span data-line="622">        <span class="p">{</span>
-</span><span data-line="623">            <span class="s2">"table_name"</span><span class="p">:</span> <span class="s2">"sorted_table"</span><span class="p">,</span>
-</span><span data-line="624">            <span class="s2">"key_fields"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"partitionkey"</span><span class="p">,</span> <span class="s2">"sortkey"</span><span class="p">),</span>
-</span><span data-line="625">            <span class="s2">"data_fields"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"data"</span><span class="p">,</span> <span class="s2">"moredata"</span><span class="p">),</span>
-</span><span data-line="626">            <span class="s2">"partition"</span><span class="p">:</span> <span class="s2">"part1"</span><span class="p">,</span>
-</span><span data-line="627">        <span class="p">}</span>
-</span><span data-line="628">    <span class="p">)</span>
-</span><span data-line="629">    <span class="n">sorted_persister</span> <span class="o">=</span> <span class="n">DynamoDbBasePersister</span><span class="p">()</span>
-</span><span data-line="630">    <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">sorted_persister</span><span class="p">):</span>
-</span><span data-line="631">        <span class="k">del</span> <span class="n">sorted_persister</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
-</span><span data-line="632">    <span class="n">sorted_persister</span><span class="p">[(</span><span class="s2">"part1"</span><span class="p">,</span> <span class="s2">"sort2"</span><span class="p">)]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"val2"</span><span class="p">,</span> <span class="s2">"moreval2"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-</span><span data-line="633">    <span class="n">sorted_persister</span><span class="p">[(</span><span class="s2">"part1"</span><span class="p">,</span> <span class="s2">"01-01"</span><span class="p">)]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"a"</span><span class="p">,</span> <span class="s2">"bcde"</span><span class="p">)</span>
-</span><span data-line="634">    <span class="n">sorted_persister</span><span class="p">[(</span><span class="s2">"part1"</span><span class="p">,</span> <span class="s2">"01-02"</span><span class="p">)]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"c"</span><span class="p">,</span> <span class="s2">"defg"</span><span class="p">)</span>
-</span><span data-line="635">    <span class="n">sorted_persister</span><span class="p">[(</span><span class="s2">"part1"</span><span class="p">,</span> <span class="s2">"01-03"</span><span class="p">)]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"e"</span><span class="p">,</span> <span class="s2">"fghi"</span><span class="p">)</span>
-</span><span data-line="636">    <span class="n">sorted_persister</span><span class="p">[(</span><span class="s2">"part1"</span><span class="p">,</span> <span class="s2">"01-04"</span><span class="p">)]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"a"</span><span class="p">,</span> <span class="s2">"cdef"</span><span class="p">)</span>
-</span><span data-line="637">    <span class="n">sorted_persister</span><span class="p">[(</span><span class="s2">"part1"</span><span class="p">,</span> <span class="s2">"02-01"</span><span class="p">)]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"g"</span><span class="p">,</span> <span class="s2">"hijk"</span><span class="p">)</span>
-</span><span data-line="638">    <span class="n">sorted_persister</span><span class="p">[(</span><span class="s2">"part1"</span><span class="p">,</span> <span class="s2">"03-02"</span><span class="p">)]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"i"</span><span class="p">,</span> <span class="s2">"jklm"</span><span class="p">)</span>
-</span><span data-line="639">    <span class="n">sorted_persister</span><span class="p">[(</span><span class="s2">"part1"</span><span class="p">,</span> <span class="s2">"04-03"</span><span class="p">)]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"k"</span><span class="p">,</span> <span class="s2">"lmno"</span><span class="p">)</span>
-</span><span data-line="640">    <span class="n">sorted_persister</span><span class="p">[(</span><span class="s2">"part2"</span><span class="p">,</span> <span class="s2">"02-01"</span><span class="p">)]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"m"</span><span class="p">,</span> <span class="s2">"nopq"</span><span class="p">)</span>
-</span><span data-line="641">    <span class="n">sorted_persister</span><span class="p">[(</span><span class="s2">"part2"</span><span class="p">,</span> <span class="s2">"03-02"</span><span class="p">)]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"o"</span><span class="p">,</span> <span class="s2">"pqrs"</span><span class="p">)</span>
-</span><span data-line="642">    <span class="n">sorted_persister</span><span class="p">[(</span><span class="s2">"part2"</span><span class="p">,</span> <span class="s2">"04-03"</span><span class="p">)]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"q"</span><span class="p">,</span> <span class="s2">"rstu"</span><span class="p">)</span>
-</span><span data-line="643">    <span class="n">sorted_persister</span><span class="p">[(</span><span class="s2">"part3"</span><span class="p">,</span> <span class="s2">"01-05"</span><span class="p">)]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"s"</span><span class="p">,</span> <span class="s2">"tuvw"</span><span class="p">)</span>
-</span><span data-line="644">    <span class="n">sorted_persister</span><span class="p">[(</span><span class="s2">"part3"</span><span class="p">,</span> <span class="s2">"02-02"</span><span class="p">)]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"u"</span><span class="p">,</span> <span class="s2">"vwxy"</span><span class="p">)</span>
-</span><span data-line="645">    <span class="n">sorted_persister</span><span class="p">[(</span><span class="s2">"part3"</span><span class="p">,</span> <span class="s2">"03-03"</span><span class="p">)]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"w"</span><span class="p">,</span> <span class="s2">"xyza"</span><span class="p">)</span></div>
+</span><span data-line="625"><span class="k">def</span><span class="w"> </span><span class="nf">load_sample_data</span><span class="p">():</span>
+</span><span data-line="626"><span class="w">    </span><span class="sd">"""For supporting doctests"""</span>
+</span><span data-line="627">    <span class="n">set_db_defaults</span><span class="p">(</span>
+</span><span data-line="628">        <span class="p">{</span>
+</span><span data-line="629">            <span class="s2">"table_name"</span><span class="p">:</span> <span class="s2">"sorted_table"</span><span class="p">,</span>
+</span><span data-line="630">            <span class="s2">"key_fields"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"partitionkey"</span><span class="p">,</span> <span class="s2">"sortkey"</span><span class="p">),</span>
+</span><span data-line="631">            <span class="s2">"data_fields"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"data"</span><span class="p">,</span> <span class="s2">"moredata"</span><span class="p">),</span>
+</span><span data-line="632">            <span class="s2">"partition"</span><span class="p">:</span> <span class="s2">"part1"</span><span class="p">,</span>
+</span><span data-line="633">        <span class="p">}</span>
+</span><span data-line="634">    <span class="p">)</span>
+</span><span data-line="635">    <span class="n">sorted_persister</span> <span class="o">=</span> <span class="n">DynamoDbBasePersister</span><span class="p">()</span>
+</span><span data-line="636">    <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">sorted_persister</span><span class="p">):</span>
+</span><span data-line="637">        <span class="k">del</span> <span class="n">sorted_persister</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+</span><span data-line="638">    <span class="n">sorted_persister</span><span class="p">[(</span><span class="s2">"part1"</span><span class="p">,</span> <span class="s2">"sort2"</span><span class="p">)]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"val2"</span><span class="p">,</span> <span class="s2">"moreval2"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+</span><span data-line="639">    <span class="n">sorted_persister</span><span class="p">[(</span><span class="s2">"part1"</span><span class="p">,</span> <span class="s2">"01-01"</span><span class="p">)]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"a"</span><span class="p">,</span> <span class="s2">"bcde"</span><span class="p">)</span>
+</span><span data-line="640">    <span class="n">sorted_persister</span><span class="p">[(</span><span class="s2">"part1"</span><span class="p">,</span> <span class="s2">"01-02"</span><span class="p">)]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"c"</span><span class="p">,</span> <span class="s2">"defg"</span><span class="p">)</span>
+</span><span data-line="641">    <span class="n">sorted_persister</span><span class="p">[(</span><span class="s2">"part1"</span><span class="p">,</span> <span class="s2">"01-03"</span><span class="p">)]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"e"</span><span class="p">,</span> <span class="s2">"fghi"</span><span class="p">)</span>
+</span><span data-line="642">    <span class="n">sorted_persister</span><span class="p">[(</span><span class="s2">"part1"</span><span class="p">,</span> <span class="s2">"01-04"</span><span class="p">)]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"a"</span><span class="p">,</span> <span class="s2">"cdef"</span><span class="p">)</span>
+</span><span data-line="643">    <span class="n">sorted_persister</span><span class="p">[(</span><span class="s2">"part1"</span><span class="p">,</span> <span class="s2">"02-01"</span><span class="p">)]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"g"</span><span class="p">,</span> <span class="s2">"hijk"</span><span class="p">)</span>
+</span><span data-line="644">    <span class="n">sorted_persister</span><span class="p">[(</span><span class="s2">"part1"</span><span class="p">,</span> <span class="s2">"03-02"</span><span class="p">)]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"i"</span><span class="p">,</span> <span class="s2">"jklm"</span><span class="p">)</span>
+</span><span data-line="645">    <span class="n">sorted_persister</span><span class="p">[(</span><span class="s2">"part1"</span><span class="p">,</span> <span class="s2">"04-03"</span><span class="p">)]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"k"</span><span class="p">,</span> <span class="s2">"lmno"</span><span class="p">)</span>
+</span><span data-line="646">    <span class="n">sorted_persister</span><span class="p">[(</span><span class="s2">"part2"</span><span class="p">,</span> <span class="s2">"02-01"</span><span class="p">)]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"m"</span><span class="p">,</span> <span class="s2">"nopq"</span><span class="p">)</span>
+</span><span data-line="647">    <span class="n">sorted_persister</span><span class="p">[(</span><span class="s2">"part2"</span><span class="p">,</span> <span class="s2">"03-02"</span><span class="p">)]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"o"</span><span class="p">,</span> <span class="s2">"pqrs"</span><span class="p">)</span>
+</span><span data-line="648">    <span class="n">sorted_persister</span><span class="p">[(</span><span class="s2">"part2"</span><span class="p">,</span> <span class="s2">"04-03"</span><span class="p">)]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"q"</span><span class="p">,</span> <span class="s2">"rstu"</span><span class="p">)</span>
+</span><span data-line="649">    <span class="n">sorted_persister</span><span class="p">[(</span><span class="s2">"part3"</span><span class="p">,</span> <span class="s2">"01-05"</span><span class="p">)]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"s"</span><span class="p">,</span> <span class="s2">"tuvw"</span><span class="p">)</span>
+</span><span data-line="650">    <span class="n">sorted_persister</span><span class="p">[(</span><span class="s2">"part3"</span><span class="p">,</span> <span class="s2">"02-02"</span><span class="p">)]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"u"</span><span class="p">,</span> <span class="s2">"vwxy"</span><span class="p">)</span>
+</span><span data-line="651">    <span class="n">sorted_persister</span><span class="p">[(</span><span class="s2">"part3"</span><span class="p">,</span> <span class="s2">"03-03"</span><span class="p">)]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"w"</span><span class="p">,</span> <span class="s2">"xyza"</span><span class="p">)</span></div>
 
-</span><span data-line="646">
-</span><span data-line="647">
-</span><span data-line="648"><span class="c1"># TODO class DynamoDbStore(DynamoDbBasePersister, Store): ...</span>
-</span><span data-line="649">
-</span><span data-line="650">
-</span><span data-line="651"><span class="k">def</span><span class="w"> </span><span class="nf">_leaf_reader</span><span class="p">(</span><span class="n">store</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">fn</span><span class="p">):</span>
-</span><span data-line="652">    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">store</span><span class="p">,</span> <span class="n">DynamoDbBaseReader</span><span class="p">):</span>
-</span><span data-line="653">        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
-</span><span data-line="654">            <span class="sa">f</span><span class="s2">"`</span><span class="si">{</span><span class="n">fn</span><span class="si">}</span><span class="s2">` needs an unwrapped dynamodol reader, got "</span>
-</span><span data-line="655">            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">store</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">. A wrapped store (key codec, filt_iter, value "</span>
-</span><span data-line="656">            <span class="sa">f</span><span class="s2">"codec...) must be iterated with its own `.items()` / `.values()`, which "</span>
-</span><span data-line="657">            <span class="sa">f</span><span class="s2">"apply the wrapper's scope and codecs (one `get` per key)."</span>
-</span><span data-line="658">        <span class="p">)</span>
-</span><span data-line="659">    <span class="k">return</span> <span class="n">store</span>
-</span><span data-line="660">
-</span><span data-line="661">
+</span><span data-line="652">
+</span><span data-line="653">
+</span><span data-line="654"><span class="c1"># TODO class DynamoDbStore(DynamoDbBasePersister, Store): ...</span>
+</span><span data-line="655">
+</span><span data-line="656">
+</span><span data-line="657"><span class="k">def</span><span class="w"> </span><span class="nf">_leaf_reader</span><span class="p">(</span><span class="n">store</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">fn</span><span class="p">):</span>
+</span><span data-line="658"><span class="w">    </span><span class="sd">"""``store`` if it is an unwrapped dynamodol reader (the single-scan fast path),</span>
+</span><span data-line="659"><span class="sd">    ``None`` if it is any other mapping (a dol-wrapped store: use its own ``.items()`` /</span>
+</span><span data-line="660"><span class="sd">    ``.values()``, which apply the wrapper's scope and codecs); ``TypeError`` otherwise."""</span>
+</span><span data-line="661">    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">store</span><span class="p">,</span> <span class="n">DynamoDbBaseReader</span><span class="p">):</span>
+</span><span data-line="662">        <span class="k">return</span> <span class="n">store</span>
+</span><span data-line="663">    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">store</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">):</span>
+</span><span data-line="664">        <span class="k">return</span> <span class="kc">None</span>
+</span><span data-line="665">    <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+</span><span data-line="666">        <span class="sa">f</span><span class="s2">"`</span><span class="si">{</span><span class="n">fn</span><span class="si">}</span><span class="s2">` needs a dynamodol reader (bare, or wrapped with a key codec, "</span>
+</span><span data-line="667">        <span class="sa">f</span><span class="s2">"filt_iter, value codec...), got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">store</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">."</span>
+</span><span data-line="668">    <span class="p">)</span>
+</span><span data-line="669">
+</span><span data-line="670">
 <div class="viewcode-block" id="scan_items">
 <a class="viewcode-back" href="../../_autosummary/dynamodol.base.html#dynamodol.base.scan_items">[docs]</a>
-</span><span data-line="662"><span class="k">def</span><span class="w"> </span><span class="nf">scan_items</span><span class="p">(</span><span class="n">store</span><span class="p">):</span>
-</span><span data-line="663"><span class="w">    </span><span class="sd">"""Iterate ``(key, value)`` pairs of an *unwrapped* dynamodol reader in one scan.</span>
-</span><span data-line="664">
-</span><span data-line="665"><span class="sd">    The opt-in fast path that ``store.items()`` deliberately is not: ``items()`` goes</span>
-</span><span data-line="666"><span class="sd">    through ``__iter__`` and ``__getitem__`` (one get per key) so that it is correct</span>
-</span><span data-line="667"><span class="sd">    under any dol wrapper. Passing a wrapped store raises ``TypeError``, because a</span>
-</span><span data-line="668"><span class="sd">    free function cannot apply the wrapper's key mapping, scope or value decoding.</span>
-</span><span data-line="669">
-</span><span data-line="670"><span class="sd">    &gt;&gt;&gt; import dynamodol</span>
-</span><span data-line="671"><span class="sd">    &gt;&gt;&gt; dynamodol.scan_items(object())</span>
-</span><span data-line="672"><span class="sd">    Traceback (most recent call last):</span>
-</span><span data-line="673"><span class="sd">      ...</span>
-</span><span data-line="674"><span class="sd">    TypeError: `scan_items` needs an unwrapped dynamodol reader, got object. A wrapped store (key codec, filt_iter, value codec...) must be iterated with its own `.items()` / `.values()`, which apply the wrapper's scope and codecs (one `get` per key).</span>
-</span><span data-line="675"><span class="sd">    """</span>
-</span><span data-line="676">    <span class="n">reader</span> <span class="o">=</span> <span class="n">_leaf_reader</span><span class="p">(</span>
-</span><span data-line="677">        <span class="n">store</span><span class="p">,</span> <span class="n">fn</span><span class="o">=</span><span class="s2">"scan_items"</span>
-</span><span data-line="678">    <span class="p">)</span>  <span class="c1"># eager: fail at the call, not at first next()</span>
-</span><span data-line="679">    <span class="n">records</span> <span class="o">=</span> <span class="n">reader</span><span class="o">.</span><span class="n">_scan_records</span><span class="p">(</span><span class="n">reader</span><span class="o">.</span><span class="n">_keys_values_expression</span><span class="p">)</span>
-</span><span data-line="680">    <span class="k">return</span> <span class="p">(</span>
-</span><span data-line="681">        <span class="p">(</span><span class="n">reader</span><span class="o">.</span><span class="n">format_get_key</span><span class="p">(</span><span class="n">record</span><span class="p">),</span> <span class="n">reader</span><span class="o">.</span><span class="n">format_get_item</span><span class="p">(</span><span class="n">record</span><span class="p">))</span>
-</span><span data-line="682">        <span class="k">for</span> <span class="n">record</span> <span class="ow">in</span> <span class="n">records</span>
-</span><span data-line="683">    <span class="p">)</span></div>
+</span><span data-line="671"><span class="k">def</span><span class="w"> </span><span class="nf">scan_items</span><span class="p">(</span><span class="n">store</span><span class="p">):</span>
+</span><span data-line="672"><span class="w">    </span><span class="sd">"""Iterate ``(key, value)`` pairs of a dynamodol store.</span>
+</span><span data-line="673">
+</span><span data-line="674"><span class="sd">    A bare dynamodol reader is read in one scan: the opt-in fast path that</span>
+</span><span data-line="675"><span class="sd">    ``store.items()`` deliberately is not, since ``items()`` batches ``BatchGetItem``</span>
+</span><span data-line="676"><span class="sd">    (100 keys per call) so that it is correct under any dol wrapper. A *wrapped* store</span>
+</span><span data-line="677"><span class="sd">    (key codec, ``filt_iter``, value codec...) has its own mapping, scope and decoding,</span>
+</span><span data-line="678"><span class="sd">    which a free function cannot reproduce from the table: for it this is simply</span>
+</span><span data-line="679"><span class="sd">    ``iter(store.items())``. Anything that is not a mapping raises ``TypeError``.</span>
+</span><span data-line="680">
+</span><span data-line="681"><span class="sd">    &gt;&gt;&gt; import dynamodol</span>
+</span><span data-line="682"><span class="sd">    &gt;&gt;&gt; dynamodol.scan_items(object())</span>
+</span><span data-line="683"><span class="sd">    Traceback (most recent call last):</span>
+</span><span data-line="684"><span class="sd">      ...</span>
+</span><span data-line="685"><span class="sd">    TypeError: `scan_items` needs a dynamodol reader (bare, or wrapped with a key codec, filt_iter, value codec...), got object.</span>
+</span><span data-line="686"><span class="sd">    """</span>
+</span><span data-line="687">    <span class="n">reader</span> <span class="o">=</span> <span class="n">_leaf_reader</span><span class="p">(</span>
+</span><span data-line="688">        <span class="n">store</span><span class="p">,</span> <span class="n">fn</span><span class="o">=</span><span class="s2">"scan_items"</span>
+</span><span data-line="689">    <span class="p">)</span>  <span class="c1"># eager: fail at the call, not at first next()</span>
+</span><span data-line="690">    <span class="k">if</span> <span class="n">reader</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+</span><span data-line="691">        <span class="k">return</span> <span class="nb">iter</span><span class="p">(</span><span class="n">store</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
+</span><span data-line="692">    <span class="n">records</span> <span class="o">=</span> <span class="n">reader</span><span class="o">.</span><span class="n">_scan_records</span><span class="p">(</span><span class="n">reader</span><span class="o">.</span><span class="n">_keys_values_expression</span><span class="p">)</span>
+</span><span data-line="693">    <span class="k">return</span> <span class="p">(</span>
+</span><span data-line="694">        <span class="p">(</span><span class="n">reader</span><span class="o">.</span><span class="n">format_get_key</span><span class="p">(</span><span class="n">record</span><span class="p">),</span> <span class="n">reader</span><span class="o">.</span><span class="n">format_get_item</span><span class="p">(</span><span class="n">record</span><span class="p">))</span>
+</span><span data-line="695">        <span class="k">for</span> <span class="n">record</span> <span class="ow">in</span> <span class="n">records</span>
+</span><span data-line="696">    <span class="p">)</span></div>
 
-</span><span data-line="684">
-</span><span data-line="685">
+</span><span data-line="697">
+</span><span data-line="698">
 <div class="viewcode-block" id="scan_values">
 <a class="viewcode-back" href="../../_autosummary/dynamodol.base.html#dynamodol.base.scan_values">[docs]</a>
-</span><span data-line="686"><span class="k">def</span><span class="w"> </span><span class="nf">scan_values</span><span class="p">(</span><span class="n">store</span><span class="p">):</span>
-</span><span data-line="687"><span class="w">    </span><span class="sd">"""Iterate the values of an *unwrapped* dynamodol reader in one scan (see `scan_items`)."""</span>
-</span><span data-line="688">    <span class="n">reader</span> <span class="o">=</span> <span class="n">_leaf_reader</span><span class="p">(</span><span class="n">store</span><span class="p">,</span> <span class="n">fn</span><span class="o">=</span><span class="s2">"scan_values"</span><span class="p">)</span>
-</span><span data-line="689">    <span class="n">records</span> <span class="o">=</span> <span class="n">reader</span><span class="o">.</span><span class="n">_scan_records</span><span class="p">(</span><span class="n">reader</span><span class="o">.</span><span class="n">_values_expression</span><span class="p">)</span>
-</span><span data-line="690">    <span class="k">return</span> <span class="p">(</span><span class="n">reader</span><span class="o">.</span><span class="n">format_get_item</span><span class="p">(</span><span class="n">record</span><span class="p">)</span> <span class="k">for</span> <span class="n">record</span> <span class="ow">in</span> <span class="n">records</span><span class="p">)</span></div>
+</span><span data-line="699"><span class="k">def</span><span class="w"> </span><span class="nf">scan_values</span><span class="p">(</span><span class="n">store</span><span class="p">):</span>
+</span><span data-line="700"><span class="w">    </span><span class="sd">"""Iterate the values of a dynamodol store (see `scan_items`: a wrapped store is</span>
+</span><span data-line="701"><span class="sd">    iterated with its own ``.values()``)."""</span>
+</span><span data-line="702">    <span class="n">reader</span> <span class="o">=</span> <span class="n">_leaf_reader</span><span class="p">(</span><span class="n">store</span><span class="p">,</span> <span class="n">fn</span><span class="o">=</span><span class="s2">"scan_values"</span><span class="p">)</span>
+</span><span data-line="703">    <span class="k">if</span> <span class="n">reader</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+</span><span data-line="704">        <span class="k">return</span> <span class="nb">iter</span><span class="p">(</span><span class="n">store</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+</span><span data-line="705">    <span class="n">records</span> <span class="o">=</span> <span class="n">reader</span><span class="o">.</span><span class="n">_scan_records</span><span class="p">(</span><span class="n">reader</span><span class="o">.</span><span class="n">_values_expression</span><span class="p">)</span>
+</span><span data-line="706">    <span class="k">return</span> <span class="p">(</span><span class="n">reader</span><span class="o">.</span><span class="n">format_get_item</span><span class="p">(</span><span class="n">record</span><span class="p">)</span> <span class="k">for</span> <span class="n">record</span> <span class="ow">in</span> <span class="n">records</span><span class="p">)</span></div>
 
 </span></pre></div>
         </article><button class="back-to-top" type="button">
@@ -872,7 +888,7 @@ data-aria-dark="Switch to auto color mode">
     </div>
   </div>
 </footer>
-      <script src="../../_static/documentation_options.js?v=1e825a29"></script>
+      <script src="../../_static/documentation_options.js?v=297ad043"></script>
       <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>

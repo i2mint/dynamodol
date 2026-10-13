@@ -186,10 +186,10 @@ data-aria-dark="Switch to auto color mode">
 <td><p>Raise <code class="docutils literal notranslate"><span class="pre">NoSuchKeyError</span></code> if a <code class="docutils literal notranslate"><span class="pre">ReturnValues='ALL_OLD'</span></code> delete removed nothing.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#dynamodol.base.scan_items" title="dynamodol.base.scan_items"><code class="xref py py-obj docutils literal notranslate"><span class="pre">scan_items</span></code></a>(store)</p></td>
-<td><p>Iterate <code class="docutils literal notranslate"><span class="pre">(key,</span> <span class="pre">value)</span></code> pairs of an <em>unwrapped</em> dynamodol reader in one scan.</p></td>
+<td><p>Iterate <code class="docutils literal notranslate"><span class="pre">(key,</span> <span class="pre">value)</span></code> pairs of a dynamodol store.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#dynamodol.base.scan_values" title="dynamodol.base.scan_values"><code class="xref py py-obj docutils literal notranslate"><span class="pre">scan_values</span></code></a>(store)</p></td>
-<td><p>Iterate the values of an <em>unwrapped</em> dynamodol reader in one scan (see <code class="code docutils literal notranslate"><span class="pre">scan_items</span></code>).</p></td>
+<td><p>Iterate the values of a dynamodol store (see <code class="code docutils literal notranslate"><span class="pre">scan_items</span></code>: a wrapped store is iterated with its own <code class="docutils literal notranslate"><span class="pre">.values()</span></code>).</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#dynamodol.base.set_db_defaults" title="dynamodol.base.set_db_defaults"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_db_defaults</span></code></a>(new_defaults)</p></td>
 <td><p>Sets global defaults for dynamodol so stores can be created without explicitly passing table details every time.</p></td>
@@ -429,16 +429,18 @@ no old <code class="docutils literal notranslate"><span class="pre">Attributes</
 <dl class="py function">
 <dt class="sig sig-object py" id="dynamodol.base.scan_items">
 <span class="sig-prename descclassname"><span class="pre">dynamodol.base.</span></span><span class="sig-name descname"><span class="pre">scan_items</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">store</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dynamodol/base.html#scan_items"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dynamodol.base.scan_items" title="Link to this definition">#</a></dt>
-<dd><p>Iterate <code class="docutils literal notranslate"><span class="pre">(key,</span> <span class="pre">value)</span></code> pairs of an <em>unwrapped</em> dynamodol reader in one scan.</p>
-<p>The opt-in fast path that <code class="docutils literal notranslate"><span class="pre">store.items()</span></code> deliberately is not: <code class="docutils literal notranslate"><span class="pre">items()</span></code> goes
-through <code class="docutils literal notranslate"><span class="pre">__iter__</span></code> and <code class="docutils literal notranslate"><span class="pre">__getitem__</span></code> (one get per key) so that it is correct
-under any dol wrapper. Passing a wrapped store raises <code class="docutils literal notranslate"><span class="pre">TypeError</span></code>, because a
-free function cannot apply the wrapper’s key mapping, scope or value decoding.</p>
+<dd><p>Iterate <code class="docutils literal notranslate"><span class="pre">(key,</span> <span class="pre">value)</span></code> pairs of a dynamodol store.</p>
+<p>A bare dynamodol reader is read in one scan: the opt-in fast path that
+<code class="docutils literal notranslate"><span class="pre">store.items()</span></code> deliberately is not, since <code class="docutils literal notranslate"><span class="pre">items()</span></code> batches <code class="docutils literal notranslate"><span class="pre">BatchGetItem</span></code>
+(100 keys per call) so that it is correct under any dol wrapper. A <em>wrapped</em> store
+(key codec, <code class="docutils literal notranslate"><span class="pre">filt_iter</span></code>, value codec…) has its own mapping, scope and decoding,
+which a free function cannot reproduce from the table: for it this is simply
+<code class="docutils literal notranslate"><span class="pre">iter(store.items())</span></code>. Anything that is not a mapping raises <code class="docutils literal notranslate"><span class="pre">TypeError</span></code>.</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span data-line="1"><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span><span class="w"> </span><span class="nn">dynamodol</span>
 </span><span data-line="2"><span class="gp">&gt;&gt;&gt; </span><span class="n">dynamodol</span><span class="o">.</span><span class="n">scan_items</span><span class="p">(</span><span class="nb">object</span><span class="p">())</span>
 </span><span data-line="3"><span class="gt">Traceback (most recent call last):</span>
 </span><span data-line="4"><span class="w">  </span><span class="c">...</span>
-</span><span data-line="5"><span class="gr">TypeError</span>: <span class="n">`scan_items` needs an unwrapped dynamodol reader, got object. A wrapped store (key codec, filt_iter, value codec...) must be iterated with its own `.items()` / `.values()`, which apply the wrapper's scope and codecs (one `get` per key).</span>
+</span><span data-line="5"><span class="gr">TypeError</span>: <span class="n">`scan_items` needs a dynamodol reader (bare, or wrapped with a key codec, filt_iter, value codec...), got object.</span>
 </span></pre></div>
 </div>
 </dd></dl>
@@ -446,7 +448,8 @@ free function cannot apply the wrapper’s key mapping, scope or value decoding.
 <dl class="py function">
 <dt class="sig sig-object py" id="dynamodol.base.scan_values">
 <span class="sig-prename descclassname"><span class="pre">dynamodol.base.</span></span><span class="sig-name descname"><span class="pre">scan_values</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">store</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/dynamodol/base.html#scan_values"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#dynamodol.base.scan_values" title="Link to this definition">#</a></dt>
-<dd><p>Iterate the values of an <em>unwrapped</em> dynamodol reader in one scan (see <code class="code docutils literal notranslate"><span class="pre">scan_items</span></code>).</p>
+<dd><p>Iterate the values of a dynamodol store (see <code class="code docutils literal notranslate"><span class="pre">scan_items</span></code>: a wrapped store is
+iterated with its own <code class="docutils literal notranslate"><span class="pre">.values()</span></code>).</p>
 </dd></dl>
 
 <dl class="py function">
@@ -509,7 +512,7 @@ data_fields: Tuple or None - A tuple of data fields to return from queries. If d
     </div>
   </div>
 </footer>
-      <script src="../_static/documentation_options.js?v=1e825a29"></script>
+      <script src="../_static/documentation_options.js?v=297ad043"></script>
       <script src="../_static/doctools.js?v=fd6eb6e6"></script>
       <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="../_static/clipboard.min.js?v=a7894cd8"></script>

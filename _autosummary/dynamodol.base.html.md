@@ -10,18 +10,18 @@ DynamoDB (through boto3) with a simple (dict-like or list-like) interface
 
 ### Functions
 
-| `decimal_to_float`(x)                                                                              |                                                                                                                  |
-|----------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------|
-| `get_db`([aws_access_key_id, ...])                                                                 |                                                                                                                  |
-| [`get_item_or_raise`](#dynamodol.base.get_item_or_raise)(table, key, k, \*[, error_cls]) | `table.get_item(Key=key)`'s `Item`, raising `error_cls` only if it is absent.                                    |
-| [`is_no_such_key_error`](#dynamodol.base.is_no_such_key_error)(error)                       | Tell whether `error` reports a missing key.                                                                      |
-| [`load_sample_data`](#dynamodol.base.load_sample_data)()                                | For supporting doctests                                                                                          |
-| [`paginated`](#dynamodol.base.paginated)(call, /, \*\*kwargs)                    | Yield the `Items` of a `scan`/`query` across *all* its pages.                                                    |
-| [`paginated_count`](#dynamodol.base.paginated_count)(call, /, \*\*kwargs)              | The `Count` of a `Select='COUNT'` `scan`/`query` summed over all its pages.                                      |
-| [`raise_if_nothing_was_deleted`](#dynamodol.base.raise_if_nothing_was_deleted)(...[, error_cls])    | Raise `NoSuchKeyError` if a `ReturnValues='ALL_OLD'` delete removed nothing.                                     |
-| [`scan_items`](#dynamodol.base.scan_items)(store)                                 | Iterate `(key, value)` pairs of an *unwrapped* dynamodol reader in one scan.                                     |
-| [`scan_values`](#dynamodol.base.scan_values)(store)                                | Iterate the values of an *unwrapped* dynamodol reader in one scan (see `scan_items`).                            |
-| [`set_db_defaults`](#dynamodol.base.set_db_defaults)(new_defaults)                     | Sets global defaults for dynamodol so stores can be created without explicitly passing table details every time. |
+| `decimal_to_float`(x)                                                                              |                                                                                                                   |
+|----------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------|
+| `get_db`([aws_access_key_id, ...])                                                                 |                                                                                                                   |
+| [`get_item_or_raise`](#dynamodol.base.get_item_or_raise)(table, key, k, \*[, error_cls]) | `table.get_item(Key=key)`'s `Item`, raising `error_cls` only if it is absent.                                     |
+| [`is_no_such_key_error`](#dynamodol.base.is_no_such_key_error)(error)                       | Tell whether `error` reports a missing key.                                                                       |
+| [`load_sample_data`](#dynamodol.base.load_sample_data)()                                | For supporting doctests                                                                                           |
+| [`paginated`](#dynamodol.base.paginated)(call, /, \*\*kwargs)                    | Yield the `Items` of a `scan`/`query` across *all* its pages.                                                     |
+| [`paginated_count`](#dynamodol.base.paginated_count)(call, /, \*\*kwargs)              | The `Count` of a `Select='COUNT'` `scan`/`query` summed over all its pages.                                       |
+| [`raise_if_nothing_was_deleted`](#dynamodol.base.raise_if_nothing_was_deleted)(...[, error_cls])    | Raise `NoSuchKeyError` if a `ReturnValues='ALL_OLD'` delete removed nothing.                                      |
+| [`scan_items`](#dynamodol.base.scan_items)(store)                                 | Iterate `(key, value)` pairs of a dynamodol store.                                                                |
+| [`scan_values`](#dynamodol.base.scan_values)(store)                                | Iterate the values of a dynamodol store (see `scan_items`: a wrapped store is iterated with its own `.values()`). |
+| [`set_db_defaults`](#dynamodol.base.set_db_defaults)(new_defaults)                     | Sets global defaults for dynamodol so stores can be created without explicitly passing table details every time.  |
 
 ### Classes
 
@@ -211,24 +211,27 @@ dynamodol.base.NoSuchKeyError: 'Key not found: k1'
 
 ### dynamodol.base.scan_items(store)
 
-Iterate `(key, value)` pairs of an *unwrapped* dynamodol reader in one scan.
+Iterate `(key, value)` pairs of a dynamodol store.
 
-The opt-in fast path that `store.items()` deliberately is not: `items()` goes
-through `__iter__` and `__getitem__` (one get per key) so that it is correct
-under any dol wrapper. Passing a wrapped store raises `TypeError`, because a
-free function cannot apply the wrapper’s key mapping, scope or value decoding.
+A bare dynamodol reader is read in one scan: the opt-in fast path that
+`store.items()` deliberately is not, since `items()` batches `BatchGetItem`
+(100 keys per call) so that it is correct under any dol wrapper. A *wrapped* store
+(key codec, `filt_iter`, value codec…) has its own mapping, scope and decoding,
+which a free function cannot reproduce from the table: for it this is simply
+`iter(store.items())`. Anything that is not a mapping raises `TypeError`.
 
 ```pycon
 >>> import dynamodol
 >>> dynamodol.scan_items(object())
 Traceback (most recent call last):
   ...
-TypeError: `scan_items` needs an unwrapped dynamodol reader, got object. A wrapped store (key codec, filt_iter, value codec...) must be iterated with its own `.items()` / `.values()`, which apply the wrapper's scope and codecs (one `get` per key).
+TypeError: `scan_items` needs a dynamodol reader (bare, or wrapped with a key codec, filt_iter, value codec...), got object.
 ```
 
 ### dynamodol.base.scan_values(store)
 
-Iterate the values of an *unwrapped* dynamodol reader in one scan (see `scan_items`).
+Iterate the values of a dynamodol store (see `scan_items`: a wrapped store is
+iterated with its own `.values()`).
 
 ### dynamodol.base.set_db_defaults(new_defaults)
 

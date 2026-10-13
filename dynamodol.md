@@ -1,4 +1,4 @@
-> built 2026-10-13 14:23 UTC from c4b314b (master) · dynamodol 0.1.11. Details: build_info.json
+> built 2026-10-13 14:31 UTC from e59de6a (master) · dynamodol 0.1.12. Details: build_info.json
 
 # index.html.md
 
@@ -73,18 +73,18 @@ DynamoDB (through boto3) with a simple (dict-like or list-like) interface
 
 ### Functions
 
-| `decimal_to_float`(x)                                                                              |                                                                                                                  |
-|----------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------|
-| `get_db`([aws_access_key_id, ...])                                                                 |                                                                                                                  |
-| [`get_item_or_raise`](_autosummary/dynamodol.base.html.md#dynamodol.base.get_item_or_raise)(table, key, k, \*[, error_cls]) | `table.get_item(Key=key)`'s `Item`, raising `error_cls` only if it is absent.                                    |
-| [`is_no_such_key_error`](_autosummary/dynamodol.base.html.md#dynamodol.base.is_no_such_key_error)(error)                       | Tell whether `error` reports a missing key.                                                                      |
-| [`load_sample_data`](_autosummary/dynamodol.base.html.md#dynamodol.base.load_sample_data)()                                | For supporting doctests                                                                                          |
-| [`paginated`](_autosummary/dynamodol.base.html.md#dynamodol.base.paginated)(call, /, \*\*kwargs)                    | Yield the `Items` of a `scan`/`query` across *all* its pages.                                                    |
-| [`paginated_count`](_autosummary/dynamodol.base.html.md#dynamodol.base.paginated_count)(call, /, \*\*kwargs)              | The `Count` of a `Select='COUNT'` `scan`/`query` summed over all its pages.                                      |
-| [`raise_if_nothing_was_deleted`](_autosummary/dynamodol.base.html.md#dynamodol.base.raise_if_nothing_was_deleted)(...[, error_cls])    | Raise `NoSuchKeyError` if a `ReturnValues='ALL_OLD'` delete removed nothing.                                     |
-| [`scan_items`](_autosummary/dynamodol.base.html.md#dynamodol.base.scan_items)(store)                                 | Iterate `(key, value)` pairs of an *unwrapped* dynamodol reader in one scan.                                     |
-| [`scan_values`](_autosummary/dynamodol.base.html.md#dynamodol.base.scan_values)(store)                                | Iterate the values of an *unwrapped* dynamodol reader in one scan (see `scan_items`).                            |
-| [`set_db_defaults`](_autosummary/dynamodol.base.html.md#dynamodol.base.set_db_defaults)(new_defaults)                     | Sets global defaults for dynamodol so stores can be created without explicitly passing table details every time. |
+| `decimal_to_float`(x)                                                                              |                                                                                                                   |
+|----------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------|
+| `get_db`([aws_access_key_id, ...])                                                                 |                                                                                                                   |
+| [`get_item_or_raise`](_autosummary/dynamodol.base.html.md#dynamodol.base.get_item_or_raise)(table, key, k, \*[, error_cls]) | `table.get_item(Key=key)`'s `Item`, raising `error_cls` only if it is absent.                                     |
+| [`is_no_such_key_error`](_autosummary/dynamodol.base.html.md#dynamodol.base.is_no_such_key_error)(error)                       | Tell whether `error` reports a missing key.                                                                       |
+| [`load_sample_data`](_autosummary/dynamodol.base.html.md#dynamodol.base.load_sample_data)()                                | For supporting doctests                                                                                           |
+| [`paginated`](_autosummary/dynamodol.base.html.md#dynamodol.base.paginated)(call, /, \*\*kwargs)                    | Yield the `Items` of a `scan`/`query` across *all* its pages.                                                     |
+| [`paginated_count`](_autosummary/dynamodol.base.html.md#dynamodol.base.paginated_count)(call, /, \*\*kwargs)              | The `Count` of a `Select='COUNT'` `scan`/`query` summed over all its pages.                                       |
+| [`raise_if_nothing_was_deleted`](_autosummary/dynamodol.base.html.md#dynamodol.base.raise_if_nothing_was_deleted)(...[, error_cls])    | Raise `NoSuchKeyError` if a `ReturnValues='ALL_OLD'` delete removed nothing.                                      |
+| [`scan_items`](_autosummary/dynamodol.base.html.md#dynamodol.base.scan_items)(store)                                 | Iterate `(key, value)` pairs of a dynamodol store.                                                                |
+| [`scan_values`](_autosummary/dynamodol.base.html.md#dynamodol.base.scan_values)(store)                                | Iterate the values of a dynamodol store (see `scan_items`: a wrapped store is iterated with its own `.values()`). |
+| [`set_db_defaults`](_autosummary/dynamodol.base.html.md#dynamodol.base.set_db_defaults)(new_defaults)                     | Sets global defaults for dynamodol so stores can be created without explicitly passing table details every time.  |
 
 ### Classes
 
@@ -274,24 +274,27 @@ dynamodol.base.NoSuchKeyError: 'Key not found: k1'
 
 ### dynamodol.base.scan_items(store)
 
-Iterate `(key, value)` pairs of an *unwrapped* dynamodol reader in one scan.
+Iterate `(key, value)` pairs of a dynamodol store.
 
-The opt-in fast path that `store.items()` deliberately is not: `items()` goes
-through `__iter__` and `__getitem__` (one get per key) so that it is correct
-under any dol wrapper. Passing a wrapped store raises `TypeError`, because a
-free function cannot apply the wrapper’s key mapping, scope or value decoding.
+A bare dynamodol reader is read in one scan: the opt-in fast path that
+`store.items()` deliberately is not, since `items()` batches `BatchGetItem`
+(100 keys per call) so that it is correct under any dol wrapper. A *wrapped* store
+(key codec, `filt_iter`, value codec…) has its own mapping, scope and decoding,
+which a free function cannot reproduce from the table: for it this is simply
+`iter(store.items())`. Anything that is not a mapping raises `TypeError`.
 
 ```pycon
 >>> import dynamodol
 >>> dynamodol.scan_items(object())
 Traceback (most recent call last):
   ...
-TypeError: `scan_items` needs an unwrapped dynamodol reader, got object. A wrapped store (key codec, filt_iter, value codec...) must be iterated with its own `.items()` / `.values()`, which apply the wrapper's scope and codecs (one `get` per key).
+TypeError: `scan_items` needs a dynamodol reader (bare, or wrapped with a key codec, filt_iter, value codec...), got object.
 ```
 
 ### dynamodol.base.scan_values(store)
 
-Iterate the values of an *unwrapped* dynamodol reader in one scan (see `scan_items`).
+Iterate the values of a dynamodol store (see `scan_items`: a wrapped store is
+iterated with its own `.values()`).
 
 ### dynamodol.base.set_db_defaults(new_defaults)
 
@@ -436,16 +439,18 @@ Bases: [`KeyError`](https://docs.python.org/3/builtins/exceptions.html#KeyError)
 
 # About this build
 
-This documentation was built on **2026-10-13 14:23 UTC** from commit <a href="https://github.com/i2mint/dynamodol/commit/c4b314bc9f3b9fd68a503c39abcf61a1e9ac923d"><code>c4b314b</code></a> on branch <code>master</code>, for **dynamodol 0.1.11** (from <code>pyproject.toml</code>).
+This documentation was built on **2026-10-13 14:31 UTC** from commit <a href="https://github.com/i2mint/dynamodol/commit/e59de6a9318246cabe1be0058a4cb4f3f8a73879"><code>e59de6a</code></a> on branch <code>master</code>, for **dynamodol 0.1.12** (from <code>pyproject.toml</code>).
 
-#### NOTE
-Nothing suggests a mismatch: the tree was clean at the commit above, and the documented version is the one on PyPI.
+#### WARNING
+The documentation and the package may be misaligned:
+
+- The documented version (0.1.12) is behind the latest release on PyPI (0.1.13): `pip install dynamodol` gives newer code than these docs describe.
 
 ## Source
 
 |                     |                                                                                                                                                         |
 |---------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Commit              | <a href="https://github.com/i2mint/dynamodol/commit/c4b314bc9f3b9fd68a503c39abcf61a1e9ac923d"><code>c4b314bc9f3b9fd68a503c39abcf61a1e9ac923d</code></a> |
+| Commit              | <a href="https://github.com/i2mint/dynamodol/commit/e59de6a9318246cabe1be0058a4cb4f3f8a73879"><code>e59de6a9318246cabe1be0058a4cb4f3f8a73879</code></a> |
 | Branch              | <code>master</code>                                                                                                                                     |
 | Tags at this commit | none                                                                                                                                                    |
 | Working tree        | clean                                                                                                                                                   |
@@ -456,9 +461,9 @@ Nothing suggests a mismatch: the tree was clean at the commit above, and the doc
 |              |                                                                                            |
 |--------------|--------------------------------------------------------------------------------------------|
 | Repository   | <code>i2mint/dynamodol</code>                                                              |
-| Run          | <a href="https://github.com/i2mint/dynamodol/actions/runs/38412696524">38412696524</a>     |
+| Run          | <a href="https://github.com/i2mint/dynamodol/actions/runs/38413911801">38413911801</a>     |
 | Ref          | <code>refs/heads/master</code>                                                             |
-| Event commit | <code>c4b314bc9f3b9fd68a503c39abcf61a1e9ac923d</code> (in the history of the built commit) |
+| Event commit | <code>e59de6a9318246cabe1be0058a4cb4f3f8a73879</code> (in the history of the built commit) |
 
 ## Tools
 
@@ -483,13 +488,13 @@ Nothing suggests a mismatch: the tree was clean at the commit above, and the doc
 
 ## Package on PyPI
 
-Latest release: <a href="https://pypi.org/project/dynamodol/0.1.11/">0.1.11</a>, the same as the documented version.
+Latest release: <a href="https://pypi.org/project/dynamodol/0.1.13/">0.1.13</a>, newer than the documented version (0.1.12).
 
 ## Reproduce
 
 ```bash
 git clone https://github.com/i2mint/dynamodol && cd dynamodol
-git checkout c4b314bc9f3b9fd68a503c39abcf61a1e9ac923d
+git checkout e59de6a9318246cabe1be0058a4cb4f3f8a73879
 pip install "epythet==0.2.15"
 epythet quickstart . --ignore tests/ scrap/ examples/
 ```
