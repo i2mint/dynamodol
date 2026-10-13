@@ -417,7 +417,9 @@ class DynamoDbBaseReader(KvReader):
 
     ItemsView = _BatchedItemsView
     ValuesView = _BatchedValuesView
-    _no_such_key_error = NoSuchKeyError  # what a missing key raises (subclasses: their own)
+    _no_such_key_error = (
+        NoSuchKeyError  # what a missing key raises (subclasses: their own)
+    )
 
     def _primary_key(self, k) -> dict:
         """The item's primary key (``{key field: value}``) that the store key ``k`` names.
@@ -442,7 +444,9 @@ class DynamoDbBaseReader(KvReader):
     @property
     def _prefetched_items(self):
         """``{identity: item}`` while *this thread's* view looks up the items it just read."""
-        return getattr(self.__dict__.setdefault("_local", threading.local()), "items", None)
+        return getattr(
+            self.__dict__.setdefault("_local", threading.local()), "items", None
+        )
 
     @_prefetched_items.setter
     def _prefetched_items(self, items):
@@ -465,7 +469,9 @@ class DynamoDbBaseReader(KvReader):
         for part in _chunks(wanted.values(), BATCH_GET_MAX_KEYS):
             request = {"Keys": part, **self._keys_values_expression}
             try:
-                response = self.db.batch_get_item(RequestItems={self.table_name: request})
+                response = self.db.batch_get_item(
+                    RequestItems={self.table_name: request}
+                )
             except Exception as e:
                 code = (getattr(e, "response", None) or {}).get("Error", {}).get("Code")
                 if code in KEY_CANNOT_NAME_AN_ITEM_ERROR_CODES:
