@@ -5,6 +5,8 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from dynamodol.base import (
+    paginated,
+    paginated_count,
     DynamoDbBaseReader,
     DynamoDbBasePersister,
     db_defaults,
@@ -175,15 +177,16 @@ class DynamoDbQueryReader(DynamoDbBaseReader):
         return result
 
     def _scan_records(self, projection):
-        return self.table.query(**self.filter_kwargs, **projection)["Items"]
+        return list(paginated(self.table.query, **self.filter_kwargs, **projection))
 
     def __iter__(self):
-        response = self.table.query(**self.filter_kwargs, **self._keys_expression)
-        yield from (self.format_get_key(d) for d in response["Items"])
+        for record in paginated(
+            self.table.query, **self.filter_kwargs, **self._keys_expression
+        ):
+            yield self.format_get_key(record)
 
     def __len__(self):
-        response = self.table.query(**self.filter_kwargs, Select="COUNT")
-        return response["Count"]
+        return paginated_count(self.table.query, **self.filter_kwargs, Select="COUNT")
 
 
 @dataclass
@@ -206,6 +209,7 @@ class DynamoDbPartitionReader(DynamoDbQueryReader):
     """
 
     partition: str = field(default=None)
+    _no_such_key_error = NoSuchKeyError  # this module's, as before
 
     def __post_init__(self):
         DynamoDbQueryReader.__post_init__(self)
@@ -221,10 +225,8 @@ class DynamoDbPartitionReader(DynamoDbQueryReader):
         """TODO: replace with _id_of_key, etc."""
         return item[self.sort_key]
 
-    def __getitem__(self, k):
-        key = {self.partition_key: self.partition, self.sort_key: k}
-        item = get_item_or_raise(self.table, key, k, error_cls=NoSuchKeyError)
-        return self.format_get_item(item)
+    def _primary_key(self, k) -> dict:
+        return {self.partition_key: self.partition, self.sort_key: k}
 
 
 @dataclass
@@ -253,13 +255,14 @@ class DynamoDbPrefixReader(DynamoDbPartitionReader):
         """TODO: replace with _id_of_key, etc."""
         return item[self.sort_key][len(self.prefix) :]
 
-    def __getitem__(self, k):
+    def _primary_key(self, k) -> dict:
         try:
-            key = {self.partition_key: self.partition, self.sort_key: self.prefix + k}
+            return {
+                self.partition_key: self.partition,
+                self.sort_key: self.prefix + k,
+            }
         except TypeError as e:  # a non-str key cannot carry the prefix
             raise NoSuchKeyError(f"Key not found: {k}") from e
-        item = get_item_or_raise(self.table, key, k, error_cls=NoSuchKeyError)
-        return self.format_get_item(item)
 
 
 class DynamoDbPartitionPersister(DynamoDbBasePersister, DynamoDbPartitionReader):
