@@ -35,16 +35,19 @@ class FakeTable:
     ``delete_item`` so backend failures can be exercised without a live table.
     """
 
-    def __init__(self, items=(), *, delete_error=None, get_error=None):
+    def __init__(self, items=(), *, delete_error=None, get_error=None, page_size=None):
         self.items = [dict(item) for item in items]
         self.delete_error = delete_error
         self.get_error = get_error
+        self.page_size = page_size  # None: one page; else DynamoDB-style pagination
+        self.calls = []  # (operation, kwargs) of every scan/query/get_item/batch call
 
     @staticmethod
     def _matches(item, key):
         return all(item.get(k) == v for k, v in key.items())
 
     def get_item(self, Key, **kwargs):
+        self.calls.append(("get_item", Key))
         if self.get_error is not None:
             raise self.get_error
         for item in self.items:
@@ -53,9 +56,16 @@ class FakeTable:
         return {}
 
     def scan(self, **kwargs):
+        self.calls.append(("scan", kwargs))
+        start = kwargs.get("ExclusiveStartKey", {}).get("offset", 0)
+        end = len(self.items) if not self.page_size else start + self.page_size
+        page = self.items[start:end]
+        response = {}
+        if end < len(self.items):
+            response["LastEvaluatedKey"] = {"offset": end}
         if kwargs.get("Select") == "COUNT":
-            return {"Count": len(self.items)}
-        return {"Items": [dict(item) for item in self.items]}
+            return {**response, "Count": len(page)}
+        return {**response, "Items": [dict(item) for item in page]}
 
     def query(self, **kwargs):
         return self.scan(**kwargs)
@@ -92,9 +102,23 @@ class FakeDb:
     def Table(self, table_name):
         return self._table
 
+    def batch_get_item(self, RequestItems):
+        ((name, request),) = RequestItems.items()
+        assert len(request["Keys"]) <= 100, "BatchGetItem takes at most 100 keys"
+        self._table.calls.append(("batch_get_item", request["Keys"]))
+        found = [
+            dict(item)
+            for key in request["Keys"]
+            for item in self._table.items
+            if self._table._matches(item, key)
+        ]
+        return {"Responses": {name: found}, "UnprocessedKeys": {}}
 
-def _mk_persister(items=(), *, delete_error=None, get_error=None):
-    table = FakeTable(items, delete_error=delete_error, get_error=get_error)
+
+def _mk_persister(items=(), *, delete_error=None, get_error=None, page_size=None):
+    table = FakeTable(
+        items, delete_error=delete_error, get_error=get_error, page_size=page_size
+    )
     store = DynamoDbBasePersister(
         db=FakeDb(table),
         table_name=TABLE_NAME,

@@ -7,9 +7,11 @@ from decimal import Decimal
 from functools import wraps
 from lazyprop import lazyprop
 from typing import Any, Tuple
-from collections.abc import Iterable, Mapping
+from collections.abc import Iterable, ItemsView, Mapping, ValuesView
 
-from dol import KvReader, KvPersister, Store
+from contextlib import contextmanager
+
+from dol import KvReader, KvPersister, Store, inner_most_key
 
 
 class NoSuchKeyError(KeyError):
@@ -144,6 +146,96 @@ def decimal_to_float(x):
     if isinstance(x, Decimal):
         return float(x)
     return x
+
+
+def paginated(call, /, **kwargs):
+    """Yield the ``Items`` of a ``scan``/``query`` across *all* its pages.
+
+    DynamoDB returns at most ~1 MB per call and says where it stopped
+    (``LastEvaluatedKey``); a single call silently truncates a bigger table.
+    """
+    while True:
+        response = call(**kwargs)
+        yield from response["Items"]
+        last_key = response.get("LastEvaluatedKey")
+        if not last_key:
+            return
+        kwargs = {**kwargs, "ExclusiveStartKey": last_key}
+
+
+def paginated_count(call, /, **kwargs) -> int:
+    """The ``Count`` of a ``Select='COUNT'`` ``scan``/``query`` summed over all its pages."""
+    total = 0
+    while True:
+        response = call(**kwargs)
+        total += response["Count"]
+        last_key = response.get("LastEvaluatedKey")
+        if not last_key:
+            return total
+        kwargs = {**kwargs, "ExclusiveStartKey": last_key}
+
+
+BATCH_GET_MAX_KEYS = 100  # DynamoDB's limit for one BatchGetItem call
+
+
+def _chunks(items, size):
+    items = list(items)
+    for i in range(0, len(items), size):
+        yield items[i : i + size]
+
+
+def _leaf_reader_of(store):
+    """The ``DynamoDbBaseReader`` under any number of ``dol`` wrappers (``None`` if none)."""
+    seen = set()
+    while store is not None and id(store) not in seen:
+        if isinstance(store, DynamoDbBaseReader):
+            return store
+        seen.add(id(store))
+        store = getattr(store, "store", None)
+
+
+class _BatchedViewMixin:
+    """Iterate ``(key, value)`` pairs of the caller's store, a batch of keys per backend call.
+
+    ``Mapping`` builds ``items()``/``values()`` from ``store[key]`` for every key, i.e. one
+    ``GetItem`` per row. Here the keys of a batch are resolved to the reader's own keys
+    (``dol.inner_most_key``), their items are read by one ``BatchGetItem``, and only while
+    ``store[key]`` runs are lookups of those keys answered from them. The lookups still go
+    through the caller's own store, so key/value codecs, ``filt_iter`` scopes and the
+    reader's prefix/partition scoping keep applying (i2mint/dynamodol#4); nothing is
+    cached while the caller's code runs between pairs. A key the batch did not return is
+    looked up with ``GetItem`` as usual.
+    """
+
+    def _pairs(self):
+        mapping = self._mapping
+        reader = _leaf_reader_of(mapping)
+        if reader is None:
+            for key in mapping:
+                yield key, mapping[key]
+            return
+        for keys in _chunks(mapping, BATCH_GET_MAX_KEYS):
+            inner_keys = (
+                keys
+                if mapping is reader
+                else [inner_most_key(mapping, key, default=None) for key in keys]
+            )
+            items = reader._batch_get(inner_keys)
+            for key in keys:
+                with reader._using_items(items):
+                    value = mapping[key]
+                yield key, value
+
+
+class _BatchedItemsView(_BatchedViewMixin, ItemsView):
+    def __iter__(self):
+        yield from self._pairs()
+
+
+class _BatchedValuesView(_BatchedViewMixin, ValuesView):
+    def __iter__(self):
+        for _, value in self._pairs():
+            yield value
 
 
 class _RemovedMethod:
@@ -316,7 +408,15 @@ class DynamoDbBaseReader(KvReader):
             ),
         }
 
-    def __getitem__(self, k):
+    ItemsView = _BatchedItemsView
+    ValuesView = _BatchedValuesView
+    _no_such_key_error = NoSuchKeyError  # what a missing key raises (subclasses: their own)
+
+    def _primary_key(self, k) -> dict:
+        """The item's primary key (``{key field: value}``) that the store key ``k`` names.
+
+        Raises ``NoSuchKeyError`` for a key of the wrong shape.
+        """
         try:
             _k = k
             if isinstance(k, str):
@@ -325,28 +425,82 @@ class DynamoDbBaseReader(KvReader):
                         "If a sort key is defined, object keys must be tuples."
                     )
                 _k = (k,)
-            _k = {att: key for att, key in zip(self.key_fields, _k)}
+            return {att: key for att, key in zip(self.key_fields, _k)}
         except (ValueError, TypeError) as e:
             raise NoSuchKeyError(f"Key not found: {k}") from e
-        item = get_item_or_raise(self.table, _k, k, **self._values_expression)
-        return self.format_get_item(item)
+
+    def _ident(self, primary_key):
+        return tuple(primary_key[f] for f in self.key_fields)
+
+    _prefetched_items = None  # {identity: item} while a view looks up the items it just read
+
+    def _batch_get(self, keys) -> dict:
+        """``{identity: item}`` for the store keys ``keys``, by ``BatchGetItem`` (<= 100 per call).
+
+        Keys that name no item, or that the backend does not return, are simply absent
+        (they are looked up one by one later).
+        """
+        wanted = {}
+        for k in keys:
+            try:
+                primary_key = self._primary_key(k)
+                wanted[self._ident(primary_key)] = primary_key
+            except (NoSuchKeyError, KeyError, TypeError):
+                continue
+        items = {}
+        for part in _chunks(wanted.values(), BATCH_GET_MAX_KEYS):
+            request = {"Keys": part, **self._keys_values_expression}
+            try:
+                response = self.db.batch_get_item(RequestItems={self.table_name: request})
+            except Exception as e:
+                code = (getattr(e, "response", None) or {}).get("Error", {}).get("Code")
+                if code in KEY_CANNOT_NAME_AN_ITEM_ERROR_CODES:
+                    continue
+                raise
+            for item in response.get("Responses", {}).get(self.table_name, []):
+                items[self._ident(item)] = item
+        return items
+
+    @contextmanager
+    def _using_items(self, items):
+        previous, self._prefetched_items = self._prefetched_items, items
+        try:
+            yield
+        finally:
+            self._prefetched_items = previous
+
+    def _item_of_primary_key(self, primary_key, k):
+        if self._prefetched_items:
+            item = self._prefetched_items.get(self._ident(primary_key))
+            if item is not None:
+                return item
+        return get_item_or_raise(
+            self.table,
+            primary_key,
+            k,
+            error_cls=self._no_such_key_error,
+            **self._values_expression,
+        )
+
+    def __getitem__(self, k):
+        primary_key = self._primary_key(k)
+        return self.format_get_item(self._item_of_primary_key(primary_key, k))
 
     def _scan_records(self, projection):
         """The raw records for a ``projection`` (an ``Expression*`` kwargs dict)."""
-        return self.table.scan(**projection)["Items"]
+        return list(paginated(self.table.scan, **projection))
 
     iter_items = _RemovedMethod("iter_items", "dynamodol.scan_items(store)")
     iter_values = _RemovedMethod("iter_values", "dynamodol.scan_values(store)")
 
     def __iter__(self):
         # This is extremely inefficient and should not be used with large tables in production
-        response = self.table.scan(**self._keys_expression)
-        yield from (self.format_get_key(d) for d in response["Items"])
+        for record in paginated(self.table.scan, **self._keys_expression):
+            yield self.format_get_key(record)
 
     def __len__(self):
         # This is extremely inefficient and should not be used with large tables in production
-        response = self.table.scan(Select="COUNT")
-        return response["Count"]
+        return paginated_count(self.table.scan, Select="COUNT")
 
     @staticmethod
     @wraps(get_db)
