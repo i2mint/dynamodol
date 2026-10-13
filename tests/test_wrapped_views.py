@@ -60,11 +60,39 @@ def test_scan_fast_path_on_unwrapped_reader():
     assert list(dynamodol.scan_values(s)) == list(s.values())
 
 
-def test_scan_refuses_wrapped_store():
-    with pytest.raises(TypeError, match="unwrapped"):
-        list(dynamodol.scan_items(alice_only(_leaf())))
-    with pytest.raises(TypeError, match="unwrapped"):
-        list(dynamodol.scan_values(alice_only(_leaf())))
+@pytest.mark.parametrize(
+    "mk", [lambda: alice_only(_leaf()), lambda: _leaf(alice_only(DynamoDbPrefixReader))]
+)
+def test_scan_on_wrapped_store_honours_the_wrapper(mk):
+    s = mk()
+    assert list(dynamodol.scan_items(s)) == [("notes.txt", "ALICE-SECRET")]
+    assert list(dynamodol.scan_values(s)) == ["ALICE-SECRET"]  # no BOB-SECRET
+
+
+def test_scan_on_value_codec_wrapped_store_decodes():
+    s = wrap_kvs(_leaf(), obj_of_data=lambda v: {"text": v})
+    assert dict(dynamodol.scan_items(s)) == dict(s)
+    assert list(dynamodol.scan_values(s)) == [{"text": "ALICE-SECRET"}, {"text": "BOB-SECRET"}]
+
+
+def test_scan_on_wrapped_store_is_eager_about_errors_and_lazy_about_data():
+    s = alice_only(_leaf())
+    assert iter(dynamodol.scan_items(s)) is not None
+    for fn in (dynamodol.scan_items, dynamodol.scan_values):
+        with pytest.raises(TypeError, match="needs a dynamodol reader"):
+            fn(object())  # at the call, not at the first next()
+        with pytest.raises(TypeError, match="got NoneType"):
+            fn(None)
+
+
+def test_scan_of_a_bare_reader_still_uses_a_single_scan(monkeypatch):
+    s = _leaf()
+    calls = []
+    monkeypatch.setattr(
+        type(s), "_scan_records", lambda self, projection: calls.append(1) or []
+    )
+    assert list(dynamodol.scan_items(s)) == [] and list(dynamodol.scan_values(s)) == []
+    assert len(calls) == 2
 
 
 def test_removed_methods_point_to_replacement():
