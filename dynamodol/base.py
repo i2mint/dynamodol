@@ -505,13 +505,18 @@ def scan_items(store):
       ...
     TypeError: `scan_items` needs an unwrapped dynamodol reader, got object. A wrapped store (key codec, filt_iter, value codec...) must be iterated with its own `.items()` / `.values()`, which apply the wrapper's scope and codecs (one `get` per key).
     """
-    reader = _leaf_reader(store, fn="scan_items")
-    for record in reader._scan_records(reader._keys_values_expression):
-        yield reader.format_get_key(record), reader.format_get_item(record)
+    reader = _leaf_reader(
+        store, fn="scan_items"
+    )  # eager: fail at the call, not at first next()
+    records = reader._scan_records(reader._keys_values_expression)
+    return (
+        (reader.format_get_key(record), reader.format_get_item(record))
+        for record in records
+    )
 
 
 def scan_values(store):
     """Iterate the values of an *unwrapped* dynamodol reader in one scan (see `scan_items`)."""
     reader = _leaf_reader(store, fn="scan_values")
-    for record in reader._scan_records(reader._values_expression):
-        yield reader.format_get_item(record)
+    records = reader._scan_records(reader._values_expression)
+    return (reader.format_get_item(record) for record in records)
