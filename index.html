@@ -7,6 +7,7 @@
     setColorMode(localStorage._theme||"auto");
   </script><link rel="stylesheet" type="text/css" href="_static/pygments.css?v=d88b86f9" />
     <link rel="stylesheet" type="text/css" href="_static/shibuya.css?v=2ceb65ce" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinx_autodoc_typehints.css?v=057ac668" />
     <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
     <link media="print" rel="stylesheet" type="text/css" href="_static/print.css?v=20ff2c19" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -112,6 +113,7 @@ data-aria-dark="Switch to auto color mode">
 <h1>dynamodol<a class="headerlink" href="#dynamodol" title="Link to this heading">#</a></h1>
 <p>dynamodb (through boto3) with a simple (dict-like or list-like) interface</p>
 <p>To install:	<code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">dynamodol</span></code></p>
+<p>Note for contributors and agents: the key/value transforms live in the persister (<code class="docutils literal notranslate"><span class="pre">dynamodol/base.py</span></code>). Moving them into dol hooks via a <code class="docutils literal notranslate"><span class="pre">DynamoDbStore(Store)</span></code> wrapper is an available option, not done until a use appears; see <a class="reference external" href="https://github.com/i2mint/dynamodol/issues/7">#7</a> and reopen it as soon as there is one.</p>
 <p>A basic DynamoDb via Boto3 persister demo:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span data-line="1"><span class="gp">&gt;&gt;&gt; </span><span class="n">s</span> <span class="o">=</span> <span class="n">DynamoDbPersister</span><span class="p">()</span>
 </span><span data-line="2"><span class="gp">&gt;&gt;&gt; </span><span class="n">k</span> <span class="o">=</span> <span class="p">{</span><span class="s1">'key'</span><span class="p">:</span> <span class="s1">'777'</span><span class="p">}</span> <span class="c1"># Each collection will happily accept user-defined _key values.</span>
@@ -161,7 +163,7 @@ data-aria-dark="Switch to auto color mode">
 </div>
 </section>
 
-<p class="epythet-provenance" style="font-size:.8em;opacity:.65;margin-top:2.5em;text-align:right">built 2026-10-13 15:32 UTC from <a href="https://github.com/i2mint/dynamodol/commit/49e5f1bea16dce953549bc3fb8eeaec7949e6578">49e5f1b</a> (master) · dynamodol 0.1.13 · <a href="about-this-build.html">about this build</a></p>
+<p class="epythet-provenance" style="font-size:.8em;opacity:.65;margin-top:2.5em;text-align:right">built 2026-11-02 07:34 UTC from <a href="https://github.com/i2mint/dynamodol/commit/fb1a07310a4965a33bc12e82b25f1184f834dc57">fb1a073</a> (master) · dynamodol 0.1.14 · <a href="about-this-build.html">about this build</a></p>
         </article><button class="back-to-top" type="button">
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
     <path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"></path>
@@ -196,7 +198,7 @@ data-aria-dark="Switch to auto color mode">
     </div>
   </div>
 </footer>
-      <script src="_static/documentation_options.js?v=8d02545a"></script>
+      <script src="_static/documentation_options.js?v=468bc497"></script>
       <script src="_static/doctools.js?v=fd6eb6e6"></script>
       <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
       <script src="_static/clipboard.min.js?v=a7894cd8"></script>

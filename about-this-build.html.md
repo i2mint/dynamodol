@@ -2,18 +2,16 @@
 
 # About this build
 
-This documentation was built on **2026-10-13 15:32 UTC** from commit <a href="https://github.com/i2mint/dynamodol/commit/49e5f1bea16dce953549bc3fb8eeaec7949e6578"><code>49e5f1b</code></a> on branch <code>master</code>, for **dynamodol 0.1.13** (from <code>pyproject.toml</code>).
+This documentation was built on **2026-11-02 07:34 UTC** from commit <a href="https://github.com/i2mint/dynamodol/commit/fb1a07310a4965a33bc12e82b25f1184f834dc57"><code>fb1a073</code></a> on branch <code>master</code>, for **dynamodol 0.1.14** (from <code>pyproject.toml</code>).
 
-#### WARNING
-The documentation and the package may be misaligned:
-
-- The documented version (0.1.13) is behind the latest release on PyPI (0.1.14): `pip install dynamodol` gives newer code than these docs describe.
+#### NOTE
+Nothing suggests a mismatch: the tree was clean at the commit above, and the documented version is the one on PyPI.
 
 ## Source
 
 |                     |                                                                                                                                                         |
 |---------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Commit              | <a href="https://github.com/i2mint/dynamodol/commit/49e5f1bea16dce953549bc3fb8eeaec7949e6578"><code>49e5f1bea16dce953549bc3fb8eeaec7949e6578</code></a> |
+| Commit              | <a href="https://github.com/i2mint/dynamodol/commit/fb1a07310a4965a33bc12e82b25f1184f834dc57"><code>fb1a07310a4965a33bc12e82b25f1184f834dc57</code></a> |
 | Branch              | <code>master</code>                                                                                                                                     |
 | Tags at this commit | none                                                                                                                                                    |
 | Working tree        | clean                                                                                                                                                   |
@@ -24,16 +22,16 @@ The documentation and the package may be misaligned:
 |              |                                                                                            |
 |--------------|--------------------------------------------------------------------------------------------|
 | Repository   | <code>i2mint/dynamodol</code>                                                              |
-| Run          | <a href="https://github.com/i2mint/dynamodol/actions/runs/38422587299">38422587299</a>     |
+| Run          | <a href="https://github.com/i2mint/dynamodol/actions/runs/41407022806">41407022806</a>     |
 | Ref          | <code>refs/heads/master</code>                                                             |
-| Event commit | <code>49e5f1bea16dce953549bc3fb8eeaec7949e6578</code> (in the history of the built commit) |
+| Event commit | <code>fb1a07310a4965a33bc12e82b25f1184f834dc57</code> (in the history of the built commit) |
 
 ## Tools
 
 |          |         |
 |----------|---------|
-| epythet  | 0.2.16  |
-| Sphinx   | 9.1.0   |
+| epythet  | 0.2.22  |
+| Sphinx   | 9.1.1   |
 | docutils | 0.22.4  |
 | Python   | 3.12.15 |
 
@@ -51,14 +49,14 @@ The documentation and the package may be misaligned:
 
 ## Package on PyPI
 
-Latest release: <a href="https://pypi.org/project/dynamodol/0.1.14/">0.1.14</a>, newer than the documented version (0.1.13).
+Latest release: <a href="https://pypi.org/project/dynamodol/0.1.14/">0.1.14</a>, the same as the documented version.
 
 ## Reproduce
 
 ```bash
 git clone https://github.com/i2mint/dynamodol && cd dynamodol
-git checkout 49e5f1bea16dce953549bc3fb8eeaec7949e6578
-pip install "epythet==0.2.16"
+git checkout fb1a07310a4965a33bc12e82b25f1184f834dc57
+pip install "epythet==0.2.22"
 epythet quickstart . --ignore tests/ scrap/ examples/
 ```
 

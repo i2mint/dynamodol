@@ -162,9 +162,6 @@ Boto/botocore carry the backend’s error code in
 have a `__name__` (that lives on the class), so testing `error.__name__`
 only raises `AttributeError` and hides the error being inspected.
 
-* **Return type:**
-  [`bool`](https://docs.python.org/3/builtins/functions.html#bool)
-
 ```pycon
 >>> is_no_such_key_error(ValueError("nope"))
 False
@@ -174,6 +171,9 @@ False
 ... )
 True
 ```
+
+* **Return type:**
+  [`bool`](https://docs.python.org/3/builtins/functions.html#bool)
 
 ### dynamodol.base.load_sample_data()
 

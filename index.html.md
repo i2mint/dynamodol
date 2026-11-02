@@ -6,6 +6,8 @@ dynamodb (through boto3) with a simple (dict-like or list-like) interface
 
 To install:	`pip install dynamodol`
 
+Note for contributors and agents: the key/value transforms live in the persister (`dynamodol/base.py`). Moving them into dol hooks via a `DynamoDbStore(Store)` wrapper is an available option, not done until a use appears; see [#7](https://github.com/i2mint/dynamodol/issues/7) and reopen it as soon as there is one.
+
 A basic DynamoDb via Boto3 persister demo:
 
 ```python
