@@ -91,12 +91,12 @@ def test_bare_items_and_values_use_batches_not_one_get_per_key():
 @pytest.mark.parametrize(
     "mk",
     [
-        lambda store: wrap_kvs(store, key_of_id=str.upper, id_of_key=str.lower),
-        lambda store: wrap_kvs(store, obj_of_data=lambda v: v.upper()),
+        lambda store: wrap_kvs(store, key_decoder=str.upper, key_encoder=str.lower),
+        lambda store: wrap_kvs(store, value_decoder=lambda v: v.upper()),
         lambda store: filt_iter(store, filt=lambda k: k.endswith("7")),
         lambda store: Pipe(
             filt_iter(filt=lambda k: k.endswith("7")),
-            wrap_kvs(key_of_id=str.upper, id_of_key=str.lower),
+            wrap_kvs(key_decoder=str.upper, key_encoder=str.lower),
         )(store),
     ],
     ids=["key codec", "value codec", "filt_iter", "filt + codec"],
