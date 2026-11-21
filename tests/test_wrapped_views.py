@@ -43,7 +43,7 @@ def test_key_scoped_store_items_and_values_are_scoped(mk):
 
 
 def test_value_codec_applies_to_values_and_items():
-    s = wrap_kvs(_leaf(), obj_of_data=lambda v: {"text": v})
+    s = wrap_kvs(_leaf(), value_decoder=lambda v: {"text": v})
     assert s["alice/notes.txt"] == {"text": "ALICE-SECRET"}
     assert list(s.values()) == [{"text": "ALICE-SECRET"}, {"text": "BOB-SECRET"}]
     assert dict(s.items()) == dict(s)
@@ -70,7 +70,7 @@ def test_scan_on_wrapped_store_honours_the_wrapper(mk):
 
 
 def test_scan_on_value_codec_wrapped_store_decodes():
-    s = wrap_kvs(_leaf(), obj_of_data=lambda v: {"text": v})
+    s = wrap_kvs(_leaf(), value_decoder=lambda v: {"text": v})
     assert dict(dynamodol.scan_items(s)) == dict(s)
     assert list(dynamodol.scan_values(s)) == [{"text": "ALICE-SECRET"}, {"text": "BOB-SECRET"}]
 
