@@ -2,16 +2,18 @@
 
 # About this build
 
-This documentation was built on **2026-11-02 07:34 UTC** from commit <a href="https://github.com/i2mint/dynamodol/commit/fb1a07310a4965a33bc12e82b25f1184f834dc57"><code>fb1a073</code></a> on branch <code>master</code>, for **dynamodol 0.1.14** (from <code>pyproject.toml</code>).
+This documentation was built on **2026-11-21 17:33 UTC** from commit <a href="https://github.com/i2mint/dynamodol/commit/cd233244e592c0c1d9b6ee816c224c86a37eb611"><code>cd23324</code></a> on branch <code>master</code>, for **dynamodol 0.1.15** (from <code>pyproject.toml</code>).
 
-#### NOTE
-Nothing suggests a mismatch: the tree was clean at the commit above, and the documented version is the one on PyPI.
+#### WARNING
+The documentation and the package may be misaligned:
+
+- The documented version (0.1.15) is behind the latest release on PyPI (0.1.16): `pip install dynamodol` gives newer code than these docs describe.
 
 ## Source
 
 |                     |                                                                                                                                                         |
 |---------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Commit              | <a href="https://github.com/i2mint/dynamodol/commit/fb1a07310a4965a33bc12e82b25f1184f834dc57"><code>fb1a07310a4965a33bc12e82b25f1184f834dc57</code></a> |
+| Commit              | <a href="https://github.com/i2mint/dynamodol/commit/cd233244e592c0c1d9b6ee816c224c86a37eb611"><code>cd233244e592c0c1d9b6ee816c224c86a37eb611</code></a> |
 | Branch              | <code>master</code>                                                                                                                                     |
 | Tags at this commit | none                                                                                                                                                    |
 | Working tree        | clean                                                                                                                                                   |
@@ -22,9 +24,9 @@ Nothing suggests a mismatch: the tree was clean at the commit above, and the doc
 |              |                                                                                            |
 |--------------|--------------------------------------------------------------------------------------------|
 | Repository   | <code>i2mint/dynamodol</code>                                                              |
-| Run          | <a href="https://github.com/i2mint/dynamodol/actions/runs/41407022806">41407022806</a>     |
+| Run          | <a href="https://github.com/i2mint/dynamodol/actions/runs/44930576514">44930576514</a>     |
 | Ref          | <code>refs/heads/master</code>                                                             |
-| Event commit | <code>fb1a07310a4965a33bc12e82b25f1184f834dc57</code> (in the history of the built commit) |
+| Event commit | <code>cd233244e592c0c1d9b6ee816c224c86a37eb611</code> (in the history of the built commit) |
 
 ## Tools
 
@@ -33,7 +35,7 @@ Nothing suggests a mismatch: the tree was clean at the commit above, and the doc
 | epythet  | 0.2.22  |
 | Sphinx   | 9.1.1   |
 | docutils | 0.22.4  |
-| Python   | 3.12.15 |
+| Python   | 3.12.16 |
 
 ## Configuration as resolved
 
@@ -49,13 +51,13 @@ Nothing suggests a mismatch: the tree was clean at the commit above, and the doc
 
 ## Package on PyPI
 
-Latest release: <a href="https://pypi.org/project/dynamodol/0.1.14/">0.1.14</a>, the same as the documented version.
+Latest release: <a href="https://pypi.org/project/dynamodol/0.1.16/">0.1.16</a>, newer than the documented version (0.1.15).
 
 ## Reproduce
 
 ```bash
 git clone https://github.com/i2mint/dynamodol && cd dynamodol
-git checkout fb1a07310a4965a33bc12e82b25f1184f834dc57
+git checkout cd233244e592c0c1d9b6ee816c224c86a37eb611
 pip install "epythet==0.2.22"
 epythet quickstart . --ignore tests/ scrap/ examples/
 ```

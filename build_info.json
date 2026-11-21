@@ -1,39 +1,39 @@
 {
   "schema_version": 1,
-  "built_at": "2026-11-02T07:34:37Z",
+  "built_at": "2026-11-21T17:33:34Z",
   "package": {
     "name": "dynamodol",
-    "version": "0.1.14",
+    "version": "0.1.15",
     "display_name": "dynamodol",
     "source": "pyproject.toml"
   },
   "git": {
     "available": true,
-    "commit": "fb1a07310a4965a33bc12e82b25f1184f834dc57",
-    "short_commit": "fb1a073",
+    "commit": "cd233244e592c0c1d9b6ee816c224c86a37eb611",
+    "short_commit": "cd23324",
     "branch": "master",
     "tags": [],
     "dirty": false,
     "remote_url": "https://github.com/i2mint/dynamodol",
-    "commit_url": "https://github.com/i2mint/dynamodol/commit/fb1a07310a4965a33bc12e82b25f1184f834dc57",
+    "commit_url": "https://github.com/i2mint/dynamodol/commit/cd233244e592c0c1d9b6ee816c224c86a37eb611",
     "error": null
   },
   "ci": {
     "provider": "github",
     "repository": "i2mint/dynamodol",
-    "sha": "fb1a07310a4965a33bc12e82b25f1184f834dc57",
+    "sha": "cd233244e592c0c1d9b6ee816c224c86a37eb611",
     "sha_in_history": true,
     "ref": "refs/heads/master",
     "ref_name": "master",
-    "run_id": "41407022806",
-    "run_url": "https://github.com/i2mint/dynamodol/actions/runs/41407022806",
+    "run_id": "44930576514",
+    "run_url": "https://github.com/i2mint/dynamodol/actions/runs/44930576514",
     "server_url": "https://github.com"
   },
   "tools": {
     "epythet": "0.2.22",
     "sphinx": "9.1.1",
     "docutils": "0.22.4",
-    "python": "3.12.15"
+    "python": "3.12.16"
   },
   "config": {
     "theme": "auto",
@@ -60,14 +60,16 @@
   },
   "pypi": {
     "checked": true,
-    "latest": "0.1.14",
-    "relation": "same",
+    "latest": "0.1.16",
+    "relation": "behind",
     "error": null
   },
-  "reproduce": "git clone https://github.com/i2mint/dynamodol && cd dynamodol\ngit checkout fb1a07310a4965a33bc12e82b25f1184f834dc57\npip install \"epythet==0.2.22\"\nepythet quickstart . --ignore tests/ scrap/ examples/",
+  "reproduce": "git clone https://github.com/i2mint/dynamodol && cd dynamodol\ngit checkout cd233244e592c0c1d9b6ee816c224c86a37eb611\npip install \"epythet==0.2.22\"\nepythet quickstart . --ignore tests/ scrap/ examples/",
   "warnings": [],
   "alignment": {
-    "aligned": true,
-    "notes": []
+    "aligned": false,
+    "notes": [
+      "The documented version (0.1.15) is behind the latest release on PyPI (0.1.16): `pip install dynamodol` gives newer code than these docs describe."
+    ]
   }
 }
